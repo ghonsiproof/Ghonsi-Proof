@@ -1,0 +1,8 @@
+.custom-options {
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    transform-origin: top;
+}
+
+.custom-options.hidden {
+    transform: scaleY(0.95);
+}

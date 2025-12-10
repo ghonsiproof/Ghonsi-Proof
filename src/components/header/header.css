@@ -1,0 +1,40 @@
+/* Desktop responsive */
+/* @media(min-width: 768px) {
+    .header-btn {
+        display: none;
+    }
+    
+    .links {
+        display: flex !important;
+        position: static;
+        flex-direction: row;
+        background: transparent;
+        padding: 0;
+        gap: 2rem;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .links nav ul {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+    
+    .links li {
+        padding: 0;
+    }
+    
+    .btn-group {
+        flex-direction: row;
+        margin-top: 0;
+        padding-top: 0;
+        gap: 1rem;
+    }
+    
+    .btn1 {
+        margin: 0;
+        width: auto;
+        padding: 10px 24px;
+    }
+} */
