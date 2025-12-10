@@ -6,20 +6,22 @@ import Footer from '../../components/footer/footer.jsx';
 import './contact.css';
 
 function Contact() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [charCount, setCharCount] = useState(0);
   const [selectedSubject, setSelectedSubject] = useState('');
-  const [setSelectedValue] = useState('');
+  const [selectedValue, setSelectedValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [messagePlaceholder, setMessagePlaceholder] = useState("Tell us how we can help you build your verified portfolio on Ghonsi proof");
+  const [message, setMessage] = useState('');
   
   const dropdownRef = useRef(null);
 
-  const placeholders = {
-    default: "Tell us how we can help you build your verified portfolio on Ghonsi proof",
+  const messageTemplates = {
+    default: "",
     verification: "Hi team, I'm having trouble with the verification process for my Solana project. Specifically...",
     feedback: "I really like the platform, but I think it could be improved by...",
-    partnership: "Hello! We are interested in exploring partnership opportunities with Ghonsi proof. Our project focuses on...",
+    partnership: "Hello! We are interested in exploring partnership opportunities with Ghonsi Proof. Our project focuses on...",
     other: "I have a question about something not listed above..."
   };
 
@@ -44,16 +46,26 @@ function Contact() {
     setSelectedSubject(label);
     setSelectedValue(value);
     setIsDropdownOpen(false);
-    setMessagePlaceholder(placeholders[value] || placeholders.default);
+    const newMessage = messageTemplates[value] || messageTemplates.default;
+    setMessage(newMessage);
+    setCharCount(newMessage.length);
+  };
+
+  const handleMessageChange = (e) => {
+    setMessage(e.target.value);
+    setCharCount(e.target.value.length);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setShowModal(true);
-    e.target.reset();
-    setCharCount(0);
+    // Reset form state
+    setName('');
+    setEmail('');
     setSelectedSubject('');
     setSelectedValue('');
+    setMessage('');
+    setCharCount(0);
   };
 
   return (
@@ -75,13 +87,19 @@ function Contact() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-white">Name *</label>
-                <input type="text" placeholder="Your full name" required
+                <input type="text" placeholder="Your full name" required value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="w-full bg-[#0B0F1B] border border-[#C19A4A] rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#d4a852] focus:ring-2 focus:ring-[#C19A4A]/50 transition-colors" />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-white">Email *</label>
-                <input type="email" placeholder="Your email" required
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-[#0B0F1B] border border-[#C19A4A] rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#d4a852] focus:ring-2 focus:ring-[#C19A4A]/50 transition-colors" />
               </div>
 
@@ -116,9 +134,10 @@ function Contact() {
                 <textarea 
                   rows="4" 
                   required
-                  placeholder={messagePlaceholder}
+                  value={message}
+                  onChange={handleMessageChange}
+                  placeholder="Tell us how we can help you build your verified portfolio on Ghonsi proof"
                   maxLength="500"
-                  onChange={(e) => setCharCount(e.target.value.length)}
                   className="w-full bg-[#0B0F1B] border border-[#C19A4A] rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#d4a852] focus:ring-2 focus:ring-[#C19A4A]/50 transition-colors resize-none"></textarea>
                 <div className="text-right text-[10px] text-gray-600">{charCount}/500 characters</div>
               </div>
