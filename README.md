@@ -64,7 +64,7 @@ Ghonsi Proof is a decentralized platform built on Solana that transforms scatter
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structure.
 
 ```
 ghonsi-proof/
