@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Home from './pages/home/home.jsx';
 import FAQ from './pages/faq/faq.jsx';
 import About from './pages/about/about.jsx';
@@ -13,6 +14,8 @@ import Request from './pages/request/request.jsx';
 import PublicProfile from './pages/publicProfile/publicProfile.jsx';
 import Policy from './pages/policy/policy.jsx';
 import Terms from './pages/terms/terms.jsx';
+import TestSupabase from './pages/test/testSupabase.jsx';
+import AuthCallback from './pages/auth/AuthCallback.jsx';
 import './App.css';
 
 function App() {
@@ -25,14 +28,18 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/portfolio" element={<Portfolio />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/createProfile" element={<CreateProfile />} />
-        <Route path="/upload" element={<Upload />} />
-        <Route path="/request" element={<Request />} />
-        <Route path="/publicProfile" element={<PublicProfile />} />
         <Route path="/policy" element={<Policy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/test" element={<TestSupabase />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/publicProfile" element={<PublicProfile />} />
+        
+        {/* Protected Routes */}
+        <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/createProfile" element={<ProtectedRoute><CreateProfile /></ProtectedRoute>} />
+        <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+        <Route path="/request" element={<ProtectedRoute><Request /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

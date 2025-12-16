@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getCurrentUser } from '../../utils/supabaseAuth';
+import { uploadProof } from '../../utils/proofsApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import './upload.css';
@@ -14,6 +16,8 @@ function Upload() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showSubmittedModal, setShowSubmittedModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [referenceError, setReferenceError] = useState('');
   const [supportingError, setSupportingError] = useState('');
 
@@ -146,12 +150,14 @@ function Upload() {
     e.stopPropagation();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploadError('');
 
     let hasError = false;
 
     if (!proofName.trim() || !summary.trim() || !proofType) {
+      setUploadError('Please fill in all required fields.');
       hasError = true;
     }
 
@@ -175,11 +181,38 @@ function Upload() {
 
     if (hasError) return;
 
+    setIsUploading(true);
     setShowPendingModal(true);
-    setTimeout(() => {
+
+    try {
+      // Get current user
+      const user = await getCurrentUser();
+      if (!user) {
+        throw new Error('You must be logged in to upload proofs');
+      }
+
+      // Prepare proof data
+      const proofData = {
+        proofType: proofType,
+        proofName: proofName,
+        summary: summary,
+        referenceLink: referenceLink || null
+      };
+
+      // Upload with files
+      await uploadProof(proofData, [referenceFiles[0] || null].filter(Boolean), [supportingFiles[0]]);
+
+      // Success
+      setTimeout(() => {
+        setShowPendingModal(false);
+        setTimeout(() => setShowSubmittedModal(true), 300);
+      }, 2000);
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadError(error.message || 'Failed to upload proof');
       setShowPendingModal(false);
-      setTimeout(() => setShowSubmittedModal(true), 300);
-    }, 3000);
+      setIsUploading(false);
+    }
   };
 
   const resetAll = () => {
@@ -192,6 +225,8 @@ function Upload() {
     setShowInstructions(false);
     setReferenceError('');
     setSupportingError('');
+    setUploadError('');
+    setIsUploading(false);
   };
 
   const getFileIcon = (file) => {
@@ -215,6 +250,12 @@ function Upload() {
         </div>
 
         <div className="border border-gray-700 rounded-xl p-5 mb-6 relative bg-brand-card">
+          {uploadError && (
+            <div className="mb-5 p-3 rounded-lg text-sm bg-red-500/20 text-red-400 border border-red-500/30">
+              {uploadError}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-5">
             
             <div className="space-y-1.5">
@@ -400,8 +441,12 @@ function Upload() {
               <button type="button" onClick={resetAll} className="text-white text-sm font-medium hover:text-brand-gold transition-colors">
                 Cancel
               </button>
-              <button type="submit" className="bg-brand-gold text-[#0B0F1B] px-5 py-3 rounded font-semibold text-sm hover:bg-yellow-600 transition-colors flex items-center gap-2">
-                Submit for Verification
+              <button 
+                type="submit" 
+                disabled={isUploading}
+                className="bg-brand-gold text-[#0B0F1B] px-5 py-3 rounded font-semibold text-sm hover:bg-yellow-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUploading ? 'Uploading...' : 'Submit for Verification'}
               </button>
             </div>
           </form>
@@ -426,6 +471,21 @@ function Upload() {
       {showSubmittedModal && (
         <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center px-4">
           <div className="bg-brand-card border border-brand-border rounded-xl max-w-sm w-full p-8 relative text-center shadow-2xl">
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowSubmittedModal(false);
+                setIsUploading(false);
+                resetAll();
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
             <div className="mb-4">
               <h3 className="text-xl font-semibold mb-3 text-white">Verification Submitted!</h3>
               <p className="text-gray-300 text-xs mb-8 leading-relaxed px-2">
@@ -440,6 +500,26 @@ function Upload() {
                   <li className="flex gap-2 items-start"><span className="text-white text-[6px] mt-1.5">●</span> You'll receive a notification when verification is complete</li>
                 </ul>
               </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowSubmittedModal(false);
+                  setIsUploading(false);
+                  resetAll();
+                }}
+                className="flex-1 py-2.5 rounded-lg border border-white/20 text-white text-sm font-medium hover:bg-white/5 transition-colors"
+              >
+                Upload Another
+              </button>
+              <button
+                onClick={() => window.location.href = '/dashboard'}
+                className="flex-1 py-2.5 rounded-lg bg-brand-gold text-[#0B0F1B] text-sm font-semibold hover:bg-yellow-600 transition-colors"
+              >
+                View Dashboard
+              </button>
             </div>
           </div>
         </div>

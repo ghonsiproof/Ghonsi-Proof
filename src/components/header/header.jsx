@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
+import { getCurrentUser, logout } from '../../utils/supabaseAuth';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 import './header.css';
 
@@ -8,16 +9,24 @@ function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   // Check authentication status on mount
   useEffect(() => {
-    const checkAuthStatus = () => {
-      const loggedIn = localStorage.getItem('userLoggedIn');
-      setIsLoggedIn(loggedIn === 'true');
-    };
     checkAuthStatus();
   }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      setIsLoggedIn(!!currentUser);
+      setUser(currentUser);
+    } catch (error) {
+      setIsLoggedIn(false);
+      setUser(null);
+    }
+  };
 
   const handleMenuToggle = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -31,12 +40,17 @@ function Header() {
     navigate('/login');
   };
 
-  const handleSignOut = () => {
-    localStorage.removeItem('userLoggedIn');
-    localStorage.removeItem('userEmail');
-    setIsLoggedIn(false);
-    setIsMenuOpen(false);
-    navigate('/home');
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      setIsLoggedIn(false);
+      setUser(null);
+      setIsMenuOpen(false);
+      navigate('/home');
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Failed to sign out. Please try again.');
+    }
   };
 
   const handleGetStarted = () => {
