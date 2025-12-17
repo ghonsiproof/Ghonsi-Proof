@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Share2, CheckCircle2, Calendar, Award, Flag, Trophy, Link as LinkIcon, Mail, Copy, Wallet, ExternalLink } from 'lucide-react';
+import { Share2, CheckCircle2, Calendar, Award, Flag, Trophy, Link as LinkIcon, Mail, Copy, Wallet, ExternalLink, Shield } from 'lucide-react';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 import './publicProfile.css';
 
@@ -29,33 +29,30 @@ function PublicProfile () {
       title: "Senior Frontend Developer Certification",
       type: "Certificate",
       date: "2024-01-15",
-      description: "Advanced React and TypeScript certification from Web3 Academy. Demonstrated proficiency in modern frontend development practices, component architecture, and state management.",
+      description: "Advanced React and TypeScript certification from Web3 Academy. ",
       tags: ["React", "TypeScript", "Web3.js"],
       verified: true,
-      hash: "0x7f9a2b8c3d4...",
-      image: "https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=1000&auto=format&fit=crop"
+      hash: "0x7f9a2b8c3d4..."
     },
     {
       id: "GH-M-018",
       title: "Blockchain Security Audit",
       type: "Milestone",
       date: "2023-12-20",
-      description: "Completed comprehensive security audit for major DeFi protocol, identifying and resolving critical vulnerabilities. Improved protocol security by 95% and prevented potential $5M+ in losses.",
+      description: "Completed comprehensive security audit for major DeFi protocol, identifying and resolving critical vulnerabilities.",
       tags: ["Security Auditing", "Smart Contracts", "DeFi"],
       verified: true,
-      hash: "0x8a1b2c3d4e5...",
-      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1000&auto=format&fit=crop"
+      hash: "0x8a1b2c3d4e5..."
     },
     {
       id: "GH-P-022",
       title: "DeFi Protocol Development",
       type: "Project",
       date: "2023-11-10",
-      description: "Built and deployed a yield farming protocol on Solana with $2M+ TVL. Implemented innovative tokenomics and automated market making features.",
+      description: "Built and deployed a yield farming protocol on Solana with $2M+ TVL.",
       tags: ["Solana", "Smart Contracts", "DeFi"],
       verified: true,
-      hash: "0x9b2c3d4e5f6...",
-      image: "https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?q=80&w=1000&auto=format&fit=crop"
+      hash: "0x9b2c3d4e5f6..."
     },
     {
       id: "GH-A-011",
@@ -65,8 +62,7 @@ function PublicProfile () {
       description: "First place winner at Solana Global Hackathon for building an innovative NFT marketplace with cross-chain compatibility.",
       tags: ["NFTs", "Cross-chain", "Marketplace"],
       verified: true,
-      hash: "0x8a1b2c3d4e5...",
-      image: "https://images.unsplash.com/photo-1642104704074-907c0698b98d?q=80&w=1000&auto=format&fit=crop"
+      hash: "0x8a1b2c3d4e5..."
     },
     {
       id: "GH-C-007",
@@ -76,8 +72,7 @@ function PublicProfile () {
       description: "Advanced Rust programming certification focusing on systems programming and blockchain development.",
       tags: ["Rust", "Systems Programming", "Blockchain"],
       verified: true,
-      hash: "0xb3d4e5f6a7b...",
-      image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1000&auto=format&fit=crop"
+      hash: "0xb3d4e5f6a7b..."
     },
     {
       id: "GH-P-067",
@@ -87,8 +82,7 @@ function PublicProfile () {
       description: "Designed and implemented governance mechanisms for a 10,000+ member DAO, including voting systems and proposal management.",
       tags: ["DAO", "Governance", "Community"],
       verified: true,
-      hash: "0x8a1b2c3d4e5...",
-      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop"
+      hash: "0x8a1b2c3d4e5..."
     }
   ];
 
@@ -249,17 +243,20 @@ function PublicProfile () {
           ))}
         </div>
 
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-bold text-white">Verified Proofs</h2>
+          <div className="flex items-center gap-1.5 text-xs text-white">
+            <Shield size={14} />
+            <span>All proofs are verified on-chain</span>
+          </div>
+        </div>
+
         <div className="space-y-4">
           {filteredProofs.map((proof, idx) => {
             const IconComponent = typeIcons[proof.type] || Trophy;
             return (
               <div key={idx} className="bg-[#111625] rounded-xl border border-white/5 overflow-hidden mb-5 hover:border-white/10 transition-colors group">
-                <div className="relative h-32 overflow-hidden">
-                  <img src={proof.image} alt={proof.title} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#111625] to-transparent"></div>
-                </div>
-                
-                <div className="p-4 -mt-6 relative z-10">
+                <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2 max-w-[calc(100%-40px)]">
                       <h3 className={`text-white font-semibold truncate ${proof.title.length > 30 ? 'text-[11px]' : 'text-[13px]'}`} title={proof.title}>
