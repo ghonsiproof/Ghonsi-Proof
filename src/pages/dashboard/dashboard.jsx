@@ -1,5 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getCurrentUser } from '../../utils/supabaseAuth';
+import { getUserProofs, getProofStats } from '../../utils/proofsApi';
+import { getProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import { CheckCircle2, ExternalLink, FileText, Award, Plus, Briefcase, Share2, Settings, Copy, User, Trash2, Clock } from 'lucide-react';
@@ -28,11 +31,13 @@ const Badge = ({ status }) => {
   return null;
 };
 
-const ProfileSection = () => {
+const ProfileSection = ({ user, profile }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  const walletAddress = "7xKXtgrD2cFA8e2U1dY2gAsU";
-  const truncatedAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+  const walletAddress = profile?.wallet_address || "Not connected";
+  const truncatedAddress = walletAddress !== "Not connected" 
+    ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+    : walletAddress;
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(walletAddress);
@@ -46,8 +51,8 @@ const ProfileSection = () => {
         <User size={30} strokeWidth={1.5} />
       </div>
       
-      <h2 className="text-lg font-medium text-white mb-1">Profile Not Set</h2>
-      <p className="text-xs text-gray-400 mb-6 font-light">Complete your profile</p>
+      <h2 className="text-lg font-medium text-white mb-1">{profile?.full_name || 'Profile Not Set'}</h2>
+      <p className="text-xs text-gray-400 mb-6 font-light">{profile?.bio || 'Complete your profile'}</p>
 
       <div className="w-full space-y-3 mb-7 px-2">
         <div className="flex justify-between items-center text-xs">
@@ -59,7 +64,7 @@ const ProfileSection = () => {
         </div>
         <div className="flex justify-between items-center text-xs">
           <span className="text-gray-500 font-medium">Email</span>
-          <span className="text-gray-200 font-mono">use***@example.com</span>
+          <span className="text-gray-200 font-mono">{user?.email || 'Not set'}</span>
         </div>
         <div className="flex justify-between items-center text-xs">
           <span className="text-gray-500 font-medium">Status</span>
@@ -71,21 +76,21 @@ const ProfileSection = () => {
       </div>
 
       <button className="w-full py-3 rounded-xl border border-[#C19A4A] text-[#C19A4A] text-sm font-medium hover:bg-[#C19A4A] hover:text-[#0B0F1B] transition-all duration-300 active:scale-[0.98]" onClick={() => navigate('/createProfile')} >
-        Create Profile
+        {profile ? 'Edit Profile' : 'Create Profile'}
       </button>
     </Card>
   );
 };
 
-const StatsRow = () => (
+const StatsRow = ({ stats }) => (
   <div className="grid grid-cols-2 gap-4">
     <Card className="flex flex-col items-center justify-center py-5 !bg-[#151925] !border-white/5">
-      <span className="text-3xl font-bold text-white mb-1 tracking-tight">12</span>
+      <span className="text-3xl font-bold text-white mb-1 tracking-tight">{stats?.total || 0}</span>
       <span className="text-xs text-gray-400 font-medium">Total Proofs</span>
     </Card>
     <Card className="flex flex-col items-center justify-center py-5 !bg-[#151925] !border-white/5">
-      <span className="text-3xl font-bold text-white mb-1 tracking-tight">4</span>
-      <span className="text-xs text-gray-400 font-medium">Achievements</span>
+      <span className="text-3xl font-bold text-white mb-1 tracking-tight">{stats?.verified || 0}</span>
+      <span className="text-xs text-gray-400 font-medium">Verified</span>
     </Card>
   </div>
 );
@@ -112,34 +117,40 @@ const ProofItem = ({ title, type, date, status }) => (
   </div>
 );
 
-const RecentProofs = () => (
-  <div className="space-y-3">
-    <div className="flex justify-between items-center px-1">
-      <h3 className="text-sm font-medium text-white">Recent Proofs</h3>
-      <button className="text-xs text-gray-400 hover:text-white transition-colors">All</button>
+const RecentProofs = ({ proofs }) => {
+  const navigate = useNavigate();
+  
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-between items-center px-1">
+        <h3 className="text-sm font-medium text-white">Recent Proofs</h3>
+        <button 
+          onClick={() => navigate('/portfolio')}
+          className="text-xs text-gray-400 hover:text-white transition-colors"
+        >
+          All
+        </button>
+      </div>
+      <div className="space-y-2.5">
+        {proofs && proofs.length > 0 ? (
+          proofs.slice(0, 3).map((proof) => (
+            <ProofItem 
+              key={proof.id}
+              title={proof.title} 
+              type={proof.type || 'Project'} 
+              date={new Date(proof.created_at).toLocaleDateString()} 
+              status={proof.verification_status === 'verified' ? 'Verified' : 'Pending'} 
+            />
+          ))
+        ) : (
+          <div className="bg-[#1C2133] p-6 rounded-xl text-center">
+            <p className="text-sm text-gray-400">No proofs yet. Upload your first proof!</p>
+          </div>
+        )}
+      </div>
     </div>
-    <div className="space-y-2.5">
-      <ProofItem 
-        title="DeFi Protocol Development" 
-        type="Project" 
-        date="2023-11-10" 
-        status="Verified" 
-      />
-      <ProofItem 
-        title="Solana Developer Certification" 
-        type="Certificate" 
-        date="2024-01-10" 
-        status="Verified" 
-      />
-      <ProofItem 
-        title="Smart Contract Audit" 
-        type="Achievement" 
-        date="2024-01-08" 
-        status="Pending" 
-      />
-    </div>
-  </div>
-);
+  );
+};
 
 const ActionButton = ({ icon: Icon, label, onClick }) => (
   <button onClick={onClick} className="flex flex-col items-center justify-center gap-2 bg-[#C19A4A] text-[#ffffff] p-5 rounded-xl font-medium text-xs hover:bg-[#D4AB58] transition-all active:scale-[0.98] shadow-lg shadow-[#C19A4A]/5">
@@ -200,15 +211,66 @@ const DeleteSection = () => (
 );
 
 function Dashboard() {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [proofs, setProofs] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+
+      if (currentUser) {
+        // Load profile
+        const userProfile = await getProfile(currentUser.id);
+        setProfile(userProfile);
+
+        // Load proofs
+        const userProofs = await getUserProofs(currentUser.id);
+        setProofs(userProofs || []);
+
+        // Load stats
+        const proofStats = await getProofStats(currentUser.id);
+        setStats(proofStats);
+      }
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-[#0B0F1B] flex items-center justify-center mt-[105px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#C19A4A] mx-auto mb-4"></div>
+            <p className="text-white">Loading dashboard...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   return (
     <>
       <Header />
       <div className="min-h-screen bg-[#0B0F1B] font-sans text-white selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">
         <div className="max-w-md mx-auto min-h-screen bg-[#0B0F1B] relative flex flex-col border-x border-white/5 shadow-2xl">
           <main className="flex-1 px-5 py-6 space-y-8">
-            <ProfileSection />
-            <StatsRow />
-            <RecentProofs />
+            <ProfileSection user={user} profile={profile} />
+            <StatsRow stats={stats} />
+            <RecentProofs proofs={proofs} />
             <QuickActions />
             <DeleteSection />
           </main>

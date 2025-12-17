@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getCurrentUser } from '../../utils/supabaseAuth';
+import { createProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import { ArrowLeft, ArrowRight, User, Award, Share2, Settings, Camera, Upload, ChevronDown, Check } from 'lucide-react';
@@ -8,6 +10,8 @@ function CreateProfile() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [formData, setFormData] = useState({
     fullName: '', emailAddress: '', phoneNumber: '', location: '',
     professionalTitle: '', professionalBio: '', skills: '', experience: '',
@@ -74,13 +78,49 @@ function CreateProfile() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validateStep(currentStep)) return;
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      setShowSuccess(true);
+      // Final step - save profile to Supabase
+      setIsSubmitting(true);
+      setSubmitError('');
+      
+      try {
+        const user = await getCurrentUser();
+        if (!user) {
+          throw new Error('You must be logged in to create a profile');
+        }
+
+        // Prepare profile data
+        const profileData = {
+          user_id: user.id,
+          full_name: formData.fullName,
+          email: formData.emailAddress,
+          phone: formData.phoneNumber || null,
+          location: formData.location || null,
+          professional_title: formData.professionalTitle || null,
+          bio: formData.professionalBio || null,
+          skills: formData.skills ? formData.skills.split(',').map(s => s.trim()) : [],
+          experience_years: formData.experience || null,
+          website_url: formData.website || null,
+          github_url: formData.github || null,
+          twitter_url: formData.twitter || null,
+          linkedin_url: formData.linkedin || null,
+          profile_visibility: formData.visibility || 'public',
+          email_notifications: formData.emailNotifications
+        };
+
+        await createProfile(profileData);
+        setShowSuccess(true);
+      } catch (error) {
+        console.error('Profile creation error:', error);
+        setSubmitError(error.message || 'Failed to create profile');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -282,6 +322,12 @@ function CreateProfile() {
                 </div>
               )}
 
+              {submitError && (
+                <div className="mb-6 p-4 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
+                  {submitError}
+                </div>
+              )}
+
               <div className="flex items-center justify-between mt-12 pt-6 border-t border-white/10">
                 <button type="button" onClick={handlePrev} className={`text-[#C19A4A] text-sm font-medium flex items-center gap-1 transition-all hover:-translate-x-1 ${currentStep === 1 ? 'opacity-0 pointer-events-none' : ''}`}>
                   <ArrowLeft className="w-4 h-4" /> Previous
@@ -289,8 +335,15 @@ function CreateProfile() {
 
                 <div className="flex items-center gap-6">
                   <button type="button" className="text-[#C19A4A] hover:text-[#A8863D] text-sm font-medium transition-colors">Cancel</button>
-                  <button type="button" onClick={handleNext} className="bg-[#C19A4A] hover:bg-[#A8863D] text-black text-sm font-semibold px-8 py-3 rounded-lg flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-[#C19A4A]/20">
-                    {currentStep === totalSteps ? (
+                  <button 
+                    type="button" 
+                    onClick={handleNext} 
+                    disabled={isSubmitting}
+                    className="bg-[#C19A4A] hover:bg-[#A8863D] text-black text-sm font-semibold px-8 py-3 rounded-lg flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-[#C19A4A]/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  >
+                    {isSubmitting ? (
+                      <>Submitting...</>
+                    ) : currentStep === totalSteps ? (
                       <>Submit <Check className="w-4 h-4" /></>
                     ) : (
                       <>Next <ArrowRight className="w-4 h-4" /></>

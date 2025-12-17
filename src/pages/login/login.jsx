@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import { signInWithMagicLink } from '../../utils/supabaseAuth';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
@@ -8,6 +9,8 @@ import glowIcon from '../../assets/wallet-icons/glow.png';
 function Login() {
   const [activeTab, setActiveTab] = useState('wallet');
   const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
   const navigate = useNavigate();
 
@@ -27,22 +30,31 @@ function Login() {
     navigate('/home');
   };
 
-  const handleEmailSignIn = (e) => {
+  const handleEmailSignIn = async (e) => {
     e.preventDefault();
     const trimmedEmail = email.trim();
     
     if (!trimmedEmail) {
-      alert('Please enter your email address');
+      setMessage('Please enter your email address');
       return;
     }
     if (!validateEmail(trimmedEmail)) {
-      alert('Please enter a valid email address');
+      setMessage('Please enter a valid email address');
       return;
     }
     
-    localStorage.setItem('userLoggedIn', 'true');
-    localStorage.setItem('userEmail', trimmedEmail);
-    navigate('/dashboard');
+    setIsLoading(true);
+    setMessage('');
+    
+    try {
+      await signInWithMagicLink(trimmedEmail);
+      setMessage('✅ Magic link sent! Check your email to sign in.');
+      setEmail('');
+    } catch (error) {
+      setMessage('❌ Failed to send magic link: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -84,19 +96,34 @@ function Login() {
         <section>
           <div className="bg-white/5 py-[30px] px-5 my-5 mx-5 rounded-xl border border-[#C19A4A]">
             <h2 className="text-lg font-bold text-white mb-[25px]">Sign in with Email</h2>
+            <p className="text-sm text-[#ccc] mb-5">We'll send you a magic link to sign in without a password.</p>
+            
+            {message && (
+              <div className={`mb-5 p-3 rounded-lg text-sm ${message.startsWith('✅') ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                {message}
+              </div>
+            )}
+            
             <h2 className="text-sm font-bold text-[#ccc] mb-3">Email Address</h2>
             <form onSubmit={handleEmailSignIn} className="mb-5">
               <input
                 type="email"
                 id="email"
                 name="email"
-                placeholder="Enter your mail"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full py-3 px-[15px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A]"
+                disabled={isLoading}
+                className="w-full py-3 px-[15px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </form>
-            <button className="w-full py-3 px-5 bg-[#C19A4A] text-[#0B0F1B] border-none rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border hover:text-[#C19A4A] hover:bg-[#0B0F1B] hover:scale-[0.98]" onClick={handleEmailSignIn}>Sign In</button>
+            <button 
+              className="w-full py-3 px-5 bg-[#C19A4A] text-[#0B0F1B] border-none rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border hover:text-[#C19A4A] hover:bg-[#0B0F1B] hover:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
+              onClick={handleEmailSignIn}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Sending magic link...' : 'Send Magic Link'}
+            </button>
           </div>
         </section>
       )}

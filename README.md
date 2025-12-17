@@ -1,8 +1,8 @@
 # Ghonsi Proof
 
-**The On-Chain Trust Engine for the Web3 Workforce**
+**The On-Chain Trust Engine for the Web3 Workforce.**
 
-Ghonsi Proof is a decentralized platform built on Solana that transforms scattered professional contributions into a single verifiable on-chain identity. We help Web3 professionals prove their skills, authenticate their work, and showcase verified credentials.
+Ghonsi Proof is a decentralized platform built on Solana that transforms scattered professional contributions into a single verifiable on-chain identity. We help Web3 professionals prove their skills, authenticate their work, and showcase verified credentials..
 
 ---
 
@@ -49,6 +49,12 @@ Ghonsi Proof is a decentralized platform built on Solana that transforms scatter
 - **Lucide React** (v0.555.0) - Icon library
 - **FontAwesome** (v7.1.0) - Additional icons
 
+### Backend & Database
+- **Supabase** - PostgreSQL database, authentication, and file storage
+- **Supabase Auth** - Email and wallet authentication
+- **Supabase Storage** - Secure file uploads
+- **Row Level Security (RLS)** - Database-level access control
+
 ### Build Tools
 - **React Scripts** (v5.0.1) - Create React App build configuration
 - **PostCSS** (v8.5.6) - CSS processing
@@ -58,13 +64,17 @@ Ghonsi Proof is a decentralized platform built on Solana that transforms scatter
 - **Jest** - Testing framework
 - **React Testing Library** (v16.3.0) - Component testing
 
-### Blockchain (Backend Integration Ready)
+### Deployment
+- **Vercel** - Frontend hosting and CI/CD
+- **Supabase Cloud** - Backend as a Service (BaaS)
+
+### Blockchain (Integration Ready)
 - **Solana** - Blockchain platform
 - **Wallet Adapters** - For wallet connections (to be integrated)
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structure.
 
 ```
 ghonsi-proof/
@@ -77,7 +87,33 @@ ghonsi-proof/
 │   ├── components/              # Reusable components
 │   │   ├── header/              # Navigation header
 │   │   └── footer/              # Footer component
+│   ├── config/                  # Configuration files
+│   │   └── supabaseClient.js    # Supabase client setup
 │   ├── hooks/                   # Custom React hooks
+│   │   └── useAuth.js           # Authentication hook
+│   ├── pages/                   # Page components
+│   │   ├── about/               # About page
+│   │   ├── contact/             # Contact page
+│   │   ├── createProfile/       # Profile creation
+│   │   ├── dashboard/           # User dashboard
+│   │   ├── faq/                 # FAQ page
+│   │   ├── home/                # Landing page
+│   │   ├── login/               # Login page
+│   │   ├── policy/              # Privacy policy
+│   │   ├── portfolio/           # Portfolio view
+│   │   ├── publicProfile/       # Public profile view
+│   │   ├── request/             # Proof request page
+│   │   ├── terms/               # Terms of service
+│   │   └── upload/              # Proof upload page
+│   ├── utils/                   # Utility functions
+│   │   ├── auth.js              # Legacy auth utilities
+│   │   ├── supabaseAuth.js      # Supabase authentication
+│   │   ├── profileApi.js        # Profile management API
+│   │   ├── proofsApi.js         # Proof management API
+│   │   └── verificationApi.js   # Verification request API
+│   ├── App.js                   # Main app component
+│   ├── App.css                  # Global styles
+│   ├── index.js                 # App entry point
 │   │   └── useAuth.js           # Authentication hook
 │   ├── pages/                   # Page components
 │   │   ├── about/               # About page
@@ -190,22 +226,30 @@ Launches the test runner in interactive watch mode.
 ### Create `.env` file in the root directory:
 
 ```env
-# API Configuration (Backend Integration)
-REACT_APP_API_URL=http://localhost:5000/api
-REACT_APP_SOLANA_NETWORK=devnet
+# Supabase Configuration (REQUIRED)
+REACT_APP_SUPABASE_URL=https://your-project.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=your-anon-key-here
 
-# Solana Configuration
+# Optional: Solana Configuration (for future blockchain integration)
+REACT_APP_SOLANA_NETWORK=devnet
 REACT_APP_SOLANA_RPC_URL=https://api.devnet.solana.com
 
 # Optional: Analytics
 REACT_APP_GOOGLE_ANALYTICS_ID=your_ga_id
 ```
 
-### Environment Variables Explained:
+### How to Get Supabase Credentials:
 
-- `REACT_APP_API_URL`: Backend API endpoint
-- `REACT_APP_SOLANA_NETWORK`: Solana network (devnet/testnet/mainnet-beta)
-- `REACT_APP_SOLANA_RPC_URL`: Solana RPC endpoint
+1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
+2. Select your project
+3. Navigate to **Settings** → **API**
+4. Copy:
+   - **Project URL** → `REACT_APP_SUPABASE_URL`
+   - **anon/public key** → `REACT_APP_SUPABASE_ANON_KEY`
+
+### Complete Setup Guide:
+
+See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed Supabase + Vercel setup instructions.
 
 ---
 
@@ -283,35 +327,65 @@ Each page has its own CSS file for component-specific styles:
 
 ## 🔐 Authentication Flow
 
-### Wallet Authentication
-1. User clicks "Connect Wallet"
-2. Selects wallet provider (Phantom, Solflare, Backpack, Glow)
-3. Wallet connection is established
-4. User data is stored in `localStorage`
-5. Redirect to dashboard
+### Supabase Authentication
+
+The app now uses **Supabase Auth** for secure authentication:
 
 ### Email Authentication
-1. User enters email address
-2. Email validation
-3. User data is stored in `localStorage`
-4. Redirect to dashboard
+1. User enters email address on `/login`
+2. Supabase sends magic link to email
+3. User clicks link → automatically signed in
+4. Session stored securely by Supabase
+5. Redirect to dashboard
 
-### Authentication Hook
+### Wallet Authentication (Hybrid Approach)
+1. User clicks wallet (Phantom, Solflare, Backpack, Glow)
+2. Wallet signature is verified
+3. User record created/retrieved with wallet address
+4. Custom session management for wallet users
+5. Redirect to home/dashboard
+
+### Session Management
 ```javascript
-// src/hooks/useAuth.js
-import { useAuth } from '../hooks/useAuth';
+// Check if user is authenticated
+import { isAuthenticated } from './utils/supabaseAuth';
 
-const { isAuthenticated, user, logout } = useAuth();
+const checkAuth = async () => {
+  const authenticated = await isAuthenticated();
+  // Returns true if email or wallet session exists
+};
 ```
 
-### Protected Routes (To Be Implemented)
+### Using Authentication in Components
 ```javascript
-// Example protected route wrapper
+import { getCurrentUser, logout } from './utils/supabaseAuth';
+
+// Get current user
+const user = await getCurrentUser();
+
+// Logout
+await logout();
+```
+
+### Protected Routes
+
+To protect routes, wrap them with authentication check:
+
+```javascript
+// Example: src/components/ProtectedRoute.jsx
 import { Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { isAuthenticated } from '../utils/supabaseAuth';
 
 const ProtectedRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem('userLoggedIn');
-  return isLoggedIn ? children : <Navigate to="/login" />;
+  const [auth, setAuth] = useState(null);
+  
+  useEffect(() => {
+    isAuthenticated().then(setAuth);
+  }, []);
+  
+  if (auth === null) return <div>Loading...</div>;
+  return auth ? children : <Navigate to="/login" />;
 };
 ```
 
@@ -319,114 +393,269 @@ const ProtectedRoute = ({ children }) => {
 
 ## 🔌 API Integration Guide
 
-### For Backend Developers
+### Supabase Backend Architecture
 
-#### Expected API Endpoints
+Ghonsi Proof uses **Supabase** as its backend, which provides:
+- PostgreSQL database
+- Authentication (email + magic links)
+- File storage
+- Row Level Security (RLS)
+- Real-time subscriptions (optional)
 
-##### Authentication
-```
-POST /api/auth/wallet-login
-POST /api/auth/email-login
-POST /api/auth/logout
-GET  /api/auth/verify
-```
+### API Modules
 
-##### User Profile
-```
-GET    /api/profile/:userId
-POST   /api/profile/create
-PUT    /api/profile/update
-DELETE /api/profile/delete
-```
+All API functions are organized in `src/utils/`:
 
-##### Proofs
-```
-GET    /api/proofs/:userId
-POST   /api/proofs/upload
-PUT    /api/proofs/:proofId
-DELETE /api/proofs/:proofId
-GET    /api/proofs/verify/:proofId
-```
+#### 1. Authentication API (`supabaseAuth.js`)
 
-##### Verification Requests
-```
-POST   /api/requests/create
-GET    /api/requests/:userId
-PUT    /api/requests/:requestId/approve
-PUT    /api/requests/:requestId/reject
-```
-
-#### Request/Response Format
-
-**Upload Proof Request:**
-```json
-{
-  "proofType": "certificates",
-  "proofName": "Senior Frontend Developer Certification",
-  "summary": "Advanced React certification...",
-  "referenceLink": "https://certificate-url.com",
-  "referenceFiles": ["file1.pdf"],
-  "supportingFiles": ["file2.pdf"]
-}
-```
-
-**Upload Proof Response:**
-```json
-{
-  "success": true,
-  "proofId": "GH-C-012",
-  "message": "Proof submitted for verification",
-  "verificationStatus": "pending",
-  "estimatedTime": "2-5 business days"
-}
-```
-
-#### File Upload
-- Maximum file size: 2MB
-- Accepted formats: PDF, JPG, PNG, DOC, DOCX
-- Use multipart/form-data for file uploads
-
-#### Authentication Headers
 ```javascript
-headers: {
-  'Authorization': `Bearer ${token}`,
-  'Content-Type': 'application/json'
+import { 
+  signUp, 
+  signInWithEmail, 
+  signInWithMagicLink,
+  signInWithWallet,
+  logout, 
+  getCurrentUser,
+  isAuthenticated 
+} from './utils/supabaseAuth';
+
+// Sign up with email
+await signUp('user@example.com', 'password123');
+
+// Sign in with magic link (passwordless)
+await signInWithMagicLink('user@example.com');
+
+// Sign in with wallet
+await signInWithWallet(walletAddress, signature, message);
+
+// Logout
+await logout();
+
+// Get current user
+const user = await getCurrentUser();
+```
+
+#### 2. Profile API (`profileApi.js`)
+
+```javascript
+import { 
+  createProfile, 
+  getProfile, 
+  updateProfile,
+  deleteProfile 
+} from './utils/profileApi';
+
+// Create profile
+await createProfile({
+  display_name: 'John Doe',
+  bio: 'Web3 Developer',
+  profession: 'Frontend Developer',
+  is_public: true
+});
+
+// Get profile
+const profile = await getProfile(userId);
+
+// Update profile
+await updateProfile(userId, { bio: 'Updated bio' });
+```
+
+#### 3. Proofs API (`proofsApi.js`)
+
+```javascript
+import { 
+  uploadProof, 
+  getUserProofs, 
+  getProof,
+  updateProof,
+  deleteProof,
+  updateProofStatus 
+} from './utils/proofsApi';
+
+// Upload proof with files
+const result = await uploadProof(
+  {
+    proofType: 'certificates',
+    proofName: 'React Certification',
+    summary: 'Advanced React course',
+    referenceLink: 'https://certificate-url.com'
+  },
+  referenceFiles,  // File[] array
+  supportingFiles  // File[] array
+);
+
+// Get all proofs for user
+const proofs = await getUserProofs(userId);
+
+// Get single proof
+const proof = await getProof(proofId);
+
+// Update proof status (admin)
+await updateProofStatus(proofId, 'verified', verifierId);
+```
+
+#### 4. Verification Requests API (`verificationApi.js`)
+
+```javascript
+import { 
+  createVerificationRequest,
+  getUserVerificationRequests,
+  updateVerificationRequestStatus 
+} from './utils/verificationApi';
+
+// Create verification request
+await createVerificationRequest({
+  proofId: 'uuid-here',
+  verifierEmail: 'verifier@example.com',
+  verifierName: 'Jane Smith',
+  relationship: 'Former Manager',
+  message: 'Please verify my work'
+});
+
+// Get user's requests
+const requests = await getUserVerificationRequests(userId);
+
+// Approve/reject request
+await updateVerificationRequestStatus(requestId, 'approved', 'Great work!');
+```
+
+### Database Schema
+
+See [SUPABASE_SCHEMA.md](./SUPABASE_SCHEMA.md) for complete database structure.
+
+**Main Tables:**
+- `users` - User accounts and wallet addresses
+- `profiles` - User profile information
+- `proofs` - Uploaded proof records
+- `files` - File metadata and storage links
+- `verification_requests` - Peer verification requests
+
+### File Upload Flow
+
+```javascript
+// 1. User selects files in upload form
+const files = event.target.files;
+
+// 2. Call uploadProof API
+const result = await uploadProof(proofData, files, []);
+
+// 3. Files are uploaded to Supabase Storage
+// 4. File URLs are stored in database
+// 5. User can access files via public URL
+```
+
+### Error Handling
+
+```javascript
+try {
+  await uploadProof(data, files, []);
+} catch (error) {
+  if (error.code === 'PGRST116') {
+    // Record not found
+  } else if (error.message.includes('JWT')) {
+    // Authentication error - redirect to login
+  } else {
+    // Other error
+    console.error('Upload failed:', error);
+  }
 }
+```
+
+### Real-Time Updates (Optional)
+
+```javascript
+import { supabase } from './config/supabaseClient';
+
+// Subscribe to proof updates
+const subscription = supabase
+  .channel('proofs-changes')
+  .on('postgres_changes', 
+    { event: '*', schema: 'public', table: 'proofs' },
+    (payload) => {
+      console.log('Proof updated:', payload);
+    }
+  )
+  .subscribe();
+
+// Unsubscribe when done
+subscription.unsubscribe();
 ```
 
 ---
 
 ## 🌐 Deployment
 
-### Vercel (Recommended)
+### Production Deployment
 
-1. Install Vercel CLI:
-```bash
-npm install -g vercel
+**Live URL**: [https://ghonsi-proof.vercel.app](https://ghonsi-proof.vercel.app)
+
+The application is automatically deployed to Vercel via GitHub integration.
+
+### Automatic Deployment Flow
+
+```
+1. Push code to GitHub (main branch)
+   ↓
+2. Vercel detects changes
+   ↓
+3. Build & deploy automatically
+   ↓
+4. Live at ghonsi-proof.vercel.app
 ```
 
-2. Deploy:
-```bash
-vercel
+### Deployment Stack
+
+- **Frontend Hosting**: Vercel
+- **Backend**: Supabase (PostgreSQL + Storage + Auth)
+- **CI/CD**: GitHub → Vercel integration
+- **Database**: Supabase Cloud PostgreSQL
+- **File Storage**: Supabase Storage
+
+### Environment Variables (Vercel)
+
+Configure in Vercel Dashboard → Settings → Environment Variables:
+
+```env
+REACT_APP_SUPABASE_URL=https://xxxxx.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI...
 ```
 
-### Netlify
+### Quick Deployment Guide
 
-1. Build the project:
+**Step 1: Setup Supabase**
+1. Create account at [supabase.com](https://supabase.com)
+2. Create new project
+3. Run SQL schema from `SUPABASE_SCHEMA.md`
+4. Copy API credentials
+
+**Step 2: Configure Vercel**
+1. Connect GitHub repo to Vercel
+2. Add environment variables
+3. Deploy!
+
+**Detailed Instructions**: See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+
+### Branch Previews
+
+- `main` branch → Production (`ghonsi-proof.vercel.app`)
+- Feature branches → Preview URLs (`ghonsi-proof-git-feature-name.vercel.app`)
+
+### Manual Build
+
 ```bash
+# Build production bundle
 npm run build
+
+# Output in /build directory
+# Upload to any static hosting service
 ```
 
-2. Deploy the `build` folder to Netlify
+### Performance
 
-### Manual Deployment
-
-1. Build:
-```bash
-npm run build
-```
-
-2. Upload the `build` folder to your hosting provider
+- **Lighthouse Score**: 95+ (target)
+- **Time to First Byte**: < 200ms (Vercel Edge Network)
+- **CDN**: Automatic via Vercel
+- **SSL**: Automatic HTTPS via Vercel
 
 ---
 
@@ -476,21 +705,59 @@ chore: Update dependencies
 
 ## 🐛 Known Issues & Roadmap
 
-### Current Limitations
-- [ ] Wallet integration is UI-only (needs blockchain connection)
-- [ ] No backend API integration yet
-- [ ] Email authentication is mock (needs real authentication)
-- [ ] File uploads are client-side only (needs server storage)
+### Current Status
+
+✅ **Completed:**
+- Frontend UI/UX design
+- React routing and components
+- Supabase integration
+- Authentication system (email + wallet hybrid)
+- Database schema and RLS policies
+- File upload to Supabase Storage
+- Proof management API
+- Profile management API
+- Verification request system
+- Vercel deployment with CI/CD
+
+⚠️ **In Progress:**
+- Wallet signature verification
+- Blockchain integration (Solana)
+- Admin verification dashboard
+- Email notifications (via Supabase)
 
 ### Roadmap
-- [ ] Integrate Solana wallet adapters
-- [ ] Connect to backend API
-- [ ] Implement real authentication
-- [ ] Add file upload to IPFS/Arweave
-- [ ] Implement on-chain proof verification
-- [ ] Add notification system
-- [ ] Implement search and filter functionality
-- [ ] Add analytics dashboard
+
+#### Phase 1: Core Features (Current)
+- [x] Supabase backend integration
+- [x] Authentication (email + wallet)
+- [x] Profile creation and management
+- [x] Proof upload system
+- [x] File storage (Supabase Storage)
+- [ ] Protected routes implementation
+- [ ] Admin verification dashboard
+
+#### Phase 2: Blockchain Integration
+- [ ] Solana wallet adapter integration
+- [ ] Wallet signature verification
+- [ ] On-chain proof hash storage
+- [ ] Smart contract deployment
+- [ ] NFT-based credentials (optional)
+
+#### Phase 3: Enhanced Features
+- [ ] Email notifications (Supabase triggers)
+- [ ] Real-time updates (Supabase subscriptions)
+- [ ] Search and filter functionality
+- [ ] Analytics dashboard
+- [ ] Public profile sharing
+- [ ] Proof verification badges
+
+#### Phase 4: Scaling & Optimization
+- [ ] Image optimization
+- [ ] Lazy loading
+- [ ] Progressive Web App (PWA)
+- [ ] Mobile app (React Native)
+- [ ] API rate limiting
+- [ ] Caching strategy
 
 ---
 
@@ -520,7 +787,7 @@ This project is proprietary and confidential. All rights reserved by Ghonsi Proo
 
 ---
 
-## 🙏 Acknowledgments
+## 🙏 Acknowledgments.
 
 - Solana Foundation
 - Web3 Community
@@ -530,4 +797,4 @@ This project is proprietary and confidential. All rights reserved by Ghonsi Proo
 
 **Built with ❤️ by the Ghonsi Proof Team**
 
-*Making Web3 professional verification accessible to everyone.*
+*Making Web3 professional verification accessible to everyone*
