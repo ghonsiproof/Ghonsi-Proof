@@ -26,12 +26,7 @@ function About() {
     return () => clearInterval(valueInterval);
   }, []);
 
-  useEffect(() => {
-    const teamInterval = setInterval(() => {
-      setCurrentTeamSlide((prev) => (prev + 1) % 6);
-    }, 2000);
-    return () => clearInterval(teamInterval);
-  }, []);
+
 
   useEffect(() => {
     const reveals = document.querySelectorAll('.reveal');
@@ -105,8 +100,9 @@ function About() {
 
         <section id="mission" className="bg-white text-[#C19A4A] m-4 p-6 rounded-lg border border-white/10 w-auto reveal opacity-0 translate-y-[18px] transition-all duration-[600ms] ease-in-out" aria-labelledby="missionTitle">
           <h2 id="missionTitle" className="text-lg mb-2 text-[#07090d] font-bold tracking-[0.1px]">Our Mission</h2>
-          <p className="text-base leading-[1.7] text-[#222]" style={{ textAlign: 'justify' }}>In the rapidly evolving Web3 landscape, trust is the most valuable currency. Traditional credentials and resumes don't capture the full picture of someone's contributions to decentralized projects and communities.</p>
-          <p className="text-base leading-[1.7] text-[#222] mt-[15px]" style={{ textAlign: 'justify' }}>Ghonsi Proof bridges this gap by creating an immutable, community-verified record of professional achievements that travels with you across the entire Web3 ecosystem.</p>
+          <p className="text-base leading-[1.7] text-[#222]" style={{ textAlign: 'justify' }}>Ghonsi proof was founded on a simple, frustrating truth: the web3 talent ecosystem is broken. Genuine builders struggle to prove their value, while projects risk time and capital on unverified claims. We realized that for web3 to truly thrive, it needed a verifiable, tamper-proof professional identity layer.</p>
+          <p className="text-base leading-[1.7] text-[#222] mt-[15px]" style={{ textAlign: 'justify' }}>Our mission is to provide that layer, ensuring every contribution is permanently recorded and easily verifiable using the blockchain technology.</p>
+          <p className="text-base leading-[1.7] text-[#222] mt-[15px]" style={{ textAlign: 'justify' }}>We are committed to making trust a fundamental, on-chain primitive.</p>
           <button className="inline-flex gap-2.5 bg-[#C19A4A] text-[#0B0F1B] py-2.5 px-3.5 rounded-lg font-bold cursor-pointer border-none shadow-[0_6px_18px_rgba(193,154,74,0.12)] mt-[35px]">Join Our Mission</button>
           <div className="my-3.5 mx-4 p-3.5 min-h-[8.75rem] rounded-xl bg-white/[0.04] border border-white/[0.04] flex justify-center items-center reveal opacity-0 translate-y-[18px] transition-all duration-[600ms] ease-in-out">
             <div className="flex justify-center items-center">
@@ -176,7 +172,7 @@ function About() {
               <p className="text-white/80 mb-8">From concept to reality here's how we're building the future of Web3 professional verification.</p>
             </div>
             <div className="grid grid-cols-[60px_30px_1fr] items-start relative mb-6">
-              <div className="text-sm text-white/60">2023</div>
+              <div className="text-sm text-white/60">Q4 2025</div>
               <div className="relative h-full flex justify-center">
                 <span className="w-2.5 h-2.5 bg-[#C19A4A] rounded-full relative z-[2]"></span>
                 <span className="absolute top-[14px] left-1/2 -translate-x-1/2 w-0.5 h-[calc(100%+30px)] bg-white/20"></span>
@@ -185,12 +181,12 @@ function About() {
                 <div>
                   <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">Foundation</h3>
                   <hr className="border-0 border-t border-white/15 my-2" />
-                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">GhonsiProof was founded with the vision of creating trust infrastructure for Web3 professionals.</p>
+                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Strategic partnerships and waitlist launch.</p>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-[60px_30px_1fr] items-start relative mb-6">
-              <div className="text-sm text-white/60">2024</div>
+              <div className="text-sm text-white/60">Q1 2026</div>
               <div className="relative h-full flex justify-center">
                 <span className="w-2.5 h-2.5 bg-[#C19A4A] rounded-full relative z-[2]"></span>
                 <span className="absolute top-[14px] left-1/2 -translate-x-1/2 w-0.5 h-[calc(100%+30px)] bg-white/20"></span>
@@ -199,12 +195,12 @@ function About() {
                 <div>
                   <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">MVP Launch</h3>
                   <hr className="border-0 border-t border-white/15 my-2" />
-                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Launched our minimum viable product with basic verification and credential storage features.</p>
+                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Beta and Public MVP launch (open signup & onboarding).</p>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-[60px_30px_1fr] items-start relative mb-6">
-              <div className="text-sm text-white/60">2024</div>
+              <div className="text-sm text-white/60">Q2 2026</div>
               <div className="relative h-full flex justify-center">
                 <span className="w-2.5 h-2.5 bg-[#C19A4A] rounded-full relative z-[2]"></span>
                 <span className="absolute top-[14px] left-1/2 -translate-x-1/2 w-0.5 h-[calc(100%+30px)] bg-white/20"></span>
@@ -213,12 +209,12 @@ function About() {
                 <div>
                   <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">Community Growth</h3>
                   <hr className="border-0 border-t border-white/15 my-2" />
-                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Reached 10,000+ verified professionals and 50+ partner organizations in the Web3 ecosystem.</p>
+                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Talent & hiring features. (job listings, applications, DMs)</p>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-[60px_30px_1fr] items-start relative mb-6">
-              <div className="text-sm text-white/60">2024</div>
+              <div className="text-sm text-white/60"> Q3 2026</div>
               <div className="relative h-full flex justify-center">
                 <span className="w-2.5 h-2.5 bg-[#C19A4A] rounded-full relative z-[2]"></span>
               </div>
@@ -226,7 +222,7 @@ function About() {
                 <div>
                   <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">Global Expansion</h3>
                   <hr className="border-0 border-t border-white/15 my-2" />
-                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Planning to expand globally with multi-chain support and enterprise partnerships.</p>
+                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Ecosystem expansion.</p>
                 </div>
               </div>
             </div>

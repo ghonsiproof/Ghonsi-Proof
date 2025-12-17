@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
-import { ArrowLeft, ArrowRight, User, Award, Share2, Settings, Camera, Upload, ChevronDown, Check, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, User, Award, Share2, Settings, Camera, Upload, ChevronDown, Check } from 'lucide-react';
 
 function CreateProfile() {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ function CreateProfile() {
   const [photoError, setPhotoError] = useState('');
   const [isExperienceOpen, setIsExperienceOpen] = useState(false);
 
-  const totalSteps = 4;
+  const totalSteps = 3;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -109,7 +109,7 @@ function CreateProfile() {
               </div>
 
               <div className="flex justify-between items-start mb-12 w-full px-1">
-                {[1, 2, 3, 4].map((step, idx) => (
+                {[1, 2, 3].map((step, idx) => (
                   <React.Fragment key={step}>
                     <div className="flex flex-col items-center gap-2 bg-[#0B0F1B] z-10">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border transition-all duration-300 ${
@@ -128,10 +128,9 @@ function CreateProfile() {
                         {step === 1 && 'Basic Info'}
                         {step === 2 && 'Professional'}
                         {step === 3 && 'Social Links'}
-                        {step === 4 && 'Preferences'}
                       </span>
                     </div>
-                    {idx < 3 && (
+                    {idx < 2 && (
                       <div className={`h-[1px] flex-auto mt-4 mx-1 transition-colors duration-500 ${
                         currentStep > step ? 'bg-white' : 'bg-white/10'
                       }`}></div>
@@ -278,48 +277,6 @@ function CreateProfile() {
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">LinkedIn</label>
                       <input name="linkedin" value={formData.linkedin} onChange={handleInputChange} type="text" placeholder="linkedin.com/in/yourusername" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 4 && (
-                <div className="animate-[fadeIn_0.4s_ease-in-out]">
-                  <div className="mb-8">
-                    <h2 className="text-lg font-medium text-white mb-1">Preferences</h2>
-                    <p className="text-xs text-white/50 font-light">Customize your visibility and notification settings</p>
-                  </div>
-
-                  <div className="space-y-8">
-                    <div>
-                      <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Profile Visibility</label>
-                      <div className="relative">
-                        <select name="visibility" value={formData.visibility} onChange={handleInputChange} className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all appearance-none cursor-pointer">
-                          <option className="bg-[#0B0F1B]">Public - Anyone can view</option>
-                          <option className="bg-[#0B0F1B]">Private - Only connections</option>
-                        </select>
-                        <ChevronDown className="absolute right-4 top-3.5 w-4 h-4 text-white/40 pointer-events-none" />
-                      </div>
-                      <p className="text-[10px] text-white/40 mt-2 font-light">Control who can see your profile details.</p>
-                    </div>
-
-                    <div className="flex items-center justify-between border border-white/10 p-4 rounded-lg bg-white/5">
-                      <div>
-                        <label className="block text-sm font-medium text-white">Email Notifications</label>
-                        <p className="text-[10px] text-white/50 mt-1 font-light">Receive updates about your profile and activity</p>
-                      </div>
-                      <div className="relative inline-block w-11 mr-1 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" name="emailNotifications" checked={formData.emailNotifications} onChange={handleInputChange} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-white/30 transition-all duration-300 checked:right-0 checked:border-[#C19A4A]" style={{ right: formData.emailNotifications ? '0' : 'auto', left: formData.emailNotifications ? 'auto' : '0' }} />
-                        <label className={`block overflow-hidden h-5 rounded-full cursor-pointer transition-colors duration-300 ${formData.emailNotifications ? 'bg-[#C19A4A]' : 'bg-white/10'}`}></label>
-                      </div>
-                    </div>
-
-                    <div className="border border-[#C19A4A]/30 bg-[#C19A4A]/5 rounded-lg p-4 flex gap-3 items-start">
-                      <ShieldCheck className="w-5 h-5 text-[#C19A4A] flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="text-[#C19A4A] font-medium text-sm mb-1">Privacy Notice</h4>
-                        <p className="text-[11px] text-white/70 leading-relaxed font-light">Your wallet address and email will be perfectly hidden on your public profile. Only Verified connections can see your full contact information.</p>
-                      </div>
                     </div>
                   </div>
                 </div>

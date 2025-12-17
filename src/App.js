@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext.jsx';
 import Home from './pages/home/home.jsx';
 import FAQ from './pages/faq/faq.jsx';
 import About from './pages/about/about.jsx';
@@ -13,11 +14,13 @@ import Request from './pages/request/request.jsx';
 import PublicProfile from './pages/publicProfile/publicProfile.jsx';
 import Policy from './pages/policy/policy.jsx';
 import Terms from './pages/terms/terms.jsx';
+import SettingsPage from './pages/settingsPage/settingsPage.jsx';
 import './App.css';
 
 function App() {
   return (
-    <Router>
+    <ThemeProvider>
+      <Router>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
@@ -33,8 +36,10 @@ function App() {
         <Route path="/publicProfile" element={<PublicProfile />} />
         <Route path="/policy" element={<Policy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/settingsPage" element={<SettingsPage />} />
       </Routes>
     </Router>
+    </ThemeProvider>
   );
 }
 

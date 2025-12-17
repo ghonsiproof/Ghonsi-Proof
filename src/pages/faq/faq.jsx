@@ -52,10 +52,6 @@ function FAQ() {
       answer: "We strongly recommend using our optional email backup feature during sign-up. This provides a secure recovery path for your profile, ensuring you never lose access to your verified on-chain portfolio."
     },
     {
-      question: "How do I delete my account or proofs?",
-      answer: "On-chain proofs, or data recorded on a blockchain, cannot be deleted because a blockchain is an immutable ledger."
-    },
-    {
       question: "Do you offer API access for developers?",
       answer: "Yes. We offer API access for developers and organizations who want to integrate Ghonsi proof's verification and reputation scoring into their own platforms or hiring tools. Contact us for more details."
     }

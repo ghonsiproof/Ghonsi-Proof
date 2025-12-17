@@ -174,7 +174,8 @@ const QuickActions = () => {
         />
         <ActionButton 
         icon={Settings} 
-        label="Edit Profile" 
+        label="Edit Profile"
+        onClick={() => navigate('/settingsPage')} 
         />
       </div>
     </div>
