@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wallet, Shield, Upload } from 'lucide-react';
+import { getCurrentUser } from '../../utils/supabaseAuth';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import prosperImg from '../../assets/team/Prosper.png';
@@ -50,45 +51,51 @@ function Home() {
   const [summaryPosition, setSummaryPosition] = useState({ top: 0, left: 0 });
   const [currentSlide, setCurrentSlide] = useState(0);
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await getCurrentUser();
+        setIsLoggedIn(!!user);
+      } catch (error) {
+        setIsLoggedIn(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const positionSummaryBox = (event) => {
     const bubbleRect = event.currentTarget.getBoundingClientRect();
+    const container = event.currentTarget.closest('.h-screen');
+    const containerRect = container.getBoundingClientRect();
     const scrollY = window.scrollY;
     const summaryWidth = 250;
     const summaryHeight = 280;
     const padding = 20;
 
-    const spaceRight = window.innerWidth - bubbleRect.right;
-    const spaceLeft = bubbleRect.left;
-    const spaceBottom = window.innerHeight - bubbleRect.bottom;
-    const spaceTop = bubbleRect.top;
+    const containerTop = containerRect.top + scrollY + 60;
+    const containerBottom = containerRect.bottom + scrollY - 20;
+    const containerLeft = containerRect.left + 20;
+    const containerRight = containerRect.right - 20;
 
-    let topPos, leftPos;
+    let topPos = bubbleRect.top + scrollY + (bubbleRect.height / 2) - (summaryHeight / 2);
+    let leftPos;
+
+    const spaceRight = containerRight - bubbleRect.right;
+    const spaceLeft = bubbleRect.left - containerLeft;
 
     if (spaceRight > summaryWidth + padding) {
       leftPos = bubbleRect.right + padding;
-      topPos = bubbleRect.top + scrollY + (bubbleRect.height / 2) - (summaryHeight / 2);
     } else if (spaceLeft > summaryWidth + padding) {
       leftPos = bubbleRect.left - summaryWidth - padding;
-      topPos = bubbleRect.top + scrollY + (bubbleRect.height / 2) - (summaryHeight / 2);
-    } else if (spaceBottom > summaryHeight + padding) {
-      topPos = bubbleRect.bottom + scrollY + padding;
-      leftPos = bubbleRect.left + (bubbleRect.width / 2) - (summaryWidth / 2);
-    } else if (spaceTop > summaryHeight + padding) {
-      topPos = bubbleRect.top + scrollY - summaryHeight - padding;
-      leftPos = bubbleRect.left + (bubbleRect.width / 2) - (summaryWidth / 2);
     } else {
-      if (spaceRight > spaceLeft) {
-        leftPos = bubbleRect.right + padding;
-      } else {
-        leftPos = bubbleRect.left - summaryWidth - padding;
-      }
-      topPos = bubbleRect.top + scrollY + (bubbleRect.height / 2) - (summaryHeight / 2);
+      leftPos = spaceRight > spaceLeft ? bubbleRect.right + padding : bubbleRect.left - summaryWidth - padding;
     }
 
-    topPos = Math.max(scrollY, Math.min(topPos, scrollY + window.innerHeight - summaryHeight - 10));
-    leftPos = Math.max(10, Math.min(leftPos, window.innerWidth - summaryWidth - 10));
+    topPos = Math.max(containerTop, Math.min(topPos, containerBottom - summaryHeight));
+    leftPos = Math.max(containerLeft, Math.min(leftPos, containerRight - summaryWidth));
 
     return { top: topPos, left: leftPos };
   };
@@ -153,7 +160,7 @@ function Home() {
                 <img id="summaryImg" src={selectedBubble.img} alt="profile" className="w-[60px] h-[60px] rounded-full mb-2.5" />
                 <h3 id="summaryName" className="mb-1.5 text-base font-bold">{selectedBubble.name}</h3>
                 <p id="summaryBio" className="text-xs text-[#CCC] mb-4 leading-[1.4]">{selectedBubble.bio}</p>
-                <button id="showProfileBtn" onClick={() => { alert(`Opening full profile for ${selectedBubble.name}`); navigate('/publicProfile'); }} className="mt-2.5 w-full p-2.5 border-none bg-[#C19A4A] text-[#1a1a2e] cursor-pointer rounded-md font-semibold transition-all duration-200 hover:bg-[#d9b563] hover:scale-[0.98]">
+                <button id="showProfileBtn" onClick={() => { alert(`Opening full profile for ${selectedBubble.name}`); navigate('/request'); }} className="mt-2.5 w-full p-2.5 border-none bg-[#C19A4A] text-[#1a1a2e] cursor-pointer rounded-md font-semibold transition-all duration-200 hover:bg-[#d9b563] hover:scale-[0.98]">
                   Show Profile
                 </button>
               </div>
@@ -186,8 +193,8 @@ function Home() {
         <section className="text-justify mt-[23px] p-5">
           <div>
             <h1 className="text-center text-[28px]">Prove what you've built.</h1>
-            <h1 className="text-center text-[28px]">Unlock who you can work with.</h1>
-            <p className="mt-4 text-lg">
+            <h1 className="text-center text-[#C19A4A] text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-bolt-ds-textPrimary drop-shadow-[0_0_15px_#C19A4A]">Unlock who you can work with.</h1>
+            <p className="mt-[35px] text-lg">
               Ghonsi proof is the on-chain trust engine for the Web3 workforce. We transform your scattered contributions into a single, verifiable on-chain portfolio so you can get noticed for the work you've actually done. <br /> <br /> Now, as a builder or professional in Web3 you can store your portfolio on the blockchain. <br /> <br /> As an employer or hirer, you can now verify talents and their track records.
             </p>
           </div>
@@ -222,7 +229,9 @@ function Home() {
             </div>
           </div>
 
-            <button className="py-4 px-12 text-lg font-semibold text-white bg-transparent border-2 border-[#C19A4A] rounded-lg cursor-pointer transition-all duration-300 tracking-wide min-w-[280px] mt-10 hover:bg-[#C19A4A]/10 hover:text-[#C19A4A] hover:scale-[0.98] hover:shadow-[0_8px_24px_#C19A4A]" onClick={() => navigate('/createProfile')}>Get Started</button>
+            {!isLoggedIn && (
+              <button className="py-4 px-12 text-lg font-semibold text-white bg-transparent border-2 border-[#C19A4A] rounded-lg cursor-pointer transition-all duration-300 tracking-wide min-w-[280px] mt-10 hover:bg-[#C19A4A]/10 hover:text-[#C19A4A] hover:scale-[0.98] hover:shadow-[0_8px_24px_#C19A4A]" onClick={() => navigate('/login?mode=getstarted')}>Get Started</button>
+            )}
           
         </section>
       </main>

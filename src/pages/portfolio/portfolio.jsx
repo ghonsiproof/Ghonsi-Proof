@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy } from 'lucide-react';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 import './portfolio.css';
 
 function Portfolio() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All Proofs');
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [emailCopied, setEmailCopied] = useState(false);
@@ -355,12 +357,12 @@ function Portfolio() {
               <p className="text-[11px] text-white truncate">Start uploading your proofs and build your on-chain reputation</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button className="px-3 py-2 rounded-lg border border-[#C19A4A] text-[#C19A4A] text-xs font-semibold hover:bg-[#C19A4A]/10 transition-colors flex items-center gap-1.5">
+              <button onClick={() => navigate('/upload')} className="px-3 py-2 rounded-lg border border-[#C19A4A] text-[#C19A4A] text-xs font-semibold hover:bg-[#C19A4A]/10 transition-colors flex items-center gap-1.5">
                 <Download size={14} />
                 <span className="hidden sm:inline">Export Portfolio</span>
                 <span className="sm:hidden">Export</span>
               </button>
-              <button className="px-3 py-2 rounded-lg bg-[#C19A4A] text-black text-xs font-semibold hover:bg-[#a8853b] transition-colors flex items-center gap-1.5">
+              <button onClick={() => navigate('/upload')} className="px-3 py-2 rounded-lg bg-[#C19A4A] text-black text-xs font-semibold hover:bg-[#a8853b] transition-colors flex items-center gap-1.5">
                 <Plus size={14} />
                 <span className="hidden sm:inline">Add New Proof</span>
                 <span className="sm:hidden">Add</span>

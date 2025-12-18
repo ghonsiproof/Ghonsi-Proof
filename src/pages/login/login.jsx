@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithMagicLink } from '../../utils/supabaseAuth';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
@@ -9,14 +9,19 @@ import glowIcon from '../../assets/wallet-icons/glow.png';
 function Login() {
   const [activeTab, setActiveTab] = useState('wallet');
   const [email, setEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [isGetStarted, setIsGetStarted] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     setActiveTab('wallet');
-  }, []);
+    const params = new URLSearchParams(location.search);
+    setIsGetStarted(params.get('mode') === 'getstarted');
+  }, [location]);
 
   const validateEmail = (emailValue) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -60,7 +65,8 @@ function Login() {
   return (
     <main>
       <div className="mt-[115px] mx-auto py-10 px-5 text-center flex flex-col">
-        <h2 className="text-2xl font-bold text-white mb-2.5">Welcome Back</h2>
+        {!isGetStarted && <h2 className="text-2xl font-bold text-white mb-2.5">Welcome Back</h2>}
+        {isGetStarted && <h2 className="text-2xl font-bold text-white mb-2.5">Get Started</h2>}
         <p className="text-sm text-[#ccc] leading-[1.5] mb-[30px]">Connect your wallet or sign in to access your proof portfolio</p>
         <div className="flex flex-row gap-2.5 justify-center items-center mt-5">
           <button className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${activeTab === 'wallet' ? 'bg-[#C19A4A] text-[#1a1a2e] border-none' : 'bg-white/10 text-white border border-white/20'}`} onClick={() => setActiveTab('wallet')}>Wallet Connect</button>
@@ -114,8 +120,27 @@ function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
-                className="w-full py-3 px-[15px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 px-[15px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed mb-4"
               />
+              <div className="relative">
+                <input
+                  type="text"
+                  id="otpCode"
+                  name="otpCode"
+                  placeholder="Enter code"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full py-3 px-[15px] pr-[100px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 py-1.5 px-4 bg-transparent text-[#C19A4A] border-none rounded text-sm font-semibold cursor-pointer transition-all duration-200 ease-in-out hover:text-[#d9b563] disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
+                >
+                  Get Code
+                </button>
+              </div>
             </form>
             <button 
               className="w-full py-3 px-5 bg-[#C19A4A] text-[#0B0F1B] border-none rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border hover:text-[#C19A4A] hover:bg-[#0B0F1B] hover:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 

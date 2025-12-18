@@ -15,6 +15,7 @@ const mockDatabase = {
     skills: ['Solana Development', 'React', 'Security Auditing', 'Smart Contracts', '+10 more...'],
     proofs: [
       {
+        id: "GH-C-012",
         title: "Senior Frontend Developer Certification",
         status: "Verified",
         type: "Certificate",
@@ -24,6 +25,7 @@ const mockDatabase = {
         hash: "2z3g...K9hL"
       },
       {
+        id: "GH-M-018",
         title: "Blockchain Security Audit",
         status: "Verified",
         type: "Milestone",
@@ -33,6 +35,7 @@ const mockDatabase = {
         hash: "5y6z...P2qR"
       },
       {
+        id: "GH-P-022",
         title: "Contributor to Open-Source SPL Library",
         status: "Pending",
         type: "Contribution",
@@ -109,7 +112,7 @@ function Request() {
   const proofsToShow = showMore ? profileData.proofs : profileData.proofs.slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">
+    <div className="min-h-screen pb-20 bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">
       
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0B0F1B]/95 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -225,6 +228,12 @@ function Request() {
 
                 <p className="text-xs text-gray-400 mb-3 line-clamp-2">{proof.desc}</p>
 
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="text-[10px] bg-[#0B0F1B] border border-white/10 text-white px-2 py-1 rounded-md font-mono">
+                    {proof.id}
+                  </span>
+                </div>
+
                 <a href={`https://solscan.io/tx/${proof.hash}`} target="_blank" rel="noopener noreferrer" className="group/link inline-flex">
                   <div className="flex items-center gap-2 bg-[#0B0F1B] rounded p-1.5 w-fit">
                     <div className="text-[10px] text-gray-500 flex items-center gap-1">
@@ -248,6 +257,25 @@ function Request() {
           )}
         </div>
       </main>
+
+      {/* Floating Bottom Bar */}
+      <div className="fixed bottom-2 left-3 right-3 z-40">
+        <div className="max-w-xl mx-auto bg-[#1C1C1C]/95 backdrop-blur-md border border-white/10 p-2 rounded-xl shadow-2xl flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-sm text-white">
+              To view {profileData.name} full credentials and experience{' '}
+            </p>
+          </div>
+          <div className="shrink-0">
+            <button 
+              onClick={() => setShowRequestModal(true)} 
+              className="px-4 py-2 rounded-lg bg-[#C19A4A] text-black text-xs font-semibold hover:bg-[#a8853b] transition-colors whitespace-nowrap"
+            >
+              Request Portfolio
+            </button>
+          </div>
+        </div>
+      </div>
 
       {showRequestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">

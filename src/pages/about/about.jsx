@@ -220,7 +220,7 @@ function About() {
               </div>
               <div className="pl-5">
                 <div>
-                  <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">Global Expansion</h3>
+                  <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">Ecosystem Expansion</h3>
                   <hr className="border-0 border-t border-white/15 my-2" />
                   <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Ecosystem expansion.</p>
                 </div>
@@ -233,7 +233,7 @@ function About() {
           <div className="block md:flex md:gap-[160px]">
             <div>
               <div className="text-sm opacity-70 mb-[25px] font-normal">
-                <img src={logo} alt="Ghonsi proof Logo" style={{ width: '40px', height: '40px', marginRight: '2px', verticalAlign: 'middle' }} />
+                <img src={logo} alt="Ghonsi proof Logo" style={{ width: '90px', height: '90px', marginRight: '2px', verticalAlign: 'middle' }} />
               </div>
               <p className="max-w-[360px] text-sm leading-[1.6] opacity-90 m-0">Building the trust layer for the Web3 workforce. Prove your skills, authenticate your work, and showcase verified credentials on-chain.</p>
               <div className="flex gap-[5px] justify-start mb-5 mt-5 pt-5">

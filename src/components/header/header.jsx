@@ -37,7 +37,7 @@ function Header() {
   };
 
   const handleSignIn = () => {
-    navigate('/login');
+    navigate('/login?mode=signin');
   };
 
   const handleSignOut = async () => {
@@ -54,7 +54,7 @@ function Header() {
   };
 
   const handleGetStarted = () => {
-    navigate('/createProfile');
+    navigate('/login?mode=getstarted');
   };
 
   const handlePortfolioClick = (e) => {

@@ -5,7 +5,7 @@ import { getUserProofs, getProofStats } from '../../utils/proofsApi';
 import { getProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
-import { CheckCircle2, ExternalLink, FileText, Award, Plus, Briefcase, Share2, Settings, Copy, User, Trash2, Clock } from 'lucide-react';
+import { CheckCircle2, ExternalLink, FileText, Award, Plus, Briefcase, Share2, Settings, Copy, User, Clock } from 'lucide-react';
 
 const Card = ({ children, className = "" }) => (
   <div className={`bg-[#151925] rounded-2xl p-5 border border-white/5 ${className}`}>
@@ -194,21 +194,7 @@ const QuickActions = () => {
 );
 };
 
-const DeleteSection = () => (
-  <div className="mt-12 pt-8 border-t border-white/10">
-    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-5">
-      <h3 className="text-red-500 text-sm font-bold mb-2 flex items-center gap-2">
-        <Trash2 size={16} /> Danger Zone
-      </h3>
-      <p className="text-[11px] text-white/60 mb-4 leading-relaxed">
-        Deleting your profile will permanently remove all your verification data and proofs from our platform. This action cannot be undone.
-      </p>
-      <button className="w-full py-3 rounded-lg border border-red-500/50 text-red-500 text-xs font-bold hover:bg-red-500 hover:text-white transition-all duration-300 uppercase tracking-wide">
-        Delete Account
-      </button>
-    </div>
-  </div>
-);
+
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -272,7 +258,6 @@ function Dashboard() {
             <StatsRow stats={stats} />
             <RecentProofs proofs={proofs} />
             <QuickActions />
-            <DeleteSection />
           </main>
         </div>
       </div>
