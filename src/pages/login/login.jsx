@@ -147,7 +147,7 @@ function Login() {
               onClick={handleEmailSignIn}
               disabled={isLoading}
             >
-              {isLoading ? 'Sending magic link...' : 'Send Magic Link'}
+              {isLoading ? 'Verifying OTP...' : 'Sign in'}
             </button>
           </div>
         </section>
