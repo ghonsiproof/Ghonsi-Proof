@@ -4,14 +4,16 @@ import { faXTwitter, faLinkedinIn, faDiscord } from '@fortawesome/free-brands-sv
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-[#0B0F1B] p-5">
 
       <div className="flex gap-3 justify-start mb-5 mt-5 pt-5 border-t border-white">
-        <a href="https://x.com/Ghonsiproof"><FontAwesomeIcon icon={faXTwitter} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
-        <a href="https://x.com/Ghonsiproof"><FontAwesomeIcon icon={faLinkedinIn} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
+        <a href="https://x.com/Ghonsiproof" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={faXTwitter} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
+        <a href="https://linkedin.com/company/ghonsiproof" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={faLinkedinIn} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
         <a href="mailto:ghonsiproof@gmail.com"><FontAwesomeIcon icon={faEnvelope} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
-        <a href="https://x.com/Ghonsiproof"><FontAwesomeIcon icon={faDiscord} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
+        <a href="https://discord.gg/your-invite-code" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={faDiscord} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
       </div>
       
       <ul className="flex flex-row flex-wrap gap-3 list-none justify-center">
@@ -21,7 +23,7 @@ function Footer() {
       </ul>
       
       <div className="text-center text-xs text-white mt-5 pt-5 border-t border-white/5">
-        <p> &copy; 2026 Ghonsi Proof. All rights reserved</p>
+        <p> &copy; {currentYear} Ghonsi Proof. All rights reserved</p>
       </div>
     </footer>
   );
