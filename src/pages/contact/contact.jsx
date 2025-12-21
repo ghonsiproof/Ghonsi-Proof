@@ -5,32 +5,31 @@ import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import './contact.css';
 
+const messageTemplates = {
+  default: "",
+  verification: "Hi team, I'm having trouble with the verification process for my Solana project. Specifically...",
+  feedback: "I really like the platform, but I think it could be improved by...",
+  partnership: "Hello! We are interested in exploring partnership opportunities with Ghonsi Proof. Our project focuses on...",
+  other: "I have a question about something not listed above..."
+};
+
+const subjects = [
+  { value: 'verification', label: 'Verification help' },
+  { value: 'feedback', label: 'General feedback' },
+  { value: 'partnership', label: 'Partnership Inquiry' },
+  { value: 'other', label: 'Other' }
+];
+
 function Contact() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [charCount, setCharCount] = useState(0);
   const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedValue, setSelectedValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [message, setMessage] = useState('');
   
   const dropdownRef = useRef(null);
-
-  const messageTemplates = {
-    default: "",
-    verification: "Hi team, I'm having trouble with the verification process for my Solana project. Specifically...",
-    feedback: "I really like the platform, but I think it could be improved by...",
-    partnership: "Hello! We are interested in exploring partnership opportunities with Ghonsi Proof. Our project focuses on...",
-    other: "I have a question about something not listed above..."
-  };
-
-  const subjects = [
-    { value: 'verification', label: 'Verification help' },
-    { value: 'feedback', label: 'General feedback' },
-    { value: 'partnership', label: 'Partnership Inquiry' },
-    { value: 'other', label: 'Other' }
-  ];
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -44,7 +43,6 @@ function Contact() {
 
   const handleSubjectChange = (value, label) => {
     setSelectedSubject(label);
-    setSelectedValue(value);
     setIsDropdownOpen(false);
     const newMessage = messageTemplates[value] || messageTemplates.default;
     setMessage(newMessage);
@@ -63,14 +61,13 @@ function Contact() {
     setName('');
     setEmail('');
     setSelectedSubject('');
-    setSelectedValue('');
     setMessage('');
     setCharCount(0);
   };
 
   return (
     <>
-      <div className="selection:bg-[#C19A4A] selection:text-[#0B0F1B] min-h-screen flex flex-col" style={{backgroundColor: '#0B0F1B', color: 'white'}}>
+      <div className="selection:bg-[#C19A4A] selection:text-[#0B0F1B] min-h-screen flex flex-col bg-[#0B0F1B] text-white">
         <Header />
 
         <main className="flex-grow px-4 pb-12 w-full max-w-lg mx-auto md:max-w-2xl mt-[105px]">
@@ -106,14 +103,15 @@ function Contact() {
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-white">Subject *</label>
                 <div className="relative" ref={dropdownRef}>
-                  <div 
+                  <button
+                    type="button"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="w-full bg-[#0B0F1B] border border-[#C19A4A] rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#d4a852] focus:ring-2 focus:ring-[#C19A4A]/50 transition-colors cursor-pointer flex justify-between items-center">
                     <span className={!selectedSubject ? 'text-gray-400' : ''}>{selectedSubject || 'Select a subject'}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" className="w-5 h-5 transition-transform duration-200" style={{transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
                       <path stroke="#9CA3AF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 8l4 4 4-4"></path>
                     </svg>
-                  </div>
+                  </button>
                   {isDropdownOpen && (
                     <div className="absolute z-10 w-full mt-1 bg-[#131825] border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                       {subjects.map(subject => (
