@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { createProfile } from '../../utils/profileApi';
@@ -24,6 +24,16 @@ function CreateProfile() {
   const [isExperienceOpen, setIsExperienceOpen] = useState(false);
 
   const totalSteps = 3;
+
+  useEffect(() => {
+    const loadUserEmail = async () => {
+      const user = await getCurrentUser();
+      if (user?.email) {
+        setFormData(prev => ({ ...prev, emailAddress: user.email }));
+      }
+    };
+    loadUserEmail();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;

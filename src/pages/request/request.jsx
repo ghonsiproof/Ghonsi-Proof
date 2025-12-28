@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Share2, Mail, Wallet, ExternalLink, ShieldCheck, Info, Check } from 'lucide-react';
+import { getCurrentUser } from '../../utils/supabaseAuth';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 import './request.css';
 
@@ -70,7 +71,15 @@ function Request() {
       setLoading(false);
     };
     
+    const loadUserEmail = async () => {
+      const user = await getCurrentUser();
+      if (user?.email) {
+        setFormData(prev => ({ ...prev, email: user.email }));
+      }
+    };
+    
     fetchProfile();
+    loadUserEmail();
   }, []);
 
   const handleShare = () => {
