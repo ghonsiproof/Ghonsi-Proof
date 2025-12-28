@@ -72,9 +72,13 @@ function Request() {
     };
     
     const loadUserEmail = async () => {
-      const user = await getCurrentUser();
-      if (user?.email) {
-        setFormData(prev => ({ ...prev, email: user.email }));
+      try {
+        const user = await getCurrentUser();
+        if (user?.email) {
+          setFormData(prev => ({ ...prev, email: user.email }));
+        }
+      } catch (error) {
+        // User not logged in, ignore error
       }
     };
     
