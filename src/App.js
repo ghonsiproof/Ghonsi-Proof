@@ -49,12 +49,16 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/publicProfile" element={<PublicProfile />} />
         <Route path="/request" element={<Request />} />
+        <Route path="/portfolio" element={<Portfolio />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/createProfile" element={<CreateProfile />} />
+        <Route path="/upload" element={<Upload />} />
         
         {/* Protected Routes */}
-        <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/createProfile" element={<ProtectedRoute><CreateProfile /></ProtectedRoute>} />
-        <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+        {/* <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} /> */}
+        {/* <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> */}
+        {/* <Route path="/createProfile" element={<ProtectedRoute><CreateProfile /></ProtectedRoute>} /> */}
+        {/* <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} /> */}
       </Routes>
     </Router>
     </ThemeProvider>

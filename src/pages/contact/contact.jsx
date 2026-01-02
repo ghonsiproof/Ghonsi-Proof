@@ -69,8 +69,7 @@ function Contact() {
     <>
       <div className="selection:bg-[#C19A4A] selection:text-[#0B0F1B] min-h-screen flex flex-col bg-[#0B0F1B] text-white">
         <Header />
-
-        <main className="flex-grow px-4 pb-12 w-full max-w-lg mx-auto md:max-w-2xl mt-[105px]">
+        <main className="max-w-full mx-auto mt-[105px]">
           <div className="text-center mb-8 space-y-3 pt-4">
             <h1 className="text-3xl font-bold text-white">Get in Touch</h1>
             <p className="text-sm text-[#9CA3AF] leading-relaxed max-w-sm mx-auto">

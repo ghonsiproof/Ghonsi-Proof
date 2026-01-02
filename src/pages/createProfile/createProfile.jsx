@@ -145,7 +145,7 @@ function CreateProfile() {
     <>
       <Header />
       <div className="min-h-screen bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A] selection:text-black mt-[105px]">
-        <main className="flex-grow w-full max-w-lg mx-auto md:max-w-2xl px-6 py-8">
+        <main className="flex-grow max-w-full mx-auto px-6 py-8">
           <a href="/dashboard" className="inline-flex items-center text-[#C19A4A] text-sm mb-8 hover:underline gap-1 font-light tracking-wide">
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
