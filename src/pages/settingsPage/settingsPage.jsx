@@ -15,7 +15,7 @@ function SettingsPage() {
     <div className={`min-h-screen ${theme === 'Dark' ? 'bg-[#0B0F1B] text-white' : 'bg-white text-black'}`}>
       <Header />
       
-      <div className="max-w-2xl mx-auto px-4 py-8 mt-[115px]">
+      <div className="max-w-full mx-auto px-4 py-8 mt-[115px]">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Settings</h1>
           <p className="text-gray-400 text-sm">Manage your account preferences<br />and application settings</p>

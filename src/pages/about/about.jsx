@@ -84,7 +84,7 @@ function About() {
   return (
     <>
       <Header />
-      <div className="max-w-[30rem] mx-auto mt-[70px]">
+      <div className="max-w-full mx-auto mt-[70px] min-h-screen">
         <section id="about" className="p-4 text-center max-w-[80%] my-0 mx-auto mt-[110px] rounded-lg bg-white/[0.02] border border-white/5 relative z-10 reveal opacity-0 translate-y-[18px] transition-all duration-[600ms] ease-in-out">
           <div className="opacity-85 font-semibold mb-2 text-xl">
             <span style={{ color: 'var(--gold)' }}>About</span>

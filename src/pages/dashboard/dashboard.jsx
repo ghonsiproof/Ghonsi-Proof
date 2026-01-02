@@ -252,7 +252,7 @@ function Dashboard() {
     <>
       <Header />
       <div className="min-h-screen bg-[#0B0F1B] font-sans text-white selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">
-        <div className="max-w-md mx-auto min-h-screen bg-[#0B0F1B] relative flex flex-col border-x border-white/5 shadow-2xl">
+        <div className="max-w-full mx-auto min-h-screen bg-[#0B0F1B] relative flex flex-col border-x border-white/5 shadow-2xl">
           <main className="flex-1 px-5 py-6 space-y-8">
             <ProfileSection user={user} profile={profile} />
             <StatsRow stats={stats} />

@@ -63,7 +63,7 @@ function Login() {
   };
 
   return (
-    <main>
+    <main className="min-h-screen">
       <div className="mt-[115px] mx-auto py-10 px-5 text-center flex flex-col">
         {!isGetStarted && <h2 className="text-2xl font-bold text-white mb-2.5">Welcome Back</h2>}
         {isGetStarted && <h2 className="text-2xl font-bold text-white mb-2.5">Get Started</h2>}

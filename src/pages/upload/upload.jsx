@@ -241,7 +241,7 @@ function Upload() {
   return (
     <>
       <Header />
-      <main className="flex-grow px-4 py-8 max-w-none sm:max-w-lg mx-auto w-full mt-[105px]">
+      <main className="flex-grow px-4 py-8 max-w-none mx-auto w-full mt-[105px]">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold mb-2">Upload Your Proof</h1>
           <p className="text-gray-300 text-sm leading-relaxed">

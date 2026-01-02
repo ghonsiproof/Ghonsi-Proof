@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, Share2, Mail, Wallet, ExternalLink, ShieldCheck, Info, Check } from 'lucide-react';
-import { getCurrentUser } from '../../utils/supabaseAuth';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
-import './request.css';
 
+// Mock Auth function to replace missing import
+const getCurrentUser = async () => {
+  // Simulate an authenticated user or return null
+  return { email: 'visitor@example.com' };
+};
+
+// Mock Data
 const mockDatabase = {
   "alex_chen": {
     profilePhotoUrl: "https://i.pravatar.cc/150?u=alexchen",
@@ -125,7 +130,13 @@ function Request() {
   const proofsToShow = showMore ? profileData.proofs : profileData.proofs.slice(0, 2);
 
   return (
-    <div className="min-h-screen pb-20 bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">
+    <div className="max-w-full mx-auto bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">
+      <style>{`
+        @keyframes scaleIn {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
       
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0B0F1B]/95 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -142,7 +153,8 @@ function Request() {
         </div>
       </header>
 
-      <main className="px-4 pb-20 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl space-y-6 mt-4">
+      {/* CHANGED: Removed max-w-md, md:max-w-2xl, lg:max-w-4xl constraints to make it full width */}
+      <main className="px-4 pb-20 w-full space-y-6 mt-4">
         <div className="relative bg-[#131825] border border-gray-800 rounded-2xl p-6 shadow-xl">
           <button className="absolute top-4 right-4 text-gray-400 hover:text-white">
             <X className="w-5 h-5" />

@@ -49,7 +49,7 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/publicProfile" element={<PublicProfile />} />
         <Route path="/request" element={<Request />} />
-        
+                
         {/* Protected Routes */}
         <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
