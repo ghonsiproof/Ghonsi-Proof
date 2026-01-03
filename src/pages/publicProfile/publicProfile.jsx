@@ -123,7 +123,7 @@ function PublicProfile () {
   };
 
   return (
-    <div className="min-h-screen pb-28 max-w-xl mx-auto bg-[#0B0F1B] border-x border-white/5 text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B]">
+    <div className="min-h-screen pb-28 max-w-full mx-auto bg-[#0B0F1B] border-x border-white/5 text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B]">
       
       <div className="flex items-center justify-between px-4 py-3 sticky top-0 z-50 bg-[#0B0F1B]/95 backdrop-blur-sm border-b border-white/5">
         <div className="flex items-center gap-3">
@@ -140,7 +140,7 @@ function PublicProfile () {
         </div>
       </div>
 
-      <main className="max-w-xl mx-auto px-4" style={{paddingTop: windowWidth < 640 ? '12px' : windowWidth < 1024 ? '60px' : '30px'}}>
+      <main className="max-w-full mx-auto px-4" style={{paddingTop: windowWidth < 640 ? '12px' : windowWidth < 1024 ? '60px' : '30px'}}>
         <div className="bg-[#111625] rounded-2xl p-5 border border-white/5 mb-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#C19A4A]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 

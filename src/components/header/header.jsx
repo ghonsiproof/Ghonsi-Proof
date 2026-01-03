@@ -9,7 +9,6 @@ function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   // Check authentication status on mount
@@ -21,10 +20,8 @@ function Header() {
     try {
       const currentUser = await getCurrentUser();
       setIsLoggedIn(!!currentUser);
-      setUser(currentUser);
     } catch (error) {
       setIsLoggedIn(false);
-      setUser(null);
     }
   };
 
@@ -44,7 +41,6 @@ function Header() {
     try {
       await logout();
       setIsLoggedIn(false);
-      setUser(null);
       setIsMenuOpen(false);
       navigate('/home');
     } catch (error) {

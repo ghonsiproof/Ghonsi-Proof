@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
-import { signInWithMagicLink } from '../../utils/supabaseAuth';
+import { sendOTPToEmail, verifyOTP } from '../../utils/supabaseAuth';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
@@ -10,6 +10,7 @@ function Login() {
   const [activeTab, setActiveTab] = useState('wallet');
   const [email, setEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isGetStarted, setIsGetStarted] = useState(false);
@@ -48,15 +49,50 @@ function Login() {
       return;
     }
     
+    if (!otpSent) {
+      setMessage('❌ Please request an OTP code first');
+      return;
+    }
+    if (!otpCode || otpCode.length < 6) {
+      setMessage('❌ Please enter the complete code from your email');
+      return;
+    }
+    
     setIsLoading(true);
     setMessage('');
     
     try {
-      await signInWithMagicLink(trimmedEmail);
-      setMessage('✅ Magic link sent! Check your email to sign in.');
-      setEmail('');
+      await verifyOTP(trimmedEmail, otpCode);
+      setMessage('✅ Successfully signed in!');
+      setTimeout(() => navigate('/dashboard'), 1000);
     } catch (error) {
-      setMessage('❌ Failed to send magic link: ' + error.message);
+      setMessage('❌ Invalid or expired code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendOTP = async () => {
+    const trimmedEmail = email.trim();
+    
+    if (!trimmedEmail) {
+      setMessage('Please enter your email address');
+      return;
+    }
+    if (!validateEmail(trimmedEmail)) {
+      setMessage('Please enter a valid email address');
+      return;
+    }
+    
+    setIsLoading(true);
+    setMessage('');
+    
+    try {
+      await sendOTPToEmail(trimmedEmail);
+      setOtpSent(true);
+      setMessage('✅ OTP sent! Check your email for the 6-digit code.');
+    } catch (error) {
+      setMessage('❌ Failed to send OTP: ' + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +138,8 @@ function Login() {
         <section>
           <div className="bg-white/5 py-[30px] px-5 my-5 mx-5 rounded-xl border border-[#C19A4A]">
             <h2 className="text-lg font-bold text-white mb-[25px]">Sign in with Email</h2>
-            <p className="text-sm text-[#ccc] mb-5">We'll send you a magic link to sign in without a password.</p>
+            
+            <p className="text-sm text-[#ccc] mb-5">We'll send you a code to verify your email.</p>
             
             {message && (
               <div className={`mb-5 p-3 rounded-lg text-sm ${message.startsWith('✅') ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
@@ -119,35 +156,43 @@ function Login() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || otpSent}
                 className="w-full py-3 px-[15px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed mb-4"
               />
-              <div className="relative">
-                <input
-                  type="text"
-                  id="otpCode"
-                  name="otpCode"
-                  placeholder="Enter code"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  disabled={isLoading}
-                  className="w-full py-3 px-[15px] pr-[100px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <button
-                  type="button"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 py-1.5 px-4 bg-transparent text-[#C19A4A] border-none rounded text-sm font-semibold cursor-pointer transition-all duration-200 ease-in-out hover:text-[#d9b563] disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isLoading}
-                >
-                  Get Code
-                </button>
-              </div>
+              
+              {/* OTP Code Input */}
+              <div className="relative mb-4">
+                  <input
+                    type="text"
+                    id="otpCode"
+                    name="otpCode"
+                    placeholder="Enter code from email"
+                    value={otpCode}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      setOtpCode(value);
+                    }}
+                    disabled={isLoading || !otpSent}
+                    maxLength={8}
+                    className="w-full py-3 px-[15px] pr-[110px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSendOTP}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 py-1.5 px-4 bg-transparent text-[#C19A4A] border-none rounded text-sm font-semibold cursor-pointer transition-all duration-200 ease-in-out hover:text-[#d9b563] disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading || otpSent}
+                  >
+                    {otpSent ? 'Sent ✓' : 'Get Code'}
+                  </button>
+                </div>
             </form>
+            
             <button 
               className="w-full py-3 px-5 bg-[#C19A4A] text-[#0B0F1B] border-none rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border hover:text-[#C19A4A] hover:bg-[#0B0F1B] hover:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
               onClick={handleEmailSignIn}
               disabled={isLoading}
             >
-              {isLoading ? 'Verifying OTP...' : 'Sign in'}
+              {isLoading ? 'Verifying...' : 'Sign In'}
             </button>
           </div>
         </section>

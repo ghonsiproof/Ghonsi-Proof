@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../config/supabaseClient';
-import { signInWithMagicLink, getCurrentUser, logout } from '../../utils/supabaseAuth';
+import { signInWithMagicLink, logout } from '../../utils/supabaseAuth';
 import Header from '../../components/header/header';
 import Footer from '../../components/footer/footer';
 
@@ -12,16 +12,11 @@ function TestSupabase() {
   const [user, setUser] = useState(null);
   const [testResults, setTestResults] = useState([]);
 
-  useEffect(() => {
-    testConnection();
-    checkAuth();
-  }, []);
-
   const addResult = (test, status, message) => {
     setTestResults(prev => [...prev, { test, status, message, time: new Date().toLocaleTimeString() }]);
   };
 
-  const testConnection = async () => {
+  const testConnection = useCallback(async () => {
     try {
       // Test 1: Check Supabase client
       if (!supabase) {
@@ -34,7 +29,7 @@ function TestSupabase() {
 
       // Test 2: Check database connection
       try {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('users')
           .select('count')
           .limit(1);
@@ -54,9 +49,9 @@ function TestSupabase() {
       setConnectionStatus('❌ Failed: ' + error.message);
       addResult('Supabase Client', 'error', error.message);
     }
-  };
+  }, [addResult]);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -72,7 +67,12 @@ function TestSupabase() {
       setAuthStatus('❌ Error checking auth');
       addResult('Authentication Check', 'error', error.message);
     }
-  };
+  }, [addResult]);
+
+  useEffect(() => {
+    testConnection();
+    checkAuth();
+  }, [testConnection, checkAuth]);
 
   const handleTestLogin = async (e) => {
     e.preventDefault();

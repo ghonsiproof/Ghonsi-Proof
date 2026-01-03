@@ -42,6 +42,32 @@ export const signInWithMagicLink = async (email) => {
   return data;
 };
 
+// Sign in with OTP (sends 6-digit code to email)
+export const sendOTPToEmail = async (email) => {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true, // Creates user if doesn't exist
+      emailRedirectTo: undefined, // Explicitly no redirect = OTP code instead of link
+    }
+  });
+
+  if (error) throw error;
+  return data;
+};
+
+// Verify OTP code
+export const verifyOTP = async (email, token) => {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email'
+  });
+
+  if (error) throw error;
+  return data;
+};
+
 // Sign in with wallet (Solana)
 export const signInWithWallet = async (walletAddress, signature, message) => {
   try {
