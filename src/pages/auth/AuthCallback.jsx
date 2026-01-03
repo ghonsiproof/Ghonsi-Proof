@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../config/supabaseClient';
 
@@ -6,11 +6,7 @@ function AuthCallback() {
   const navigate = useNavigate();
   const [status, setStatus] = useState('Processing authentication...');
 
-  useEffect(() => {
-    handleAuthCallback();
-  }, []);
-
-  const handleAuthCallback = async () => {
+  const handleAuthCallback = useCallback(async () => {
     try {
       // Get the current session after magic link click
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -39,7 +35,11 @@ function AuthCallback() {
       setStatus('❌ An error occurred. Redirecting to login...');
       setTimeout(() => navigate('/login'), 3000);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    handleAuthCallback();
+  }, [handleAuthCallback]);
 
   return (
     <div className="min-h-screen bg-[#0B0F1B] flex items-center justify-center px-4">
