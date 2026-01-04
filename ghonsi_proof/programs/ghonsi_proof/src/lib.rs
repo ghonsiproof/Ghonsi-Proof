@@ -16,6 +16,13 @@ pub const PROOF_SEED: &[u8] = b"proof";
 pub mod ghonsi_proof {
     use super::*;
 
+    // NEW: Initialize the program and set the admin
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        ctx.accounts.program_authority.admin = ctx.accounts.admin.key();
+        msg!("Program initialized. Admin: {}", ctx.accounts.admin.key());
+        Ok(())
+    }
+
     pub fn mint_proof(
         ctx: Context<MintProof>,
         proof_id: String,
@@ -111,6 +118,24 @@ pub mod ghonsi_proof {
         ctx.accounts.proof.status = ProofStatus::Verified;
         Ok(())
     }
+}
+
+// NEW: Initialize context
+#[derive(Accounts)]
+pub struct Initialize<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+
+    #[account(
+        init,
+        payer = admin,
+        space = 8 + 32,
+        seeds = [b"program_authority"],
+        bump,
+    )]
+    pub program_authority: Account<'info, ProgramAuthority>,
+
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
