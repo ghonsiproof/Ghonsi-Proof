@@ -161,7 +161,7 @@ const RecentProofs = ({ proofs }) => {
 };
 
 const ActionButton = ({ icon: Icon, label, onClick }) => (
-  <button onClick={onClick} className="flex flex-col items-center justify-center gap-2 bg-[#C19A4A] text-[#ffffff] p-5 rounded-xl font-medium text-xs hover:bg-[#D4AB58] transition-all active:scale-[0.98] shadow-lg shadow-[#C19A4A]/5">
+  <button onClick={onClick} className="flex flex-col items-center justify-center gap-2 bg-[#C19A4A] text-[#ffffff] p-5 rounded-xl font-medium text-xs hover:bg-[#D4AB58] transition-all active:scale-[0.98] shadow-lg shadow-[#C19A4A]/5 touch-manipulation">
     <Icon size={22} strokeWidth={1.5} />
     <span className="tracking-wide">{label}</span>
   </button>
