@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../utils/supabaseAuth';
-import { createProfile } from '../../utils/profileApi';
+import { createProfile, getProfile, updateProfile } from '../../utils/profileApi';
+import { supabase } from '../../config/supabaseClient';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import { ArrowLeft, ArrowRight, User, Award, Share2, Settings, Camera, Upload, ChevronDown, Check } from 'lucide-react';
@@ -12,6 +13,8 @@ function CreateProfile() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [existingProfileId, setExistingProfileId] = useState(null);
   const [formData, setFormData] = useState({
     fullName: '', emailAddress: '', phoneNumber: '', location: '',
     professionalTitle: '', professionalBio: '', skills: '', experience: '',
@@ -26,13 +29,49 @@ function CreateProfile() {
   const totalSteps = 3;
 
   useEffect(() => {
-    const loadUserEmail = async () => {
-      const user = await getCurrentUser();
-      if (user?.email) {
+    const loadUserData = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (!user) return;
+
+        // Load email
         setFormData(prev => ({ ...prev, emailAddress: user.email }));
+
+        // Try to load existing profile
+        const profile = await getProfile(user.id);
+        
+        if (profile) {
+          // Profile exists - populate form with existing data
+          setIsEditMode(true);
+          setExistingProfileId(profile.id);
+          
+          setFormData({
+            fullName: profile.display_name || '',
+            emailAddress: user.email || '',
+            phoneNumber: profile.social_links?.phone || '',
+            location: profile.location || '',
+            professionalTitle: profile.profession || '',
+            professionalBio: profile.bio || '',
+            skills: profile.social_links?.skills || '',
+            experience: profile.social_links?.experience || '',
+            website: profile.social_links?.website || '',
+            github: profile.social_links?.github || '',
+            twitter: profile.social_links?.twitter || '',
+            linkedin: profile.social_links?.linkedin || '',
+            visibility: profile.is_public ? 'Public - Anyone can view' : 'Private - Only you can view',
+            emailNotifications: false
+          });
+
+          // Load avatar if exists
+          if (profile.avatar_url) {
+            setProfilePhoto({ preview: profile.avatar_url, file: null });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
       }
     };
-    loadUserEmail();
+    loadUserData();
   }, []);
 
   const handleInputChange = (e) => {
@@ -57,7 +96,8 @@ function CreateProfile() {
           if (img.width < 200 || img.height < 200) {
             setPhotoError('Image too small. Minimum dimensions are 200x200px.');
           } else {
-            setProfilePhoto(event.target.result);
+            // Store both the preview URL and the file
+            setProfilePhoto({ preview: event.target.result, file });
           }
         };
       };
@@ -104,28 +144,67 @@ function CreateProfile() {
           throw new Error('You must be logged in to create a profile');
         }
 
+        let avatarUrl = null;
+
+        // Upload profile photo if provided and it's a new file
+        if (profilePhoto && profilePhoto.file) {
+          const fileExt = profilePhoto.file.name.split('.').pop();
+          const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+          const filePath = `avatars/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('proof-files')
+            .upload(filePath, profilePhoto.file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
+            throw new Error('Failed to upload profile photo');
+          }
+
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('proof-files')
+            .getPublicUrl(filePath);
+
+          avatarUrl = publicUrl;
+        } else if (profilePhoto && profilePhoto.preview && !profilePhoto.file) {
+          // Keep existing avatar URL if no new file uploaded
+          avatarUrl = profilePhoto.preview;
+        }
+
         // Prepare profile data matching the database schema
         const profileData = {
-          user_id: user.id,
           display_name: formData.fullName,
           bio: formData.professionalBio || null,
           profession: formData.professionalTitle || null,
           location: formData.location || null,
+          avatar_url: avatarUrl,
           social_links: {
             website: formData.website || null,
             github: formData.github || null,
             twitter: formData.twitter || null,
             linkedin: formData.linkedin || null,
-            phone: formData.phoneNumber || null
+            phone: formData.phoneNumber || null,
+            skills: formData.skills || null,
+            experience: formData.experience || null
           },
           is_public: formData.visibility === 'Public - Anyone can view'
         };
 
-        await createProfile(profileData);
+        // Update existing profile or create new one
+        if (isEditMode && existingProfileId) {
+          await updateProfile(user.id, profileData);
+        } else {
+          await createProfile({ user_id: user.id, ...profileData });
+        }
+        
         setShowSuccess(true);
       } catch (error) {
-        console.error('Profile creation error:', error);
-        setSubmitError(error.message || 'Failed to create profile');
+        console.error('Profile save error:', error);
+        setSubmitError(error.message || 'Failed to save profile');
       } finally {
         setIsSubmitting(false);
       }
@@ -152,8 +231,8 @@ function CreateProfile() {
           {!showSuccess && (
             <>
               <div className="mb-10">
-                <h1 className="text-3xl font-semibold mb-3 text-white tracking-tight">Create Your Profile</h1>
-                <p className="text-white/60 text-sm font-light leading-relaxed">Build your professional Web3 identity and showcase your verified credentials</p>
+                <h1 className="text-3xl font-semibold mb-3 text-white tracking-tight">{isEditMode ? 'Edit Your Profile' : 'Create Your Profile'}</h1>
+                <p className="text-white/60 text-sm font-light leading-relaxed">{isEditMode ? 'Update your professional Web3 identity and credentials' : 'Build your professional Web3 identity and showcase your verified credentials'}</p>
               </div>
 
               <div className="flex justify-between items-start mb-12 w-full px-1">
@@ -194,8 +273,8 @@ function CreateProfile() {
               <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mb-8 ring-1 ring-green-500/30 shadow-[0_0_30px_-10px_rgba(34,197,94,0.3)]">
                 <Check className="w-12 h-12 text-green-500" />
               </div>
-              <h2 className="text-3xl font-semibold text-white mb-3">Profile Created!</h2>
-              <p className="text-white/60 text-sm mb-10 max-w-xs mx-auto leading-relaxed">Your Web3 identity has been successfully established on Ghonsi Proof.</p>
+              <h2 className="text-3xl font-semibold text-white mb-3">{isEditMode ? 'Profile Updated!' : 'Profile Created!'}</h2>
+              <p className="text-white/60 text-sm mb-10 max-w-xs mx-auto leading-relaxed">{isEditMode ? 'Your Web3 identity has been successfully updated.' : 'Your Web3 identity has been successfully established on Ghonsi Proof.'}</p>
               <button onClick={() => navigate('/dashboard')} className="bg-[#C19A4A] hover:bg-[#A8863D] text-black text-sm font-bold px-8 py-3.5 rounded-lg shadow-lg shadow-[#C19A4A]/20 transition-all transform hover:scale-105 active:scale-95 w-full max-w-xs flex items-center justify-center gap-2">
                 Go to Dashboard <ArrowRight className="w-4 h-4" />
               </button>
@@ -214,7 +293,7 @@ function CreateProfile() {
                     <div className="flex items-center gap-6">
                       <div 
                         className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex-shrink-0 hover:border-[#C19A4A]/50 transition-colors cursor-pointer group relative overflow-hidden bg-cover bg-center"
-                        style={profilePhoto ? { backgroundImage: `url(${profilePhoto})` } : {}}
+                        style={profilePhoto?.preview ? { backgroundImage: `url(${profilePhoto.preview})` } : {}}
                         onClick={() => document.getElementById('fileInput').click()}
                       >
                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -350,9 +429,9 @@ function CreateProfile() {
                     className="bg-[#C19A4A] hover:bg-[#A8863D] text-black text-sm font-semibold px-8 py-3 rounded-lg flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-[#C19A4A]/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
                     {isSubmitting ? (
-                      <>Submitting...</>
+                      <>Saving...</>
                     ) : currentStep === totalSteps ? (
-                      <>Submit <Check className="w-4 h-4" /></>
+                      <>{isEditMode ? 'Update' : 'Submit'} <Check className="w-4 h-4" /></>
                     ) : (
                       <>Next <ArrowRight className="w-4 h-4" /></>
                     )}

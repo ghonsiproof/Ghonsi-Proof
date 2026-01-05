@@ -47,11 +47,19 @@ const ProfileSection = ({ user, profile }) => {
 
   return (
     <Card className="flex flex-col items-center text-center relative overflow-hidden !bg-[#151925] !border-white/5 shadow-lg ">
-      <div className="w-16 h-16 rounded-full bg-[#C19A4A] flex items-center justify-center mb-3 text-[#0B0F1B] shadow-lg shadow-[#C19A4A]/20">
-        <User size={30} strokeWidth={1.5} />
-      </div>
+      {profile?.avatar_url ? (
+        <img 
+          src={profile.avatar_url} 
+          alt={profile.display_name || 'Profile'} 
+          className="w-16 h-16 rounded-full object-cover mb-3 shadow-lg shadow-[#C19A4A]/20 border-2 border-[#C19A4A]"
+        />
+      ) : (
+        <div className="w-16 h-16 rounded-full bg-[#C19A4A] flex items-center justify-center mb-3 text-[#0B0F1B] shadow-lg shadow-[#C19A4A]/20">
+          <User size={30} strokeWidth={1.5} />
+        </div>
+      )}
       
-      <h2 className="text-lg font-medium text-white mb-1">{profile?.full_name || 'Profile Not Set'}</h2>
+      <h2 className="text-lg font-medium text-white mb-1">{profile?.display_name || 'Profile Not Set'}</h2>
       <p className="text-xs text-gray-400 mb-6 font-light">{profile?.bio || 'Complete your profile'}</p>
 
       <div className="w-full space-y-3 mb-7 px-2">
