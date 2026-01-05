@@ -104,23 +104,21 @@ function CreateProfile() {
           throw new Error('You must be logged in to create a profile');
         }
 
-        // Prepare profile data
+        // Prepare profile data matching the database schema
         const profileData = {
           user_id: user.id,
-          full_name: formData.fullName,
-          email: formData.emailAddress,
-          phone: formData.phoneNumber || null,
-          location: formData.location || null,
-          professional_title: formData.professionalTitle || null,
+          display_name: formData.fullName,
           bio: formData.professionalBio || null,
-          skills: formData.skills ? formData.skills.split(',').map(s => s.trim()) : [],
-          experience_years: formData.experience || null,
-          website_url: formData.website || null,
-          github_url: formData.github || null,
-          twitter_url: formData.twitter || null,
-          linkedin_url: formData.linkedin || null,
-          profile_visibility: formData.visibility || 'public',
-          email_notifications: formData.emailNotifications
+          profession: formData.professionalTitle || null,
+          location: formData.location || null,
+          social_links: {
+            website: formData.website || null,
+            github: formData.github || null,
+            twitter: formData.twitter || null,
+            linkedin: formData.linkedin || null,
+            phone: formData.phoneNumber || null
+          },
+          is_public: formData.visibility === 'Public - Anyone can view'
         };
 
         await createProfile(profileData);
