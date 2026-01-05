@@ -314,21 +314,21 @@ function CreateProfile() {
                   <div className="space-y-6">
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Full Name *</label>
-                      <input name="fullName" value={formData.fullName} onChange={handleInputChange} type="text" placeholder="Enter your full name" className={`w-full bg-transparent border rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all ${errors.fullName ? 'border-red-500 animate-[shake_0.5s]' : 'border-white/20'}`} />
+                      <input name="fullName" value={formData.fullName} onChange={handleInputChange} type="text" placeholder="Enter your full name" className={`w-full bg-transparent border rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation ${errors.fullName ? 'border-red-500 animate-[shake_0.5s]' : 'border-white/20'}`} />
                       {errors.fullName && <span className="text-red-500 text-[10px] mt-1 block">{errors.fullName}</span>}
                     </div>
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Email Address *</label>
-                      <input name="emailAddress" value={formData.emailAddress} onChange={handleInputChange} type="email" placeholder="Youremail@example.com" className={`w-full bg-transparent border rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all ${errors.emailAddress ? 'border-red-500 animate-[shake_0.5s]' : 'border-white/20'}`} />
+                      <input name="emailAddress" value={formData.emailAddress} onChange={handleInputChange} type="email" placeholder="Youremail@example.com" className={`w-full bg-transparent border rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation ${errors.emailAddress ? 'border-red-500 animate-[shake_0.5s]' : 'border-white/20'}`} />
                       {errors.emailAddress && <span className="text-red-500 text-[10px] mt-1 block">{errors.emailAddress}</span>}
                     </div>
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Phone Number</label>
-                      <input name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} type="tel" placeholder="+234890124832" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all" />
+                      <input name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} type="tel" placeholder="+234890124832" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation" />
                     </div>
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Location</label>
-                      <input name="location" value={formData.location} onChange={handleInputChange} type="text" placeholder="Enter your city, country" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all" />
+                      <input name="location" value={formData.location} onChange={handleInputChange} type="text" placeholder="Enter your city, country" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation" />
                     </div>
                   </div>
                 </div>
@@ -344,7 +344,7 @@ function CreateProfile() {
                   <div className="space-y-6">
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Professional Title</label>
-                      <input name="professionalTitle" value={formData.professionalTitle} onChange={handleInputChange} type="text" placeholder="e.g, smart contract developer, web3 designer" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all" />
+                      <input name="professionalTitle" value={formData.professionalTitle} onChange={handleInputChange} type="text" placeholder="e.g, smart contract developer, web3 designer" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation" />
                     </div>
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Bio *</label>
@@ -356,7 +356,7 @@ function CreateProfile() {
                     </div>
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Skills</label>
-                      <input name="skills" value={formData.skills} onChange={handleInputChange} type="text" placeholder="e.g., solidity, Rust, React, web3.js" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all" />
+                      <input name="skills" value={formData.skills} onChange={handleInputChange} type="text" placeholder="e.g., solidity, Rust, React, web3.js" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation" />
                       <div className="text-right text-[10px] text-white/40 mt-1.5">Separate skills with commas</div>
                     </div>
                     <div>
@@ -391,19 +391,19 @@ function CreateProfile() {
                   <div className="space-y-6">
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Personal Website</label>
-                      <input name="website" value={formData.website} onChange={handleInputChange} type="url" placeholder="http://yourwebsite.com" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all" />
+                      <input name="website" value={formData.website} onChange={handleInputChange} type="url" placeholder="http://yourwebsite.com" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation" />
                     </div>
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">GitHub</label>
-                      <input name="github" value={formData.github} onChange={handleInputChange} type="text" placeholder="github.com/username" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all" />
+                      <input name="github" value={formData.github} onChange={handleInputChange} type="text" placeholder="github.com/username" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation" />
                     </div>
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Twitter / X</label>
-                      <input name="twitter" value={formData.twitter} onChange={handleInputChange} type="text" placeholder="twitter.com/username" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all" />
+                      <input name="twitter" value={formData.twitter} onChange={handleInputChange} type="text" placeholder="twitter.com/username" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation" />
                     </div>
                     <div>
                       <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">LinkedIn</label>
-                      <input name="linkedin" value={formData.linkedin} onChange={handleInputChange} type="text" placeholder="linkedin.com/in/yourusername" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all" />
+                      <input name="linkedin" value={formData.linkedin} onChange={handleInputChange} type="text" placeholder="linkedin.com/in/yourusername" className="w-full bg-transparent border border-white/20 rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation" />
                     </div>
                   </div>
                 </div>
