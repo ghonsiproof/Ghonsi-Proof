@@ -16,10 +16,33 @@ pub const PROOF_SEED: &[u8] = b"proof";
 pub mod ghonsi_proof {
     use super::*;
 
-    // NEW: Initialize the program and set the admin
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         ctx.accounts.program_authority.admin = ctx.accounts.admin.key();
         msg!("Program initialized. Admin: {}", ctx.accounts.admin.key());
+        Ok(())
+    }
+
+    pub fn update_admin(ctx: Context<UpdateAdmin>, new_admin: Pubkey) -> Result<()> {
+        require_keys_eq!(
+            ctx.accounts.current_admin.key(),
+            ctx.accounts.program_authority.admin,
+            ErrorCode::Unauthorized
+        );
+
+        ctx.accounts.program_authority.admin = new_admin;
+        msg!("Admin updated to {}", new_admin);
+        Ok(())
+    }
+
+    pub fn revoke_proof(ctx: Context<RevokeProof>) -> Result<()> {
+        require_keys_eq!(
+            ctx.accounts.admin.key(),
+            ctx.accounts.program_authority.admin,
+            ErrorCode::Unauthorized
+        );
+
+        ctx.accounts.proof.status = ProofStatus::Revoked;
+        msg!("Proof revoked");
         Ok(())
     }
 
@@ -44,7 +67,6 @@ pub mod ghonsi_proof {
         proof.proof_type = proof_type;
         proof.bump = ctx.bumps.proof;
 
-        // Mint 1 token → NFT
         mint_to(
             CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
@@ -57,7 +79,6 @@ pub mod ghonsi_proof {
             1,
         )?;
 
-        // Make soulbound by permanently freezing the token account
         freeze_account(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
@@ -70,7 +91,6 @@ pub mod ghonsi_proof {
             ),
         )?;
 
-        // Create Metaplex metadata
         let data_v2 = DataV2 {
             name: title,
             symbol: "PROOF".to_string(),
@@ -120,7 +140,6 @@ pub mod ghonsi_proof {
     }
 }
 
-// NEW: Initialize context
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(mut)]
@@ -136,6 +155,30 @@ pub struct Initialize<'info> {
     pub program_authority: Account<'info, ProgramAuthority>,
 
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateAdmin<'info> {
+    #[account(mut)]
+    pub current_admin: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"program_authority"],
+        bump,
+    )]
+    pub program_authority: Account<'info, ProgramAuthority>,
+}
+
+#[derive(Accounts)]
+pub struct RevokeProof<'info> {
+    #[account(mut)]
+    pub proof: Account<'info, Proof>,
+
+    pub admin: Signer<'info>,
+
+    #[account(seeds = [b"program_authority"], bump)]
+    pub program_authority: Account<'info, ProgramAuthority>,
 }
 
 #[derive(Accounts)]
@@ -230,6 +273,7 @@ impl Proof {
 pub enum ProofStatus {
     Pending,
     Verified,
+    Revoked, // ← Added
 }
 
 impl Default for ProofStatus {
