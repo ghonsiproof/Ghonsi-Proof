@@ -89,6 +89,7 @@ function Header() {
             <li className="py-3 px-0 font-bold list-none"><Link to="/home" onClick={handleLinkClick} className="text-white no-underline text-[19px] transition-colors duration-200 ease-in-out block hover:text-[#C19A4A]"> Home </Link></li>
             <li className="py-3 px-0 font-bold list-none"><Link to="/about" onClick={handleLinkClick} className="text-white no-underline text-[19px] transition-colors duration-200 ease-in-out block hover:text-[#C19A4A]"> About </Link></li>
             <li className="py-3 px-0 font-bold list-none"><Link to="/portfolio" onClick={handlePortfolioClick} className="text-white no-underline text-[19px] transition-colors duration-200 ease-in-out block hover:text-[#C19A4A]"> Portfolio </Link></li>
+            {isLoggedIn && <li className="py-3 px-0 font-bold list-none"><Link to="/dashboard" onClick={handleLinkClick} className="text-white no-underline text-[19px] transition-colors duration-200 ease-in-out block hover:text-[#C19A4A]"> Dashboard </Link></li>}
             <li className="py-3 px-0 font-bold list-none"><Link to="/contact" onClick={handleLinkClick} className="text-white no-underline text-[19px] transition-colors duration-200 ease-in-out block hover:text-[#C19A4A]"> Contact </Link></li>
             <li className="py-3 px-0 font-bold list-none"><Link to="/faq" onClick={handleLinkClick} className="text-white no-underline text-[19px] transition-colors duration-200 ease-in-out block hover:text-[#C19A4A]"> FAQ </Link></li>
           </ul>
