@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { getCurrentUser, logout } from '../../utils/supabaseAuth';
@@ -10,11 +10,29 @@ function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+  const menuRef = useRef(null);
 
   // Check authentication status on mount
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Handle clicks outside the menu to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   const checkAuthStatus = async () => {
     try {
@@ -83,7 +101,7 @@ function Header() {
           />
         </button>
       </div>
-      <div className={`${isMenuOpen ? 'flex' : 'hidden'} absolute top-[70px] right-0 w-full bg-[#0B0F1B] backdrop-blur-[10px] flex-col gap-0 p-5 box-border`}>
+      <div ref={menuRef} className={`${isMenuOpen ? 'flex' : 'hidden'} absolute top-[70px] right-0 w-full bg-[#0B0F1B] backdrop-blur-[10px] flex-col gap-0 p-5 box-border`}>
         <nav>
           <ul className="p-0 m-0">
             <li className="py-3 px-0 font-bold list-none"><Link to="/home" onClick={handleLinkClick} className="text-white no-underline text-[19px] transition-colors duration-200 ease-in-out block hover:text-[#C19A4A]"> Home </Link></li>
