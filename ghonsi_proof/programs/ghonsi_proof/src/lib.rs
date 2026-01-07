@@ -5,10 +5,11 @@ use anchor_spl::{
     metadata::{
         create_metadata_accounts_v3,
         mpl_token_metadata::{self, types::{Creator, DataV2, Collection}},
+        Metadata,
     },
 };
 
-declare_id!("ESbdAEpJWTaT35VfWnVm8gq8jKhc6Rj1unPKD6JSfp4M");
+declare_id!("Etw4MKDBhZWtH2zK5CA9nALLq8LM1TXQfLhFjWtEJH1a");
 
 pub const PROOF_SEED: &[u8] = b"proof";
 pub const MINT_FEE_LAMPORTS: u64 = 10_000_000; // 0.01 SOL
@@ -50,7 +51,7 @@ pub mod ghonsi_proof {
             );
         }
 
-        // FIX: Store admin_count in local variable first
+        // Store admin_count in local variable first
         let index = authority.admin_count as usize;
         authority.admins[index] = new_admin;
         authority.admin_count += 1;
@@ -85,7 +86,7 @@ pub mod ghonsi_proof {
 
         require!(found_index.is_some(), ErrorCode::AdminNotFound);
 
-        // FIX: Store values in local variables
+        // Store values in local variables
         let index = found_index.unwrap() as usize;
         let count = authority.admin_count as usize;
         
@@ -175,7 +176,7 @@ pub mod ghonsi_proof {
             uri,
             seller_fee_basis_points: 0,
             creators: Some(vec![Creator {
-                address: ctx.accounts.program_authority.key(),
+                address: ctx.accounts.mint_authority.key(),
                 verified: true,
                 share: 100,
             }]),
@@ -194,7 +195,7 @@ pub mod ghonsi_proof {
                     mint: ctx.accounts.mint.to_account_info(),
                     mint_authority: ctx.accounts.mint_authority.to_account_info(),
                     payer: ctx.accounts.owner.to_account_info(),
-                    update_authority: ctx.accounts.program_authority.to_account_info(),
+                    update_authority: ctx.accounts.mint_authority.to_account_info(),
                     system_program: ctx.accounts.system_program.to_account_info(),
                     rent: ctx.accounts.rent.to_account_info(),
                 },
@@ -287,7 +288,7 @@ pub struct Initialize<'info> {
     #[account(
         init,
         payer = admin,
-        space = 8 + ProgramAuthority::INIT_SPACE,
+        space = 8 + ProgramAuthority::SPACE,
         seeds = [b"program_authority"],
         bump,
     )]
@@ -353,23 +354,14 @@ pub struct MintProof<'info> {
     pub collection_mint: UncheckedAccount<'info>,
 
     /// CHECK: Admin receives fee
-    #[account(address = program_authority.primary_admin)]
+    #[account(mut, address = program_authority.primary_admin)]
     pub admin: UncheckedAccount<'info>,
 
-    /// CHECK: Metadata PDA
-    #[account(
-        mut,
-        seeds = [
-            b"metadata",
-            mpl_token_metadata::ID.as_ref(),
-            mint.key().as_ref(),
-        ],
-        bump,
-        seeds::program = mpl_token_metadata::ID,
-    )]
+    /// CHECK: Metadata account
+    #[account(mut)]
     pub metadata: UncheckedAccount<'info>,
 
-    /// CHECK: Metaplex program
+    /// CHECK: Metaplex metadata program
     #[account(address = mpl_token_metadata::ID)]
     pub metadata_program: UncheckedAccount<'info>,
 
@@ -395,35 +387,25 @@ pub struct VerifyProof<'info> {
 // ============================================================================
 
 #[account]
+#[derive(InitSpace)]
 pub struct Proof {
     pub mint: Pubkey,
     pub owner: Pubkey,
+    #[max_len(32)]
     pub proof_id: String,
+    #[max_len(64)]
     pub title: String,
+    #[max_len(500)]
     pub work_description: String,
     pub status: ProofStatus,
     pub submission_date: i64,
     pub verification_date: i64,
+    #[max_len(32)]
     pub proof_type: String,
     pub verified_by: Pubkey,
+    #[max_len(200)]
     pub rejection_reason: String,
     pub bump: u8,
-}
-
-impl Proof {
-    pub const INIT_SPACE: usize = 
-        32 +                        // mint
-        32 +                        // owner
-        (4 + 32) +                  // proof_id
-        (4 + 64) +                  // title
-        (4 + 500) +                 // work_description
-        1 +                         // status
-        8 +                         // submission_date
-        8 +                         // verification_date
-        (4 + 32) +                  // proof_type
-        32 +                        // verified_by
-        (4 + 200) +                 // rejection_reason
-        1;                          // bump
 }
 
 #[account]
@@ -434,13 +416,12 @@ pub struct ProgramAuthority {
 }
 
 impl ProgramAuthority {
-    pub const INIT_SPACE: usize = 
-        32 +                        // primary_admin
-        1 +                         // admin_count
-        (32 * 10);                  // admins array
+    // Manual space calculation for the account
+    // 32 (primary_admin) + 1 (admin_count) + (32 * 10) (admins array)
+    pub const SPACE: usize = 32 + 1 + (32 * 10);
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
 pub enum ProofStatus {
     Pending,
     Verified,
