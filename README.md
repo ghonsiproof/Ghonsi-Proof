@@ -797,4 +797,4 @@ This project is proprietary and confidential. All rights reserved by Ghonsi Proo
 
 **Built with ❤️ by the Ghonsi Proof Team**
 
-*Making Web3 professional verification accessible to everyone.*
+*Making Web3 professional verification accessible to everyone..*
