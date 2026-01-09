@@ -539,7 +539,7 @@ const checkAuth = async () => {
 - Review `DEPLOYMENT_GUIDE.md` for setup issues
 - Review `SUPABASE_INTEGRATION.md` for API usage
 - Check Supabase docs: https://supabase.com/docs
-- Email: ghonsiproof@gmail.com
+- Email: support@ghonsiproof.com
 
 ---
 

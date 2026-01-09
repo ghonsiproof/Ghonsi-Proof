@@ -409,7 +409,7 @@ If you encounter issues:
 1. Check [Supabase Documentation](https://supabase.com/docs)
 2. Check [Vercel Documentation](https://vercel.com/docs)
 3. Review error logs in both platforms
-4. Contact: ghonsiproof@gmail.com
+4. Contact: support@ghonsiproof.com
 
 ---
 

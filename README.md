@@ -764,7 +764,7 @@ chore: Update dependencies
 ## 📞 Support
 
 For questions or issues:
-- **Email**: ghonsiproof@gmail.com
+- **Email**: support@ghonsiproof.com
 - **Twitter**: [@Ghonsiproof](https://x.com/Ghonsiproof)
 - **Discord**: [Join our community](https://discord.com/)
 

@@ -12,7 +12,7 @@ function Footer() {
       <div className="flex gap-3 justify-start mb-5 mt-5 pt-5 border-t border-white">
         <a href="https://x.com/Ghonsiproof" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={faXTwitter} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
         <a href="https://linkedin.com/company/ghonsiproof" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={faLinkedinIn} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
-        <a href="mailto:ghonsiproof@gmail.com"><FontAwesomeIcon icon={faEnvelope} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
+        <a href="mailto:support@ghonsiproof.com"><FontAwesomeIcon icon={faEnvelope} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
         <a href="https://discord.gg/your-invite-code" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={faDiscord} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
       </div>
       

@@ -231,7 +231,7 @@ import { createVerificationRequest } from './utils/verificationApi';
 
 ## 📞 Get Help
 
-- **Email**: ghonsiproof@gmail.com
+- **Email**: support@ghonsiproof.com
 - **Twitter**: [@Ghonsiproof](https://x.com/Ghonsiproof)
 - **Supabase Docs**: https://supabase.com/docs
 - **Vercel Docs**: https://vercel.com/docs
@@ -311,4 +311,4 @@ import { createVerificationRequest } from './utils/verificationApi';
 
 **🎊 Congratulations! Your backend is ready. Now bring it to life!**
 
-**Questions? Email ghonsiproof@gmail.com**
+**Questions? Email support@ghonsiproof.com**
