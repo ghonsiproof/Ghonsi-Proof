@@ -34,16 +34,35 @@ const Badge = ({ status }) => {
 const ProfileSection = ({ user, profile }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [uidCopied, setUidCopied] = useState(false);
   const walletAddress = profile?.wallet_address || "Not connected";
   const truncatedAddress = walletAddress !== "Not connected" 
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
     : walletAddress;
+
+  const generateUID = useCallback((userId) => {
+    if (!userId) return '000000000';
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString().padStart(9, '0').slice(0, 9);
+  }, []);
+
+  const userUID = generateUID(user?.id);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(walletAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [walletAddress]);
+
+  const handleUIDCopy = useCallback(() => {
+    navigator.clipboard.writeText(userUID);
+    setUidCopied(true);
+    setTimeout(() => setUidCopied(false), 2000);
+  }, [userUID]);
 
   return (
     <Card className="flex flex-col items-center text-center relative overflow-hidden !bg-[#151925] !border-white/5 shadow-lg ">
@@ -73,6 +92,13 @@ const ProfileSection = ({ user, profile }) => {
         <div className="flex justify-between items-center text-xs">
           <span className="text-gray-500 font-medium">Email</span>
           <span className="text-gray-200 font-mono">{user?.email || 'Not set'}</span>
+        </div>
+        <div className="flex justify-between items-center text-xs">
+          <span className="text-gray-500 font-medium">UID</span>
+          <button onClick={handleUIDCopy} className="flex items-center gap-2 text-gray-200 font-mono tracking-tight hover:text-white transition-colors">
+            {uidCopied ? 'Copied!' : userUID}
+            <Copy size={12} className={uidCopied ? 'text-green-500' : 'text-gray-500'} />
+          </button>
         </div>
         <div className="flex justify-between items-center text-xs">
           <span className="text-gray-500 font-medium">Status</span>

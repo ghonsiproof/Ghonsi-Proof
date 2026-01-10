@@ -53,7 +53,7 @@ function Login() {
       setMessage('❌ Please request an OTP code first');
       return;
     }
-    if (!otpCode || otpCode.length < 6) {
+    if (!otpCode || otpCode.length < 8) {
       setMessage('❌ Please enter the complete code from your email');
       return;
     }
@@ -90,7 +90,7 @@ function Login() {
     try {
       await sendOTPToEmail(trimmedEmail);
       setOtpSent(true);
-      setMessage('✅ OTP sent! Check your email for the 6-digit code.');
+      setMessage('✅ OTP sent! Check your email for the 8-digit code.');
     } catch (error) {
       setMessage('❌ Failed to send OTP: ' + error.message);
     } finally {
