@@ -16,6 +16,7 @@ import PublicProfile from './pages/publicProfile/publicProfile.jsx';
 import Policy from './pages/policy/policy.jsx';
 import Terms from './pages/terms/terms.jsx';
 import SettingsPage from './pages/settingsPage/settingsPage.jsx';
+import Message from './pages/message/message.jsx';
 import TestSupabase from './pages/test/testSupabase.jsx';
 import AuthCallback from './pages/auth/AuthCallback.jsx';
 import './App.css';
@@ -55,6 +56,7 @@ function App() {
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/createProfile" element={<ProtectedRoute><CreateProfile /></ProtectedRoute>} />
         <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+        <Route path="/message" element={<ProtectedRoute><Message /></ProtectedRoute>} />
       </Routes>
     </Router>
     </ThemeProvider>

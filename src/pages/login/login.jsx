@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
-import { sendOTPToEmail, verifyOTP } from '../../utils/supabaseAuth';
+import { sendOTPToEmail, verifyOTP, getCurrentUser } from '../../utils/supabaseAuth';
+import { createWelcomeMessage } from '../../utils/messagesApi';
+import { getProfile } from '../../utils/profileApi';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
@@ -62,8 +64,16 @@ function Login() {
     setMessage('');
     
     try {
-      await verifyOTP(trimmedEmail, otpCode);
+      const { isNewUser } = await verifyOTP(trimmedEmail, otpCode);
       setMessage('✅ Successfully signed in!');
+      
+      if (isNewUser) {
+        const user = await getCurrentUser();
+        const profile = await getProfile(user.id);
+        const firstName = profile?.full_name?.split(' ')[0] || 'User';
+        await createWelcomeMessage(user.id, firstName);
+      }
+      
       setTimeout(() => navigate('/dashboard'), 1000);
     } catch (error) {
       setMessage('❌ Invalid or expired code. Please try again.');

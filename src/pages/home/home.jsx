@@ -4,6 +4,7 @@ import { Wallet, Shield, Upload } from 'lucide-react';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
+import NotificationWidget from '../../components/NotificationWidget.jsx';
 import prosperImg from '../../assets/team/Prosper.png';
 import logo1 from '../../assets/ghonsi-proof-logos/png-logo/1.png';
 import logo2 from '../../assets/ghonsi-proof-logos/png-logo/2.png';
@@ -144,6 +145,7 @@ function Home() {
   return (
     <>
       <Header />
+      <NotificationWidget />
       <main>
         <section className="h-screen relative overflow-hidden mt-[125px] mb-0">
           <div className="w-full h-screen relative border-2 border-[#C19A4A]/30 rounded-xl box-border p-5">

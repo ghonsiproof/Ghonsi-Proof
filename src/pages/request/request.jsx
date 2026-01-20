@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Share2, Mail, Wallet, ExternalLink, ShieldCheck, Info, Check } from 'lucide-react';
+import { getCurrentUser } from '../../utils/supabaseAuth';
+import { createPortfolioRequestMessage } from '../../utils/messagesApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
-
-// Mock Auth function to replace missing import
-const getCurrentUser = async () => {
-  // Simulate an authenticated user or return null
-  return { email: 'visitor@example.com' };
-};
 
 // Mock Data
 const mockDatabase = {
@@ -97,11 +93,23 @@ function Request() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowRequestModal(false);
-    setShowSuccessModal(true);
-    setFormData({ name: '', email: '' });
+    
+    try {
+      // Send notification to profile owner
+      // Note: You'll need to get the actual profile owner's user_id from your database
+      // For now, this is a placeholder - replace with actual user_id lookup
+      const profileOwnerUserId = 'PROFILE_OWNER_USER_ID'; // TODO: Get from database
+      await createPortfolioRequestMessage(profileOwnerUserId, formData.name);
+      
+      setShowRequestModal(false);
+      setShowSuccessModal(true);
+      setFormData({ name: '', email: '' });
+    } catch (error) {
+      console.error('Error sending request:', error);
+      alert('Failed to send request. Please try again.');
+    }
   };
 
   if (loading) {
