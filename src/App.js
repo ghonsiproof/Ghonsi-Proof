@@ -17,6 +17,7 @@ import Policy from './pages/policy/policy.jsx';
 import Terms from './pages/terms/terms.jsx';
 import SettingsPage from './pages/settingsPage/settingsPage.jsx';
 import Message from './pages/message/message.jsx';
+import DashboardA from './pages/dashboardA/dashboardA.jsx';
 import TestSupabase from './pages/test/testSupabase.jsx';
 import AuthCallback from './pages/auth/AuthCallback.jsx';
 import './App.css';
@@ -50,7 +51,8 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/publicProfile" element={<PublicProfile />} />
         <Route path="/request" element={<Request />} />
-                
+        <Route path="/dashboardA" element={<DashboardA />} />
+
         {/* Protected Routes */}
         <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
