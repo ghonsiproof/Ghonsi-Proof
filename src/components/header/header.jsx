@@ -13,6 +13,7 @@ function Header() {
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const menuRef = useRef(null);
+  const buttonRef = useRef(null);
 
   // Check authentication status on mount
   useEffect(() => {
@@ -22,7 +23,8 @@ function Header() {
   // Handle clicks outside the menu to close it
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (menuRef.current && !menuRef.current.contains(event.target) && 
+          buttonRef.current && !buttonRef.current.contains(event.target)) {
         setIsMenuOpen(false);
       }
     };
@@ -105,7 +107,8 @@ function Header() {
               )}
             </button>
           )}
-          <button 
+          <button
+            ref={buttonRef}
             className="bg-none border-none p-0 flex items-center justify-center cursor-pointer" 
             onClick={handleMenuToggle}
             onMouseEnter={() => setIsHovered(true)}
