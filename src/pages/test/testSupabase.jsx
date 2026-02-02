@@ -12,9 +12,9 @@ function TestSupabase() {
   const [user, setUser] = useState(null);
   const [testResults, setTestResults] = useState([]);
 
-  const addResult = (test, status, message) => {
+  const addResult = useCallback((test, status, message) => {
     setTestResults(prev => [...prev, { test, status, message, time: new Date().toLocaleTimeString() }]);
-  };
+  }, []);
 
   const testConnection = useCallback(async () => {
     try {

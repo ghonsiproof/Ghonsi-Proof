@@ -239,7 +239,7 @@ function About() {
               <div className="flex gap-[5px] justify-start mb-5 mt-5 pt-5">
                 <a href="https://x.com/Ghonsiproof" className="w-9 h-9 no-underline flex items-center justify-center text-base cursor-pointer transition-[0.3s]"><FontAwesomeIcon icon={faXTwitter} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
                 <a href="https://linkedin.com" className="w-9 h-9 no-underline flex items-center justify-center text-base cursor-pointer transition-[0.3s]"><FontAwesomeIcon icon={faLinkedinIn} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
-                <a href="mailto:ghonsiproof@gmail.com" className="w-9 h-9 no-underline flex items-center justify-center text-base cursor-pointer transition-[0.3s]"><FontAwesomeIcon icon={faEnvelope} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
+                <a href="mailto:support@ghonsiproof.com" className="w-9 h-9 no-underline flex items-center justify-center text-base cursor-pointer transition-[0.3s]"><FontAwesomeIcon icon={faEnvelope} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
                 <a href="https://discord.com/" className="w-9 h-9 no-underline flex items-center justify-center text-base cursor-pointer transition-[0.3s]"><FontAwesomeIcon icon={faDiscord} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" /></a>
               </div>
             </div>

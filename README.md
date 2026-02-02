@@ -1,6 +1,6 @@
 # Ghonsi Proof
 
-**The On-Chain Trust Engine for the Web3 Workforce**
+**The On-Chain Trust Engine for the Web3 Workforce.**
 
 Ghonsi Proof is a decentralized platform built on Solana that transforms scattered professional contributions into a single verifiable on-chain identity. We help Web3 professionals prove their skills, authenticate their work, and showcase verified credentials.
 
@@ -764,7 +764,7 @@ chore: Update dependencies
 ## 📞 Support
 
 For questions or issues:
-- **Email**: ghonsiproof@gmail.com
+- **Email**: support@ghonsiproof.com
 - **Twitter**: [@Ghonsiproof](https://x.com/Ghonsiproof)
 - **Discord**: [Join our community](https://discord.com/)
 

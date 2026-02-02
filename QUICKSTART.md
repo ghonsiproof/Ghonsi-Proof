@@ -116,7 +116,7 @@ App opens at `http://localhost:3000` 🎉
 
 ## Support
 
-- Email: ghonsiproof@gmail.com
+- Email: support@ghonsiproof.com
 - Twitter: [@Ghonsiproof](https://x.com/Ghonsiproof)
 - GitHub Issues: [Report a bug](https://github.com/ghonsiproof/Ghonsi-Proof/issues)
 

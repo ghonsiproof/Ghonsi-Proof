@@ -147,7 +147,7 @@ function Policy() {
     {
       title: '10. Contact',
       content: (
-        <p className="text-[13px] leading-[1.6] text-[#CCC] m-0">For support contact us at <a href="mailto:ghonsiproof@gmail.com" className="text-[#C19A4A] hover:underline">ghonsiproof@gmail.com</a></p>
+        <p className="text-[13px] leading-[1.6] text-[#CCC] m-0">For support contact us at <a href="mailto:support@ghonsiproof.com" className="text-[#C19A4A] hover:underline">support@ghonsiproof.com</a></p>
       )
     }
   ];

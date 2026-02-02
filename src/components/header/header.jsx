@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, Bell } from 'lucide-react';
 import { getCurrentUser, logout } from '../../utils/supabaseAuth';
+import { getUnreadCount } from '../../utils/messagesApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 import './header.css';
 
@@ -9,8 +10,10 @@ function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const menuRef = useRef(null);
+  const buttonRef = useRef(null);
 
   // Check authentication status on mount
   useEffect(() => {
@@ -20,7 +23,8 @@ function Header() {
   // Handle clicks outside the menu to close it
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (menuRef.current && !menuRef.current.contains(event.target) && 
+          buttonRef.current && !buttonRef.current.contains(event.target)) {
         setIsMenuOpen(false);
       }
     };
@@ -38,6 +42,10 @@ function Header() {
     try {
       const currentUser = await getCurrentUser();
       setIsLoggedIn(!!currentUser);
+      if (currentUser) {
+        const count = await getUnreadCount(currentUser.id);
+        setUnreadCount(count);
+      }
     } catch (error) {
       setIsLoggedIn(false);
     }
@@ -85,21 +93,37 @@ function Header() {
     <header className="p-[0px_20px] fixed top-0 w-full z-[100] bg-black/30 backdrop-blur-[10px] box-border">
       <div className="flex justify-between items-center">
         <img src={logo} alt="Ghonsi proof Logo" className="h-[90px] w-auto object-contain" />
-        <button 
-          className="bg-none border-none p-0 flex items-center justify-center cursor-pointer" 
-          onClick={handleMenuToggle}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <Menu 
-            size={24} 
-            color={isHovered ? "#C19A4A" : "currentColor"}
-            style={{
-              transform: isHovered ? 'rotate(90deg)' : 'rotate(0deg)',
-              transition: 'all 0.3s ease'
-            }}
-          />
-        </button>
+        <div className="flex items-center gap-3">
+          {isLoggedIn && (
+            <button
+              onClick={() => navigate('/message')}
+              className="relative p-2 rounded-lg hover:bg-[#151925] transition-colors"
+            >
+              <Bell size={20} className="text-[#C19A4A]" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          )}
+          <button
+            ref={buttonRef}
+            className="bg-none border-none p-0 flex items-center justify-center cursor-pointer" 
+            onClick={handleMenuToggle}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <Menu 
+              size={24} 
+              color={isHovered ? "#C19A4A" : "currentColor"}
+              style={{
+                transform: isHovered ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'all 0.3s ease'
+              }}
+            />
+          </button>
+        </div>
       </div>
       <div ref={menuRef} className={`${isMenuOpen ? 'flex' : 'hidden'} absolute top-[70px] right-0 w-full bg-[#0B0F1B] backdrop-blur-[10px] flex-col gap-0 p-5 box-border`}>
         <nav>
