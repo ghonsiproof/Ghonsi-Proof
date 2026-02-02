@@ -82,7 +82,7 @@ function Header() {
   };
 
   return (
-    <header className="p-[15px_20px] fixed top-0 w-full z-[100] bg-black/30 backdrop-blur-[10px] box-border">
+    <header className="p-[0px_20px] fixed top-0 w-full z-[100] bg-black/30 backdrop-blur-[10px] box-border">
       <div className="flex justify-between items-center">
         <img src={logo} alt="Ghonsi proof Logo" className="h-[90px] w-auto object-contain" />
         <button 

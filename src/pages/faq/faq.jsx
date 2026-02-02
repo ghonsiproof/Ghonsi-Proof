@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDiscord } from '@fortawesome/free-brands-svg-icons';
+import { faTelegram } from '@fortawesome/free-brands-svg-icons';
 import { faBook } from '@fortawesome/free-solid-svg-icons';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
@@ -37,7 +37,7 @@ function FAQ() {
     },
     {
       question: "Can I share my Ghonsi proof profile on social media?",
-      answer: "Absolutely. Every Ghonsi proof profile has a shareable link. You can easily share your verified track record on X, LinkedIn, Discord, and other platforms to showcase your credibility."
+      answer: "Absolutely. Every Ghonsi proof profile has a shareable link. You can easily share your verified track record on X, LinkedIn, Telegram, and other platforms to showcase your credibility."
     },
     {
       question: "What wallets are supported?",
@@ -93,26 +93,39 @@ function FAQ() {
             ))}
           </div>
 
-          <div className="text-center py-[60px] px-5">
-            <h1 className="text-2xl font-semibold mb-3">Still have questions?</h1>
-            <p className="text-[13px] text-white max-w-[300px] mx-auto mb-8">Can't find the answer you're looking for? Our support team is here to help you get started with Ghonsi Proof.</p>
+         <div className="mt-[75px] mb-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div className="rounded-xl py-6 px-4 bg-[rgba(193,154,74,0.1)] border border-[rgba(193,154,74,0.3)]
+  transition-all duration-300 ease-in-out flex flex-col items-center
+  hover:bg-[rgba(193,154,74,0.15)] hover:border-[#C19A4A]">
 
-            <div className="flex gap-4 justify-center flex-wrap mt-[75px] mb-10">
-              <div className="rounded-xl py-6 px-4 bg-[rgba(193,154,74,0.1)] border border-[rgba(193,154,74,0.3)] transition-all duration-300 ease-in-out flex flex-col items-center flex-1 min-w-0 hover:bg-[rgba(193,154,74,0.15)] hover:border-[#C19A4A]">
-                <FontAwesomeIcon icon={faDiscord} className="text-[36px] text-[#C19A4A]" />
-                <h3 className="mt-[17px] text-base font-bold text-white mb-2.5 text-center">Discord community</h3>
-                <span className="text-xs text-[#CCC] leading-[1.5] mb-[15px] text-center">Join our active community for real time supports and discussions</span>
-                <a href="https://x.com/Ghonsiproof" className="text-[#C19A4A] no-underline text-[13px] font-semibold cursor-pointer transition-colors duration-200 ease-in-out flex items-center justify-center gap-2 hover:text-[#d9b563]">Join Discord <ArrowRight size={15} /></a>
-              </div>
+    <FontAwesomeIcon icon={faTelegram} className="text-[36px] text-[#C19A4A]" />
+    <h3 className="mt-[17px] text-base font-bold text-white mb-2.5 text-center">
+      Telegram community
+    </h3>
+    <span className="text-xs text-[#CCC] leading-[1.5] mb-[15px] text-center">
+      Join our active community for real time supports and discussions
+    </span>
+    <a href="https://t.me/" target="_blank" rel="noopener noreferrer" className="text-[#C19A4A] text-[13px] font-semibold flex items-center gap-2 hover:text-[#d9b563]">
+      Join Telegram <ArrowRight size={15} />
+    </a>
+  </div>
 
-              <div className="rounded-xl py-6 px-4 bg-[rgba(193,154,74,0.1)] border border-[rgba(193,154,74,0.3)] transition-all duration-300 ease-in-out flex flex-col items-center flex-1 min-w-0 hover:bg-[rgba(193,154,74,0.15)] hover:border-[#C19A4A]">
-                <FontAwesomeIcon icon={faBook} className="text-[50px] text-[#C19A4A]" />
-                <h3 className="mt-[17px] text-base font-bold text-white mb-2.5 text-center">Documentation</h3>
-                <span className="text-xs text-[#CCC] leading-[1.5] mb-[15px] text-center">Comprehensive guides and tutorials to get you started.</span>
-                <a href="https://x.com/Ghonsiproof" className="text-[#C19A4A] no-underline text-[13px] font-semibold cursor-pointer transition-colors duration-200 ease-in-out flex items-center justify-center gap-2 hover:text-[#d9b563]">View Docs <ArrowRight size={15} /></a>
-              </div>
-            </div>
-          </div>
+  <div className="rounded-xl py-6 px-4 bg-[rgba(193,154,74,0.1)] border border-[rgba(193,154,74,0.3)]
+  transition-all duration-300 ease-in-out flex flex-col items-center
+  hover:bg-[rgba(193,154,74,0.15)] hover:border-[#C19A4A]">
+
+    <FontAwesomeIcon icon={faBook} className="text-[50px] text-[#C19A4A]" />
+    <h3 className="mt-[17px] text-base font-bold text-white mb-2.5 text-center">
+      Documentation
+    </h3>
+    <span className="text-xs text-[#CCC] leading-[1.5] mb-[15px] text-center">
+      Comprehensive guides and tutorials to get you started.
+    </span>
+    <a href="https://docs.ghonsiproof.com" target="_blank" rel="noopener noreferrer" className="text-[#C19A4A] text-[13px] font-semibold flex items-center gap-2 hover:text-[#d9b563]">
+      View Docs <ArrowRight size={15} />
+    </a>
+  </div>
+         </div>
         </section>
       </main>
       <Footer />
