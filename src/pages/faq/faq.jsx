@@ -121,7 +121,7 @@ function FAQ() {
     <span className="text-xs text-[#CCC] leading-[1.5] mb-[15px] text-center">
       Comprehensive guides and tutorials to get you started.
     </span>
-    <a href="https://docs.ghonsiproof.com" target="_blank" rel="noopener noreferrer" className="text-[#C19A4A] text-[13px] font-semibold flex items-center gap-2 hover:text-[#d9b563]">
+    <a href="https://docs.google.com/document/d/11i4kNIQrShArWAIAWOppRJKZ7Go_rkkgDu2b98cQqT8/edit" target="_blank" rel="noopener noreferrer" className="text-[#C19A4A] text-[13px] font-semibold flex items-center gap-2 hover:text-[#d9b563]">
       View Docs <ArrowRight size={15} />
     </a>
   </div>
