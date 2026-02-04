@@ -231,7 +231,10 @@ export const updateProofStatus = async (proofId, status, verifierId = null) => {
 export const profileWithfileProofs = async () => {
   const { data: profile, error } = await supabase
     .from("profiles_with_proofs_files")
-    .select("*");
+    .select(`
+      *,
+      users(wallet_address)
+    `);
   if (error) throw error;
   return profile;
 };
@@ -261,4 +264,30 @@ export const getProofStats = async (userId) => {
   });
 
   return stats;
+};
+
+// Get system-wide proof statistics for the Admin Dashboard
+export const getGlobalProofStats = async () => {
+  try {
+    const [totalResult, verifiedResult] = await Promise.all([
+      supabase
+        .from('proofs')
+        .select('*', { count: 'exact', head: true }),
+      supabase
+        .from('proofs')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'verified')
+    ]);
+
+    if (totalResult.error) throw totalResult.error;
+    if (verifiedResult.error) throw verifiedResult.error;
+
+    return {
+      total: totalResult.count || 0,
+      verified: verifiedResult.count || 0
+    };
+  } catch (error) {
+    console.error('Error fetching global stats:', error);
+    throw error;
+  }
 };

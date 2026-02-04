@@ -67,7 +67,7 @@ export const getProfileByWallet = async (walletAddress) => {
     .select(
       `
       *,
-      users!inner(wallet_address)
+      users!inner(wallet_address, email)
     `
     )
     .eq("users.wallet_address", walletAddress)

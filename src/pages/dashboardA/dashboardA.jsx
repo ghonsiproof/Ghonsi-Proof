@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserCheck, UserX, FileText, Search, X, Shield, Eye } from 'lucide-react';
 import { supabase } from '../../config/supabaseClient';
-import { getGlobalProofStats } from '../../utils/proofsApi';
+import { getGlobalProofStats, updateProofStatus } from '../../utils/proofsApi';
+import { getCurrentUser } from '../../utils/supabaseAuth';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
 function DashboardA() {
@@ -27,14 +28,28 @@ function DashboardA() {
             id,
             display_name,
             is_public,
-            user_id,
-            proofs (count)
+            created_at,
+            users (email, wallet_address),
+            proofs (status)
           `);
+
         if (!error) {
-          setRealUsers(data);
+          // Map the nested data to match your table's expected format
+          const formattedUsers = data.map(profile => ({
+            id: profile.id,
+            fullName: profile.display_name,
+            email: profile.users?.email,
+            status: profile.is_public ? 'Active' : 'Inactive',
+            proofs: {
+              verified: profile.proofs.filter(p => p.status === 'verified').length,
+              pending: profile.proofs.filter(p => p.status === 'pending').length
+            },
+            dateJoined: new Date(profile.created_at).toLocaleDateString()
+          }));
+          setRealUsers(formattedUsers);
           // Calculate stats from real data
-          const totalUsers = data.length;
-          const activeUsers = data.filter(user => user.is_public).length; // Assuming public profiles are active
+          const totalUsers = formattedUsers.length;
+          const activeUsers = formattedUsers.filter(user => user.status === 'Active').length;
           const inactiveUsers = totalUsers - activeUsers;
           setStats(prevStats => ({
             ...prevStats,
@@ -65,7 +80,20 @@ function DashboardA() {
     loadGlobalStats();
   }, []);
 
+  const handleVerify = async (proofId) => {
+    try {
+      const admin = await getCurrentUser(); // Get current admin ID
+      await updateProofStatus(proofId, 'verified', admin.id);
 
+      alert('✅ Proof officially verified and recorded!');
+
+      // Refresh your user list to show the new status
+      window.location.reload();
+    } catch (error) {
+      console.error('Verification failed:', error);
+      alert('Error updating status.');
+    }
+  };
 
   const matchDetails = {
     title: 'Web3 Hackathon Winner',
@@ -80,11 +108,11 @@ function DashboardA() {
   };
 
   const filteredUsers = realUsers.filter(user => {
-    const matchesSearch = user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.user_id?.includes(searchTerm);
+    const matchesSearch = user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'All' ||
-                         (filterStatus === 'Active' && user.is_public) ||
-                         (filterStatus === 'Inactive' && !user.is_public);
+                         (filterStatus === 'Active' && user.status === 'Active') ||
+                         (filterStatus === 'Inactive' && user.status === 'Inactive');
     return matchesSearch && matchesFilter;
   });
 
@@ -189,7 +217,7 @@ function DashboardA() {
               {filteredUsers.map((user, index) => (
                 <tr key={index} className="border-b border-gray-800 hover:bg-[#1A2332]">
                   <td className="py-3 px-4">
-                    <div className="text-sm font-medium">{user.id}</div>
+                    <div className="text-sm font-medium">{user.fullName}</div>
                     <div className="text-xs text-gray-400">{user.email}</div>
                   </td>
                   <td className="py-3 px-4">
@@ -284,12 +312,22 @@ function DashboardA() {
                         <p className="text-xs text-gray-400">🏆 Achievement: {proof.achievement}</p>
                         <p className="text-xs text-gray-400">Submitted: {proof.submitted}</p>
                       </div>
-                      <button
-                        onClick={() => setSelectedMatch(matchDetails)}
-                        className="bg-[#C19A4A] text-black text-xs px-3 py-1.5 rounded font-medium hover:bg-[#D4A854] flex items-center gap-1"
-                      >
-                        <Eye size={14} /> View Matches
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setSelectedMatch(matchDetails)}
+                          className="bg-[#C19A4A] text-black text-xs px-3 py-1.5 rounded font-medium hover:bg-[#D4A854] flex items-center gap-1"
+                        >
+                          <Eye size={14} /> View Matches
+                        </button>
+                        {proof.status === 'pending' && (
+                          <button
+                            onClick={() => handleVerify(proof.id)}
+                            className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600"
+                          >
+                            Approve Proof
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

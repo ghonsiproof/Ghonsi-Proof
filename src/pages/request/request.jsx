@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Share2, Mail, Wallet, ExternalLink, ShieldCheck, Info, Check } from 'lucide-react';
 // import { getCurrentUser } from '../../utils/supabaseAuth';
 import { createPortfolioRequestMessage } from '../../utils/messagesApi';
+import { getProfileByWallet } from '../../utils/profileApi';
+import { getUserProofs } from '../../utils/proofsApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 import { useLocation, useNavigate } from 'react-router-dom';
 // Mock Data
@@ -9,6 +11,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 function Request() {
   const [profileData, setProfileData] = useState(null);
+  const [proofs, setProofs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -21,42 +24,74 @@ function Request() {
 
   // Process the real data from location state
   useEffect(() => {
-    // Redirect to home if no bubble data is received
-    if (!bubble?.fullProfile) {
-      navigate('/home');
-      return;
-    }
+    const loadLiveProfile = async () => {
+      try {
+        setLoading(true);
+        const urlParams = new URLSearchParams(window.location.search);
+        const wallet = urlParams.get('wallet');
 
-    if (bubble?.fullProfile) {
-      const { fullProfile } = bubble;
-      // Transform the data to match the component's expected format
-      const processedData = {
-        name: fullProfile.displayName,
-        role: fullProfile.profession,
-        bio: fullProfile.bio,
-        email: '', // Email not provided in the data
-        wallet: '', // Wallet not provided in the data
-        profilePhotoUrl: fullProfile.avatarUrl,
-        stats: {
-          proofs: fullProfile.proofs.length,
-          achievements: 0 // Achievements not provided in the data
-        },
-        skills: [], // Skills not provided in the data
-        proofs: fullProfile.proofs.map(proof => ({
+        if (!wallet) {
+          navigate('/home');
+          return;
+        }
+
+        // 1. Fetch Profile by wallet
+        const profile = await getProfileByWallet(wallet);
+        if (!profile) {
+          navigate('/home');
+          return;
+        }
+
+        // 2. Fetch User's Proofs
+        const allProofs = await getUserProofs(profile.user_id);
+        // Display only verified proofs on this public-facing request page
+        const verifiedProofs = allProofs.filter(p => p.status === 'verified');
+
+        // Transform the data to match the component's expected format
+        const processedData = {
+          name: profile.display_name,
+          role: profile.profession,
+          bio: profile.bio,
+          email: profile.users?.email || '', // Email from users table
+          wallet: profile.users?.wallet_address || '', // Wallet from users table
+          profilePhotoUrl: profile.avatar_url,
+          social_links: profile.social_links || {},
+          stats: {
+            proofs: verifiedProofs.length,
+            achievements: 0 // Achievements not provided in the data
+          },
+          skills: [], // Skills not provided in the data
+          proofs: verifiedProofs.map(proof => ({
+            id: proof.id,
+            title: proof.proof_name,
+            status: proof.status,
+            type: proof.proof_type,
+            date: new Date(proof.created_at).toLocaleDateString(),
+            desc: proof.summary,
+            hash: proof.blockchain_tx || 'N/A',
+            files: proof.files
+          }))
+        };
+
+        setProfileData(processedData);
+        setProofs(verifiedProofs.map(proof => ({
           id: proof.id,
           title: proof.proof_name,
           status: proof.status,
           type: proof.proof_type,
-          date: new Date(proof.proof_created_at).toLocaleDateString(),
+          date: new Date(proof.created_at).toLocaleDateString(),
           desc: proof.summary,
           hash: proof.blockchain_tx || 'N/A',
           files: proof.files
-        }))
-      };
-
-      setProfileData(processedData);
-    }
-    setLoading(false);
+        })));
+      } catch (err) {
+        console.error('Error loading live data:', err);
+        navigate('/home');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadLiveProfile();
   }, [bubble, navigate]);
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -106,7 +141,7 @@ function Request() {
   }
 
   const shortWallet = `${profileData.wallet.substring(0, 4)}...${profileData.wallet.substring(profileData.wallet.length - 4)}`;
-  const proofsToShow = showMore ? profileData.proofs : profileData.proofs.slice(0, 2);
+  const proofsToShow = showMore ? proofs : proofs.slice(0, 2);
 
   return (
     <div className="max-w-full mx-auto bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">
@@ -166,6 +201,26 @@ function Request() {
                 <span className="font-mono">{shortWallet}</span>
                 <ExternalLink className="w-2.5 h-2.5 text-gray-500" />
               </a>
+              {/* Only render if linkedin exists in social_links JSONB */}
+              {profileData?.social_links?.linkedin && (
+                <a href={profileData.social_links.linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#C19A4A] transition-colors">
+                  <span>LinkedIn</span>
+                  <ExternalLink className="w-2.5 h-2.5 text-gray-500" />
+                </a>
+              )}
+              {/* Repeat for twitter, github, etc. */}
+              {profileData?.social_links?.twitter && (
+                <a href={profileData.social_links.twitter} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#C19A4A] transition-colors">
+                  <span>Twitter</span>
+                  <ExternalLink className="w-2.5 h-2.5 text-gray-500" />
+                </a>
+              )}
+              {profileData?.social_links?.github && (
+                <a href={profileData.social_links.github} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#C19A4A] transition-colors">
+                  <span>GitHub</span>
+                  <ExternalLink className="w-2.5 h-2.5 text-gray-500" />
+                </a>
+              )}
             </div>
 
             <div className="pt-2">
@@ -178,7 +233,7 @@ function Request() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#131825] border border-gray-800 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-white">{profileData.stats.proofs}</div>
+            <div className="text-2xl font-bold text-white">{proofs.length}</div>
             <div className="text-xs text-gray-400 mt-1">Total Proofs</div>
           </div>
           <div className="bg-[#131825] border border-gray-800 rounded-xl p-4 text-center">
