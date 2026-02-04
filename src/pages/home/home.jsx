@@ -1,27 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { getCurrentUser } from '../utils/supabaseAuth';
+import supabase from '../utils/supabase';
+import Header from '../components/header/header';
+import Footer from '../components/footer/footer';
+import NotificationWidget from '../components/notificationWidget/notificationWidget';
 import { Wallet, Shield, Upload } from 'lucide-react';
-import { getCurrentUser } from '../../utils/supabaseAuth';
-import Header from '../../components/header/header.jsx';
-import Footer from '../../components/footer/footer.jsx';
-import NotificationWidget from '../../components/NotificationWidget.jsx';
-import logo1 from '../../assets/ghonsi-proof-logos/png-logo/1.png';
-import { profileWithfileProofs } from '../../utils/proofsApi.js';
+import bubbleData from '../data/bubbleData';
 
-import './home.css';
-
-function Home() {
-  const [bubbles, setBubbles] = useState([]);
+const Home = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [profiles, setProfiles] = useState([]);
   const [selectedBubble, setSelectedBubble] = useState(null);
   const [pinnedBubble, setPinnedBubble] = useState(null);
   const [summaryPosition, setSummaryPosition] = useState({ top: 0, left: 0 });
   const [currentSlide, setCurrentSlide] = useState(0);
   const [hoveredCard, setHoveredCard] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -35,48 +30,29 @@ function Home() {
     checkAuth();
   }, []);
 
-useEffect(() => {
-  const loadProfiles = async () => {
-    try {
-      const data = await profileWithfileProofs();
-      
-      if (data && data.length > 0) {
-        const formattedBubbles = data.map(profile => ({
-          // Use display_name from your data structure
-          name: profile.display_name || profile.full_name || profile.username || 'Anonymous',
-          bio: profile.bio || profile.profession || 'Web3 Professional',
-          img: profile.avatar_url || logo1,
-          id: profile.profile_id || profile.id,
-          // Store the full profile data for when bubble is clicked
-          fullProfile: {
-            userId: profile.user_id,
-            profileId: profile.profile_id,
-            displayName: profile.display_name,
-            bio: profile.bio,
-            profession: profile.profession,
-            location: profile.location,
-            socialLinks: profile.social_links || {},
-            proofs: profile.proofs || [],
-            avatarUrl: profile.avatar_url,
-            isPublic: profile.is_public
-          }
-        }));
-        
-        setBubbles(formattedBubbles);
-      } else {
-        setBubbles([]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch profiles", error);
-      setBubbles([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  loadProfiles();
-}, []);
+  useEffect(() => {
+    const fetchPublicProfiles = async () => {
+      // Fetch only public profiles to display on the home page bubbles
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          display_name,
+          bio,
+          avatar_url,
+          users!inner(wallet_address)
+        `)
+        .eq('is_public', true)
+        .limit(10); // Limit to 10 for performance
 
+      if (error) {
+        console.error('Error fetching profiles:', error);
+      } else {
+        setProfiles(data);
+      }
+    };
+
+    fetchPublicProfiles();
+  }, []);
 
   const positionSummaryBox = (event) => {
     const bubbleRect = event.currentTarget.getBoundingClientRect();
@@ -151,9 +127,14 @@ useEffect(() => {
     setCurrentSlide((prev) => (prev + 1) % 3);
   };
 
-  // Triple the bubbles for infinite scroll effect, or just use what we have if plenty
+  const mappedProfiles = profiles.map(profile => ({
+    name: profile.display_name,
+    bio: profile.bio,
+    img: profile.avatar_url,
+    wallet_address: profile.users.wallet_address
+  }));
 
-  const allBubbles = [...bubbles];
+  const allBubbles = profiles.length > 0 ? [...mappedProfiles, ...mappedProfiles, ...mappedProfiles] : [...bubbleData, ...bubbleData, ...bubbleData];
 
   return (
     <>
@@ -161,11 +142,6 @@ useEffect(() => {
       <NotificationWidget />
       <main>
         <section className="h-screen relative overflow-hidden mt-[125px] mb-0">
-          {loading ? (
-            <div className="w-full h-full flex justify-center items-center">
-              <div className="w-10 h-10 border-4 border-t-[#C19A4A] border-gray-700 rounded-full animate-spin"></div>
-            </div>
-          ) : (
           <div className="w-full h-screen relative border-2 border-[#C19A4A]/30 rounded-xl box-border p-5">
             {selectedBubble && (
               <div
@@ -177,26 +153,14 @@ useEffect(() => {
                 onMouseEnter={() => {}}
                 onMouseLeave={handleBubbleLeave}
               >
-                <img
-                  id="summaryImg"
-                  src={selectedBubble.img}
-                  alt="profile"
-                  className="w-[60px] h-[60px] rounded-full mb-2.5"
-                />
-                <h3 id="summaryName" className="mb-1.5 text-base font-bold">
-                  {selectedBubble.name}
-                </h3>
-                <p
-                  id="summaryBio"
-                  className="text-xs text-[#CCC] mb-4 leading-[1.4]"
-                >
-                  {selectedBubble.bio}
-                </p>
-                <button
-                  id="showProfileBtn"
-                  className="mt-2.5 w-full p-2.5 border-none bg-[#C19A4A] text-[#1a1a2e] cursor-pointer rounded-md font-semibold transition-all duration-200 hover:bg-[#d9b563] hover:scale-[0.98]"
-                >
-                  <NavLink to={"/request"} state={{bubble : selectedBubble}} >Show Profile</NavLink>
+                <img id="summaryImg" src={selectedBubble.img} alt="profile" className="w-[60px] h-[60px] rounded-full mb-2.5" />
+                <h3 id="summaryName" className="mb-1.5 text-base font-bold">{selectedBubble.name}</h3>
+                <p id="summaryBio" className="text-xs text-[#CCC] mb-4 leading-[1.4]">{selectedBubble.bio}</p>
+                <button id="showProfileBtn" onClick={() => {
+                  // Assuming selectedBubble now has the wallet_address from Supabase
+                  navigate(`/request?wallet=${selectedBubble.wallet_address}`);
+                }} className="mt-2.5 w-full p-2.5 border-none bg-[#C19A4A] text-[#1a1a2e] cursor-pointer rounded-md font-semibold transition-all duration-200 hover:bg-[#d9b563] hover:scale-[0.98]">
+                  Show Profile
                 </button>
               </div>
             )}
@@ -228,7 +192,6 @@ useEffect(() => {
               ))}
             </div>
           </div>
-          )}
         </section>
 
         <section className="text-justify mt-[23px] p-5">

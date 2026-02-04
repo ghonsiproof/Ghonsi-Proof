@@ -290,7 +290,44 @@ CREATE POLICY "Users can delete their own verification requests" ON verification
 
 ---
 
-## 7. Storage Bucket for Proof Files
+## 7. Messages Table
+
+```sql
+-- Messages table for user notifications
+CREATE TABLE messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX idx_messages_user_id ON messages(user_id);
+CREATE INDEX idx_messages_is_read ON messages(is_read);
+CREATE INDEX idx_messages_created_at ON messages(created_at DESC);
+
+-- Enable Row Level Security
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY "Users can view their own messages" ON messages
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert messages for themselves" ON messages
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own messages" ON messages
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own messages" ON messages
+  FOR DELETE USING (auth.uid() = user_id);
+```
+
+---
+
+## 8. Storage Bucket for Proof Files
 
 ```sql
 -- Create storage bucket for proof files
@@ -351,7 +388,7 @@ CREATE TRIGGER update_verification_requests_updated_at BEFORE UPDATE ON verifica
 
 ---
 
-## 9. Initial Data (Optional)
+## 10. Initial Data (Optional)
 
 ```sql
 -- Insert sample proof types documentation (optional)

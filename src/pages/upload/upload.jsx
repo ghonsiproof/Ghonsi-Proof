@@ -5,6 +5,9 @@ import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import './upload.css';
 
+// API endpoint for document extraction
+const EXTRACTION_API_URL = 'https://credentials-api-irsm.onrender.com/api/documents/extract_and_create/';
+
 function Upload() {
   const [proofType, setProofType] = useState('');
   const [proofName, setProofName] = useState('');
@@ -20,6 +23,9 @@ function Upload() {
   const [uploadError, setUploadError] = useState('');
   const [referenceError, setReferenceError] = useState('');
   const [supportingError, setSupportingError] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  // eslint-disable-next-line no-unused-vars
+  const [extractedData, setExtractedData] = useState(null);
 
   const dropdownRef = useRef(null);
   const referenceFileInputRef = useRef(null);
@@ -93,6 +99,56 @@ function Upload() {
     { value: 'community', label: 'Community Contributions / Public Work' }
   ];
 
+  // Helper functions for constructing auto-fill summaries
+  const constructCertificateSummary = (data) => {
+    const fields = [];
+    if (data.title || data.certificate_title) fields.push(data.title || data.certificate_title);
+    if (data.issuer || data.organization) fields.push(`Issuer: ${data.issuer || data.organization}`);
+    if (data.completion_date || data.date) fields.push(`Completion Date: ${data.completion_date || data.date}`);
+    if (data.credential_type) fields.push(`Credential Type: ${data.credential_type}`);
+    if (data.instructor_names) fields.push(`Instructor Names: ${data.instructor_names}`);
+    return fields.join(', ');
+  };
+
+  const constructJobHistorySummary = (data) => {
+    const fields = [];
+    if (data.job_title) fields.push(data.job_title);
+    if (data.employer_name || data.organization) fields.push(`Employer: ${data.employer_name || data.organization}`);
+    if (data.employment_type) fields.push(`Employment Type: ${data.employment_type}`);
+    if (data.start_date && data.end_date) {
+      fields.push(`Dates: ${data.start_date} - ${data.end_date}`);
+    } else if (data.date) {
+      fields.push(`Date: ${data.date}`);
+    }
+    if (data.job_category) fields.push(`Category: ${data.job_category}`);
+    return fields.join(', ');
+  };
+
+  const constructSkillsSummary = (data) => {
+    const fields = [];
+    if (data.skill_name) fields.push(data.skill_name);
+    if (data.proficiency_level) fields.push(`Proficiency: ${data.proficiency_level}`);
+    if (data.skill_category) fields.push(`Category: ${data.skill_category}`);
+    return fields.join(', ');
+  };
+
+  const constructMilestonesSummary = (data) => {
+    const fields = [];
+    if (data.milestone_type) fields.push(data.milestone_type);
+    if (data.issuer_name || data.organization) fields.push(`Issuer: ${data.issuer_name || data.organization}`);
+    if (data.month_year || data.date) fields.push(`Date: ${data.month_year || data.date}`);
+    if (data.milestone_summary || data.description) fields.push(data.milestone_summary || data.description);
+    return fields.join(', ');
+  };
+
+  const constructCommunitySummary = (data) => {
+    const fields = [];
+    if (data.contribution_type) fields.push(data.contribution_type);
+    if (data.platform_name) fields.push(`Platform: ${data.platform_name}`);
+    if (data.date) fields.push(`Date: ${data.date}`);
+    return fields.join(', ');
+  };
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -132,7 +188,7 @@ function Upload() {
     setReferenceFiles([file]);
   };
 
-  const handleSupportingFiles = (files) => {
+  const handleSupportingFiles = async (files) => {
     setSupportingError('');
     if (files.length === 0) return;
     const file = files[0];
@@ -143,11 +199,105 @@ function Upload() {
       return;
     }
     setSupportingFiles([file]);
+
+    // Extract data from the uploaded file
+    try {
+      const extractedData = await extractDataFromFile(file);
+      if (extractedData && typeof extractedData === 'object') {
+        console.log('Data extracted successfully:', extractedData);
+
+        // Auto-fill form fields based on extracted data if they are empty
+        // Handle various possible field names from the API
+        const title = extractedData.title || extractedData.name || extractedData.certificate_title || extractedData.proof_name;
+        const description = extractedData.summary || extractedData.description || extractedData.details;
+
+        if (!proofName && title) {
+          setProofName(title);
+        }
+
+        // Auto-fill summary based on proof type and available data
+        if (!summary) {
+          let autoSummary = '';
+
+          if (description) {
+            autoSummary = description;
+          } else if (proofType && extractedData) {
+            // Construct summary based on proof type
+            switch (proofType) {
+              case 'certificates':
+                autoSummary = constructCertificateSummary(extractedData);
+                break;
+              case 'job_history':
+                autoSummary = constructJobHistorySummary(extractedData);
+                break;
+              case 'skills':
+                autoSummary = constructSkillsSummary(extractedData);
+                break;
+              case 'milestones':
+                autoSummary = constructMilestonesSummary(extractedData);
+                break;
+              case 'community':
+                autoSummary = constructCommunitySummary(extractedData);
+                break;
+              default:
+                // Generic summary construction
+                const fields = [];
+                if (title) fields.push(title);
+                if (extractedData.issuer || extractedData.organization) fields.push(`Issuer: ${extractedData.issuer || extractedData.organization}`);
+                if (extractedData.date || extractedData.completion_date) fields.push(`Date: ${extractedData.date || extractedData.completion_date}`);
+                autoSummary = fields.join(', ');
+            }
+          }
+
+          if (autoSummary.trim()) {
+            setSummary(autoSummary);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to extract data:', error);
+      // Don't show error to user - extraction is optional
+    }
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
+  };
+
+  // Function to extract data from uploaded files using the API
+  const extractDataFromFile = async (file) => {
+    if (!file) return null;
+
+    setIsExtracting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('proof_type', proofType || 'certificate'); // Include proof type, default to certificate
+
+      const response = await fetch(EXTRACTION_API_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Extracted data:', result);
+
+      // Store extracted data for potential auto-fill
+      setExtractedData(result);
+
+      return result;
+    } catch (error) {
+      console.error('Error extracting data from file:', error);
+      // Don't throw error - extraction is optional, continue with upload
+      return null;
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -227,6 +377,8 @@ function Upload() {
     setSupportingError('');
     setUploadError('');
     setIsUploading(false);
+    setIsExtracting(false);
+    setExtractedData(null);
   };
 
   const getFileIcon = (file) => {
@@ -424,6 +576,12 @@ function Upload() {
                         <i className={`fa-solid ${getFileIcon(file)} text-brand-gold/70`}></i>
                         <span className="truncate text-gray-300 max-w-[150px]">{file.name}</span>
                         <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                        {isExtracting && (
+                          <span className="text-xs text-brand-gold flex items-center gap-1">
+                            <i className="fa-solid fa-spinner fa-spin"></i>
+                            Extracting...
+                          </span>
+                        )}
                       </div>
                       <button type="button" onClick={() => setSupportingFiles([])} className="text-gray-500 hover:text-red-400 transition-colors">
                         <i className="fa-solid fa-xmark"></i>

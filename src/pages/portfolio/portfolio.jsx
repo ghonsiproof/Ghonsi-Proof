@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, ArrowLeft } from 'lucide-react';
+import { getProofStats, getUserProofs } from '../../utils/proofsApi';
+import { getCurrentUser } from '../../utils/supabaseAuth';
+import { getProfile } from '../../utils/profileApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
 // Mock components for other pages to demonstrate navigation
@@ -62,7 +65,11 @@ function Portfolio({ onNavigate }) {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-  
+  const [stats, setStats] = useState({ total: 0, verified: 0 });
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [proofs, setProofs] = useState([]);
+
   const tabsRef = useRef(null);
 
   useEffect(() => {
@@ -71,106 +78,83 @@ function Portfolio({ onNavigate }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const loadProfileData = async () => {
+      try {
+        const currentUser = await getCurrentUser(); // Get auth user for email
+        if (currentUser) {
+          setUser(currentUser);
+
+          // Fetch profile and proofs
+          const profileData = await getProfile(currentUser.id); // Get profile for display name and bio
+          setProfile(profileData);
+
+          const userProofs = await getUserProofs(currentUser.id);
+          setProofs(userProofs);
+
+          // Update stats
+          const liveStats = await getProofStats(currentUser.id);
+          setStats({ total: liveStats.total, verified: liveStats.verified });
+        }
+      } catch (err) {
+        console.error('Error loading profile data:', err);
+      }
+    };
+    loadProfileData();
+  }, []);
+
   const copyEmail = () => {
-    navigator.clipboard.writeText(profile.email.replace(/\*/g, '')).then(() => {
-      setEmailCopied(true);
-      setTimeout(() => setEmailCopied(false), 2000);
-    }).catch(() => {});
-  };
-
-  const profile = {
-    name: "Alex Chen",
-    title: "Senior Web3 Developer",
-    bio: "Passionate Web3 developer with 5+ years of experience building decentralized applications on Solana. Specialized in DeFi protocols, smart contract security, and full-stack dApp development. Committed to advancing the Web3 ecosystem.",
-    email: "alex.c***@gmail.com",
-    wallet: "7x9k...mN2p",
-    stats: { total: 12, verified: 8 },
-    skills: ["Solana Development", "React", "Security Auditing", "Smart Contracts", "Web3.js", "Anchor Framework", "DeFi Protocols"]
-  };
-
-  const proofs = [
-    {
-      id: "GH-C-012",
-      title: "Senior Frontend Developer Certification",
-      type: "Certificate",
-      date: "2024-01-15",
-      description: "Advanced React and TypeScript certification from Web3 Academy. Demonstrated proficiency in modern frontend development practices, component architecture, and state management.",
-      tags: ["React", "TypeScript", "Web3.js"],
-      verified: true,
-      hash: "0x7f9a2b8c3d4...",
-      image: "https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=1000&auto=format&fit=crop"
-    },
-    {
-      id: "GH-M-018",
-      title: "Blockchain Security Audit",
-      type: "Milestone",
-      date: "2023-12-20",
-      description: "Completed comprehensive security audit for major DeFi protocol, identifying and resolving critical vulnerabilities. Improved protocol security by 95% and prevented potential $5M+ in losses.",
-      tags: ["Security Auditing", "Smart Contracts", "DeFi"],
-      verified: true,
-      hash: "0x8a1b2c3d4e5...",
-      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1000&auto=format&fit=crop"
-    },
-    {
-      id: "GH-P-022",
-      title: "DeFi Protocol Development",
-      type: "Project",
-      date: "2023-11-10",
-      description: "Built and deployed a yield farming protocol on Solana with $2M+ TVL. Implemented innovative tokenomics and automated market making features.",
-      tags: ["Solana", "Smart Contracts", "DeFi"],
-      verified: true,
-      hash: "0x9b2c3d4e5f6...",
-      image: "https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?q=80&w=1000&auto=format&fit=crop"
-    },
-    {
-      id: "GH-A-011",
-      title: "Web3 Hackathon Winner",
-      type: "Achievement",
-      date: "2023-09-15",
-      description: "First place winner at Solana Global Hackathon for building an innovative NFT marketplace with cross-chain compatibility.",
-      tags: ["NFTs", "Cross-chain", "Marketplace"],
-      verified: true,
-      hash: "0x8a1b2c3d4e5...",
-      image: "https://images.unsplash.com/photo-1642104704074-907c0698b98d?q=80&w=1000&auto=format&fit=crop"
-    },
-    {
-      id: "GH-C-007",
-      title: "Rust Programming Mastery",
-      type: "Certificate",
-      date: "2023-08-20",
-      description: "Advanced Rust programming certification focusing on systems programming and blockchain development.",
-      tags: ["Rust", "Systems Programming", "Blockchain"],
-      verified: true,
-      hash: "0xb3d4e5f6a7b...",
-      image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1000&auto=format&fit=crop"
-    },
-    {
-      id: "GH-P-067",
-      title: "DAO Governance Implementation",
-      type: "Project",
-      date: "2023-07-05",
-      description: "Designed and implemented governance mechanisms for a 10,000+ member DAO, including voting systems and proposal management.",
-      tags: ["DAO", "Governance", "Community"],
-      verified: true,
-      hash: "0x8a1b2c3d4e5...",
-      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop"
+    const emailToCopy = user?.email || "";
+    if (emailToCopy) {
+      navigator.clipboard.writeText(emailToCopy).then(() => {
+        setEmailCopied(true);
+        setTimeout(() => setEmailCopied(false), 2000);
+      });
     }
-  ];
+  };
+
+  // Logic to only show social links if they exist in the JSONB field
+  const renderSocialLinks = () => {
+    if (!profile?.social_links) return null;
+    const { twitter, github, linkedin } = profile.social_links;
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {twitter && (
+          <a href={twitter.startsWith('http') ? twitter : `https://x.com/${twitter}`} target="_blank" rel="noreferrer" className="bg-[#0B0F1B]/50 hover:bg-white/5 border border-white/5 rounded px-2 py-1 flex items-center gap-1.5 transition-colors group">
+            <span className="text-[10px] text-white">Twitter</span>
+          </a>
+        )}
+        {github && (
+          <a href={github.startsWith('http') ? github : `https://github.com/${github}`} target="_blank" rel="noreferrer" className="bg-[#0B0F1B]/50 hover:bg-white/5 border border-white/5 rounded px-2 py-1 flex items-center gap-1.5 transition-colors group">
+            <span className="text-[10px] text-white">GitHub</span>
+          </a>
+        )}
+        {linkedin && (
+          <a href={linkedin.startsWith('http') ? linkedin : `https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="bg-[#0B0F1B]/50 hover:bg-white/5 border border-white/5 rounded px-2 py-1 flex items-center gap-1.5 transition-colors group">
+            <span className="text-[10px] text-white">LinkedIn</span>
+          </a>
+        )}
+      </div>
+    );
+  };
+
+  const initials = profile?.display_name
+    ? profile.display_name.split(' ').map(n => n[0]).join('').toUpperCase()
+    : "??";
 
   const tabs = [
-    { name: "All Proofs", count: 6 },
-    { name: "Project", count: 3 },
-    { name: "Certifications", count: 2 },
-    { name: "Achievements", count: 1 }
+    { name: "All Proofs", value: "All Proofs", count: proofs.length },
+    { name: "Work History", value: "job_history", count: proofs.filter(p => p.proof_type === "job_history").length },
+    { name: "Certificates", value: "certificates", count: proofs.filter(p => p.proof_type === "certificates").length },
+    { name: "Milestones", value: "milestones", count: proofs.filter(p => p.proof_type === "milestones").length },
+    { name: "Community", value: "community", count: proofs.filter(p => p.proof_type === "community").length }
   ];
 
-  const filteredProofs = activeTab === 'All Proofs' 
-    ? proofs 
-    : activeTab === 'Certifications' 
-      ? proofs.filter(p => p.type === 'Certificate')
-      : activeTab === 'Achievements'
-        ? proofs.filter(p => p.type === 'Achievement')
-        : proofs.filter(p => p.type === activeTab);
+  const activeTabValue = tabs.find(tab => tab.name === activeTab)?.value || 'All Proofs';
+  const filteredProofs = activeTabValue === 'All Proofs'
+    ? proofs
+    : proofs.filter(p => p.proof_type === activeTabValue);
 
   const handleMouseDown = (e) => {
     setIsDragging(true);
@@ -226,19 +210,19 @@ function Portfolio({ onNavigate }) {
             <div className="relative z-10 flex gap-4 flex-wrap">
               <div className="shrink-0">
                 <div className="w-16 h-16 rounded-full bg-[#C19A4A]/20 border border-[#C19A4A] flex items-center justify-center text-[#C19A4A] text-2xl font-bold">
-                  AC
+                  {initials}
                 </div>
               </div>
                 
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold text-white mb-1">{profile.name}</h1>
-                <p className="text-sm text-white mb-3">{profile.title}</p>
-                <p className="text-xs text-white leading-relaxed mb-4 max-w-3xl">{profile.bio}</p>
+                <h1 className="text-xl font-bold text-white mb-1">{profile?.display_name || 'Loading...'}</h1>
+                <p className="text-sm text-white mb-3">{profile?.profession || ''}</p>
+                <p className="text-xs text-white leading-relaxed mb-4 max-w-3xl">{profile?.bio || ''}</p>
 
                 <div className={`grid gap-2 mb-4 ${windowWidth < 640 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2'}`}>
                   <div className="flex items-center gap-2 text-xs text-white bg-[#0B0F1B]/50 p-1.5 rounded border border-white/5 relative">
                     <Mail size={12} className="text-[#C19A4A] shrink-0" />
-                    <span className="truncate">{profile.email}</span>
+                    <span className="truncate">{user?.email || ''}</span>
                     <button onClick={copyEmail} aria-label="Copy email address" className="ml-2 text-white hover:text-[#C19A4A] transition-colors flex items-center" style={{background: 'transparent', border: 'none', cursor: 'pointer'}}>
                       <Copy size={14} />
                     </button>
@@ -251,34 +235,15 @@ function Portfolio({ onNavigate }) {
                   <div className="flex items-center gap-2 text-xs text-white bg-[#0B0F1B]/50 p-1.5 rounded border border-white/5 justify-between group cursor-pointer">
                     <div className="flex items-center gap-2 truncate">
                       <Wallet size={12} className="text-[#C19A4A] shrink-0" />
-                      <span className="font-mono">{profile.wallet}</span>
+                      <span className="font-mono">{profile?.users?.wallet_address || ''}</span>
                     </div>
-                    <a href={`https://explorer.solana.com/address/${profile.wallet.replace(/\.\.\./g, '')}`} target="_blank" rel="noopener noreferrer" aria-label="Open wallet address in explorer" className="text-white hover:text-[#C19A4A] transition-colors flex items-center">
+                    <a href={`https://explorer.solana.com/address/${(profile?.users?.wallet_address || '').replace(/\.\.\./g, '')}`} target="_blank" rel="noopener noreferrer" aria-label="Open wallet address in explorer" className="text-white hover:text-[#C19A4A] transition-colors flex items-center">
                       <ExternalLink size={16} />
                     </a>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <a href="x.com/" className="bg-[#0B0F1B]/50 hover:bg-white/5 border border-white/5 rounded px-2 py-1 flex items-center gap-1.5 transition-colors group">
-                    <svg viewBox="0 0 24 24" width={10} height={10} className="text-white group-hover:text-white">
-                      <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                    <span className="text-[10px] text-white group-hover:text-white">@alexchen_web3</span>
-                  </a>
-                  <a href="github.com/" className="bg-[#0B0F1B]/50 hover:bg-white/5 border border-white/5 rounded px-2 py-1 flex items-center gap-1.5 transition-colors group">
-                    <svg viewBox="0 0 24 24" width={10} height={10} className="text-white group-hover:text-white">
-                      <path fill="currentColor" d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1. 911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                    </svg>
-                    <span className="text-[10px] text-white group-hover:text-white">@alexchen</span>
-                  </a>
-                  <a href="linkedin.com/" className="bg-[#0B0F1B]/50 hover:bg-white/5 border border-white/5 rounded px-2 py-1 flex items-center gap-1.5 transition-colors group">
-                    <svg viewBox="0 0 24 24" width={10} height={10} className="text-white group-hover:text-white">
-                      <path fill="currentColor" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                    </svg>
-                    <span className="text-[10px] text-white group-hover:text-white">@AlecChen</span>
-                  </a>
-                </div>
+                {renderSocialLinks()}
               </div>
             </div>
           </div>
@@ -288,11 +253,11 @@ function Portfolio({ onNavigate }) {
             {/* Stats Row */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-[#1A1F2E] rounded-xl p-4 text-center border border-white/5">
-                <div className="text-2xl font-bold text-white mb-1">{profile.stats.total}</div>
+                <div className="text-2xl font-bold text-white mb-1">{stats.total}</div>
                 <div className="text-xs text-white">Total Proofs</div>
               </div>
               <div className="bg-[#1A1F2E] rounded-xl p-4 text-center border border-white/5">
-                <div className="text-2xl font-bold text-[#C19A4A] mb-1">{profile.stats.verified}</div>
+                <div className="text-2xl font-bold text-[#C19A4A] mb-1">{stats.verified}</div>
                 <div className="text-xs text-white">Verified</div>
               </div>
             </div>
@@ -301,7 +266,7 @@ function Portfolio({ onNavigate }) {
             <div className="bg-[#111625] rounded-xl p-5 border border-white/5 flex-1">
               <h2 className="text-sm font-bold text-white mb-3">Skills & Expertise</h2>
               <div className="flex flex-wrap gap-2">
-                {profile.skills.map(skill => (
+                {(profile?.skills || []).map(skill => (
                   <span key={skill} className="text-xs text-[#C19A4A] bg-[#1A1F2E] border border-white/5 px-3 py-1.5 rounded-full">
                     {skill}
                   </span>
@@ -336,17 +301,17 @@ function Portfolio({ onNavigate }) {
           {filteredProofs.map((proof, idx) => (
             <div key={idx} className="bg-[#111625] rounded-xl border border-white/5 overflow-hidden hover:border-white/10 transition-colors group h-full flex flex-col">
               <div className="relative h-32 overflow-hidden shrink-0">
-                <img src={proof.image} alt={proof.title} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
+                <img src={proof.files?.[0]?.file_url || 'https://via.placeholder.com/400x200?text=No+Image'} alt={proof.proof_name} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#111625] to-transparent"></div>
               </div>
               
               <div className="p-4 -mt-6 relative z-10 flex-1 flex flex-col">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2 max-w-[calc(100%-40px)]">
-                    <h3 className={`text-white font-semibold truncate ${proof.title.length > 30 ? 'text-[11px]' : 'text-[13px]'}`} title={proof.title}>
-                      {proof.title}
+                    <h3 className={`text-white font-semibold truncate ${proof.proof_name?.length > 30 ? 'text-[11px]' : 'text-[13px]'}`} title={proof.proof_name}>
+                      {proof.proof_name}
                     </h3>
-                    {proof.verified && (
+                    {proof.status === 'verified' && (
                       <div className="flex items-center gap-0.5 text-[#22c55e] bg-[#22c55e]/10 px-1.5 py-0.5 rounded whitespace-nowrap">
                         <CheckCircle2 size={12} />
                         <span className="font-medium text-[9px]">Verified</span>
@@ -360,28 +325,23 @@ function Portfolio({ onNavigate }) {
 
                 <div className="flex items-center gap-2 text-xs text-white mb-3">
                   <div className="flex items-center gap-1.5">
-                    {proof.type === 'Project' && <FolderGit2 size={14} className="text-white" />}
-                    {proof.type === 'Certificate' && <Award size={14} className="text-white" />}
-                    {proof.type === 'Milestone' && <Flag size={14} className="text-white" />}
-                    {proof.type === 'Achievement' && <Trophy size={14} className="text-white" />}
-                    <span>{proof.type}</span>
+                    {proof.proof_type === 'Project' && <FolderGit2 size={14} className="text-white" />}
+                    {proof.proof_type === 'Certificate' && <Award size={14} className="text-white" />}
+                    {proof.proof_type === 'Milestone' && <Flag size={14} className="text-white" />}
+                    {proof.proof_type === 'Achievement' && <Trophy size={14} className="text-white" />}
+                    <span>{proof.proof_type}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Calendar size={14} />
-                    <span>{proof.date}</span>
+                    <span>{new Date(proof.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
 
-                <p className="text-xs text-white leading-relaxed flex-1">{proof.description}</p>
+                <p className="text-xs text-white leading-relaxed flex-1">{proof.summary}</p>
 
                 <div className="flex flex-wrap gap-2 mb-4 mt-4">
-                  {proof.tags.map(tag => (
-                    <span key={tag} className="text-[10px] bg-[#1A1F2E] border border-white/10 text-white px-2 py-1 rounded-md">
-                      {tag}
-                    </span>
-                  ))}
                   <span className="text-[10px] bg-[#1A1F2E] border border-white/10 text-white px-2 py-1 rounded-md font-mono">
-                    {proof.id}
+                    GH-{proof.proof_type?.charAt(0).toUpperCase()}-{String(proof.id).padStart(3, '0')}
                   </span>
                 </div>
 
@@ -391,7 +351,7 @@ function Portfolio({ onNavigate }) {
                     <span>On-chain verification:</span>
                   </div>
                   <a href="/" className="flex-1 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center justify-between group/link hover:border-[#C19A4A]/30 transition-colors">
-                    <span className="font-mono text-[#C19A4A] text-xs truncate max-w-[120px]">{proof.hash}</span>
+                    <span className="font-mono text-[#C19A4A] text-xs truncate max-w-[120px]">{proof.blockchain_tx || 'Pending...'}</span>
                   </a>
                 </div>
               </div>

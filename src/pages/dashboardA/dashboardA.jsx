@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, UserCheck, UserX, FileText, Search, X, Shield, Eye } from 'lucide-react';
+import { supabase } from '../../config/supabaseClient';
+import { getGlobalProofStats } from '../../utils/proofsApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
 function DashboardA() {
@@ -7,125 +9,63 @@ function DashboardA() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [realUsers, setRealUsers] = useState([]);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    totalProofs: 0
+  });
 
-  // Mock data
-  const stats = {
-    totalUsers: 4,
-    activeUsers: 2,
-    inactiveUsers: 1,
-    totalProofs: 1
-  };
-
-  const users = [
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active',
-      joinDate: 'August 15, 2023',
-      proofHistory: [
-        {
-          title: 'Web3 Hackathon Winner',
-          achievement: '1st 2023-06-15',
-          submitted: 'November 15, 2023'
+  useEffect(() => {
+    const fetchAllUsers = async () => {
+      try {
+        // This requires an admin-level RLS policy or service_role key
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            display_name,
+            is_public,
+            user_id,
+            proofs (count)
+          `);
+        if (!error) {
+          setRealUsers(data);
+          // Calculate stats from real data
+          const totalUsers = data.length;
+          const activeUsers = data.filter(user => user.is_public).length; // Assuming public profiles are active
+          const inactiveUsers = totalUsers - activeUsers;
+          setStats(prevStats => ({
+            ...prevStats,
+            totalUsers,
+            activeUsers,
+            inactiveUsers
+          }));
         }
-      ]
-    },
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active'
-    },
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active'
-    },
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active'
-    },
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active'
-    },
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active'
-    },
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active'
-    },
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active'
-    },
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active'
-    },
-    {
-      id: '008754021',
-      email: 'sarahchen@gmail.com',
-      status: 'active',
-      proofs: { verified: 12, pending: 2 },
-      dateJoined: 'Jan 15, 2024',
-      lastActivity: 'Jan 18, 2024',
-      fullName: 'Sarah Chen',
-      accountStatus: 'Active'
-    }
-  ];
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    fetchAllUsers();
+  }, []);
+
+  useEffect(() => {
+    const loadGlobalStats = async () => {
+      try {
+        const globalStats = await getGlobalProofStats();
+        setStats(prevStats => ({
+          ...prevStats,
+          totalProofs: globalStats.total
+        }));
+      } catch (error) {
+        console.error('Error fetching global proof stats:', error);
+      }
+    };
+    loadGlobalStats();
+  }, []);
+
+
 
   const matchDetails = {
     title: 'Web3 Hackathon Winner',
@@ -139,12 +79,12 @@ function DashboardA() {
     ]
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         user.id.includes(searchTerm);
-    const matchesFilter = filterStatus === 'All' || 
-                         (filterStatus === 'Active' && user.status === 'active') ||
-                         (filterStatus === 'Inactive' && user.status === 'inactive');
+  const filteredUsers = realUsers.filter(user => {
+    const matchesSearch = user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.user_id?.includes(searchTerm);
+    const matchesFilter = filterStatus === 'All' ||
+                         (filterStatus === 'Active' && user.is_public) ||
+                         (filterStatus === 'Inactive' && !user.is_public);
     return matchesSearch && matchesFilter;
   });
 

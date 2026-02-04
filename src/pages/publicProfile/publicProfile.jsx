@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Share2, CheckCircle2, Calendar, Award, Flag, Trophy, Link as LinkIcon, Mail, Copy, Wallet, ExternalLink, Shield } from 'lucide-react';
+import { getProfileByWallet } from '../../utils/profileApi';
+import { getUserProofs } from '../../utils/proofsApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 import './publicProfile.css';
 
@@ -12,86 +14,10 @@ function PublicProfile () {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-
-  const profile = {
-    name: "Alex Chen",
-    title: "Senior Web3 Developer",
-    bio: "Passionate Web3 developer with 5+ years of experience building decentralized applications on Solana. Specialized in DeFi protocols, smart contract security, and full-stack dApp development. Committed to advancing the Web3 ecosystem.",
-    email: "alex.c***@gmail.com",
-    wallet: "7x9k...mN2p",
-    stats: { total: 12, verified: 8 },
-    skills: ["Solana Development", "React", "Security Auditing", "Smart Contracts", "Web3.js", "Anchor Framework", "DeFi Protocols"]
-  };
-
-  const proofs = [
-    {
-      id: "GH-C-012",
-      title: "Senior Frontend Developer Certification",
-      type: "Certificate",
-      date: "2024-01-15",
-      description: "Advanced React and TypeScript certification from Web3 Academy. ",
-      tags: ["React", "TypeScript", "Web3.js"],
-      verified: true,
-      hash: "0x7f9a2b8c3d4..."
-    },
-    {
-      id: "GH-M-018",
-      title: "Blockchain Security Audit",
-      type: "Milestone",
-      date: "2023-12-20",
-      description: "Completed comprehensive security audit for major DeFi protocol, identifying and resolving critical vulnerabilities.",
-      tags: ["Security Auditing", "Smart Contracts", "DeFi"],
-      verified: true,
-      hash: "0x8a1b2c3d4e5..."
-    },
-    {
-      id: "GH-P-022",
-      title: "DeFi Protocol Development",
-      type: "Project",
-      date: "2023-11-10",
-      description: "Built and deployed a yield farming protocol on Solana with $2M+ TVL.",
-      tags: ["Solana", "Smart Contracts", "DeFi"],
-      verified: true,
-      hash: "0x9b2c3d4e5f6..."
-    },
-    {
-      id: "GH-A-011",
-      title: "Web3 Hackathon Winner",
-      type: "Achievement",
-      date: "2023-09-15",
-      description: "First place winner at Solana Global Hackathon for building an innovative NFT marketplace with cross-chain compatibility.",
-      tags: ["NFTs", "Cross-chain", "Marketplace"],
-      verified: true,
-      hash: "0x8a1b2c3d4e5..."
-    },
-    {
-      id: "GH-C-007",
-      title: "Rust Programming Mastery",
-      type: "Certificate",
-      date: "2023-08-20",
-      description: "Advanced Rust programming certification focusing on systems programming and blockchain development.",
-      tags: ["Rust", "Systems Programming", "Blockchain"],
-      verified: true,
-      hash: "0xb3d4e5f6a7b..."
-    },
-    {
-      id: "GH-P-067",
-      title: "DAO Governance Implementation",
-      type: "Project",
-      date: "2023-07-05",
-      description: "Designed and implemented governance mechanisms for a 10,000+ member DAO, including voting systems and proposal management.",
-      tags: ["DAO", "Governance", "Community"],
-      verified: true,
-      hash: "0x8a1b2c3d4e5..."
-    }
-  ];
-
-  const tabs = [
-    { name: "All Proofs", count: 6 },
-    { name: "Project", count: 3 },
-    { name: "Certifications", count: 2 },
-    { name: "Achievements", count: 1 }
-  ];
+  const [dynamicProfile, setDynamicProfile] = useState(null);
+  const [dynamicProofs, setDynamicProofs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -99,19 +25,45 @@ function PublicProfile () {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        setLoading(true);
+        const walletFromUrl = window.location.pathname.split('/').pop();
+        const profileData = await getProfileByWallet(walletFromUrl);
+        setDynamicProfile(profileData);
+
+        const allProofs = await getUserProofs(profileData.user_id);
+        const verifiedProofs = allProofs.filter(proof => proof.status === 'verified');
+        setDynamicProofs(verifiedProofs);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error loading profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProfile();
+  }, []);
+
   const copyEmail = () => {
-    navigator.clipboard.writeText(profile.email.replace(/\*/g, ''));
+    const emailToCopy = dynamicProfile?.email || '';
+    navigator.clipboard.writeText(emailToCopy.replace(/\*/g, ''));
     setEmailCopied(true);
     setTimeout(() => setEmailCopied(false), 2000);
   };
 
-  const filteredProofs = activeTab === 'All Proofs' 
-    ? proofs 
-    : activeTab === 'Certifications' 
-      ? proofs.filter(p => p.type === 'Certificate')
-      : activeTab === 'Achievements'
-        ? proofs.filter(p => p.type === 'Achievement')
-        : proofs.filter(p => p.type === activeTab);
+  const filteredProofs = activeTab === 'All Proofs'
+    ? dynamicProofs
+    : dynamicProofs.filter(p => p.proof_type === activeTab);
+
+  const dynamicTabs = [
+    { name: "All Proofs", count: dynamicProofs.length },
+    { name: "Certificate", count: dynamicProofs.filter(p => p.proof_type === 'Certificate').length },
+    { name: "Milestone", count: dynamicProofs.filter(p => p.proof_type === 'Milestone').length },
+    { name: "Community", count: dynamicProofs.filter(p => p.proof_type === 'Community').length },
+    { name: "Work History", count: dynamicProofs.filter(p => p.proof_type === 'Work History').length }
+  ];
 
   const navItemClass = windowWidth < 700 ? "text-[9px]" : "text-[11px]";
 
@@ -119,7 +71,9 @@ function PublicProfile () {
     'Project': Trophy,
     'Certificate': Award,
     'Milestone': Flag,
-    'Achievement': Trophy
+    'Achievement': Trophy,
+    'Community': LinkIcon,
+    'Work History': Calendar
   };
 
   return (
@@ -152,14 +106,14 @@ function PublicProfile () {
             </div>
               
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-white mb-1">{profile.name}</h1>
-              <p className="text-sm text-white mb-3">{profile.title}</p>
-              <p className="text-xs text-white leading-relaxed mb-4">{profile.bio}</p>
+              <h1 className="text-xl font-bold text-white mb-1">{dynamicProfile?.name || 'Loading...'}</h1>
+              <p className="text-sm text-white mb-3">{dynamicProfile?.title || ''}</p>
+              <p className="text-xs text-white leading-relaxed mb-4">{dynamicProfile?.bio || ''}</p>
 
               <div className={`grid gap-2 mb-4 ${windowWidth < 640 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
                 <div className="flex items-center gap-2 text-xs text-white bg-[#0B0F1B]/50 p-1.5 rounded border border-white/5 relative">
                   <Mail size={12} className="text-[#C19A4A] shrink-0" />
-                  <span className="truncate">{profile.email}</span>
+                  <span className="truncate">{dynamicProfile?.email || ''}</span>
                   <button onClick={copyEmail} className="ml-2 text-white hover:text-[#C19A4A] transition-colors flex items-center bg-transparent border-none cursor-pointer">
                     <Copy size={14} />
                   </button>
@@ -172,9 +126,9 @@ function PublicProfile () {
                 <div className="flex items-center gap-2 text-xs text-white bg-[#0B0F1B]/50 p-1.5 rounded border border-white/5 justify-between group cursor-pointer">
                   <div className="flex items-center gap-2 truncate">
                     <Wallet size={12} className="text-[#C19A4A] shrink-0" />
-                    <span className="font-mono">{profile.wallet}</span>
+                    <span className="font-mono">{dynamicProfile?.users?.wallet_address || ''}</span>
                   </div>
-                  <a href={`https://explorer.solana.com/address/${profile.wallet.replace(/\.\.\./g, '')}`} target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#C19A4A] transition-colors flex items-center">
+                  <a href={`https://explorer.solana.com/address/${(dynamicProfile?.users?.wallet_address || '').replace(/\.\.\./g, '')}`} target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#C19A4A] transition-colors flex items-center">
                     <ExternalLink size={16} />
                   </a>
                 </div>
@@ -191,11 +145,11 @@ function PublicProfile () {
 
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div className="bg-[#1A1F2E] rounded-xl p-4 text-center border border-white/5">
-            <div className="text-2xl font-bold text-white mb-1">{profile.stats.total}</div>
+            <div className="text-2xl font-bold text-white mb-1">{dynamicProofs.length}</div>
             <div className="text-xs text-white">Total Proofs</div>
           </div>
           <div className="bg-[#1A1F2E] rounded-xl p-4 text-center border border-white/5">
-            <div className="text-2xl font-bold text-[#C19A4A] mb-1">{profile.stats.verified}</div>
+            <div className="text-2xl font-bold text-[#C19A4A] mb-1">{dynamicProofs.length}</div>
             <div className="text-xs text-white">Verified</div>
           </div>
         </div>
@@ -203,7 +157,7 @@ function PublicProfile () {
         <div className="mb-8">
           <h2 className="text-sm font-bold text-white mb-3">Skills & Expertise</h2>
           <div className="flex flex-wrap gap-2">
-            {profile.skills.map(skill => (
+            {(dynamicProfile?.skills || []).map(skill => (
               <span key={skill} className="text-xs text-[#C19A4A] bg-[#1A1F2E] border border-white/5 px-3 py-1.5 rounded-full">
                 {skill}
               </span>
@@ -228,13 +182,13 @@ function PublicProfile () {
             e.currentTarget.scrollLeft = scrollLeft - walk;
           }}
         >
-          {tabs.map(tab => (
-            <button 
+          {dynamicTabs.map(tab => (
+            <button
               key={tab.name}
               onClick={() => !isDragging && setActiveTab(tab.name)}
               className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-semibold transition-all shrink-0 ${
-                activeTab === tab.name 
-                  ? 'bg-[#C19A4A] text-black shadow-[0_0_20px_rgba(193,154,74,0.15)]' 
+                activeTab === tab.name
+                  ? 'bg-[#C19A4A] text-black shadow-[0_0_20px_rgba(193,154,74,0.15)]'
                   : 'bg-[#1A1F2E] text-white border border-white/5 hover:bg-[#252b3d] hover:text-gray-200'
               }`}
             >
@@ -252,67 +206,72 @@ function PublicProfile () {
         </div>
 
         <div className="space-y-4">
-          {filteredProofs.map((proof, idx) => {
-            const IconComponent = typeIcons[proof.type] || Trophy;
-            return (
-              <div key={idx} className="bg-[#111625] rounded-xl border border-white/5 overflow-hidden mb-5 hover:border-white/10 transition-colors group">
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2 max-w-[calc(100%-40px)]">
-                      <h3 className={`text-white font-semibold truncate ${proof.title.length > 30 ? 'text-[11px]' : 'text-[13px]'}`} title={proof.title}>
-                        {proof.title}
-                      </h3>
-                      {proof.verified && (
-                        <div className="flex items-center gap-0.5 text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded whitespace-nowrap">
-                          <CheckCircle2 size={12} />
-                          <span className="font-medium text-[9px]">Verified</span>
-                        </div>
-                      )}
+          {loading ? (
+            <div className="text-center py-10 text-gray-400 text-sm">
+              Loading profile...
+            </div>
+          ) : error ? (
+            <div className="text-center py-10 text-red-400 text-sm">
+              Error loading profile: {error}
+            </div>
+          ) : (
+            filteredProofs.map((proof, idx) => {
+              const IconComponent = typeIcons[proof.proof_type] || Trophy;
+              return (
+                <div key={proof.id || idx} className="bg-[#111625] rounded-xl border border-white/5 overflow-hidden mb-5 hover:border-white/10 transition-colors group">
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2 max-w-[calc(100%-40px)]">
+                        <h3 className={`text-white font-semibold truncate ${proof.proof_name?.length > 30 ? 'text-[11px]' : 'text-[13px]'}`} title={proof.proof_name}>
+                          {proof.proof_name}
+                        </h3>
+                        {proof.status === 'verified' && (
+                          <div className="flex items-center gap-0.5 text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded whitespace-nowrap">
+                            <CheckCircle2 size={12} />
+                            <span className="font-medium text-[9px]">Verified</span>
+                          </div>
+                        )}
+                      </div>
+                      <button className="text-white hover:text-white transition-colors">
+                        <Share2 size={16} />
+                      </button>
                     </div>
-                    <button className="text-white hover:text-white transition-colors">
-                      <Share2 size={16} />
-                    </button>
-                  </div>
 
-                  <div className="flex items-center gap-2 text-xs text-white mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <IconComponent size={14} className="text-white" />
-                      <span>{proof.type}</span>
+                    <div className="flex items-center gap-2 text-xs text-white mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <IconComponent size={14} className="text-white" />
+                        <span>{proof.proof_type}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar size={14} />
+                        <span>{new Date(proof.created_at).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar size={14} />
-                      <span>{proof.date}</span>
-                    </div>
-                  </div>
 
-                  <p className="text-xs text-white leading-relaxed mb-4">{proof.description}</p>
+                    <p className="text-xs text-white leading-relaxed mb-4">{proof.summary}</p>
 
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {proof.tags.map(tag => (
-                      <span key={tag} className="text-[10px] bg-[#1A1F2E] border border-white/10 text-white px-2 py-1 rounded-md">
-                        {tag}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="text-[10px] bg-[#1A1F2E] border border-white/10 text-white px-2 py-1 rounded-md font-mono">
+                        GH-{proof.proof_type?.charAt(0).toUpperCase()}-{String(proof.id).padStart(3, '0')}
                       </span>
-                    ))}
-                    <span className="text-[10px] bg-[#1A1F2E] border border-white/10 text-white px-2 py-1 rounded-md font-mono">
-                      {proof.id}
-                    </span>
-                  </div>
-
-                  <div className="border-t border-white/10 pt-3 flex items-center gap-3">
-                    <div className="flex items-center gap-1 text-white text-xs">
-                      <LinkIcon size={12} />
-                      <span>On-chain verification:</span>
                     </div>
-                    <a href="/" className="flex-1 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center justify-between group/link hover:border-[#C19A4A]/30 transition-colors">
-                      <span className="font-mono text-[#C19A4A] text-xs truncate max-w-[120px]">{proof.hash}</span>
-                    </a>
+
+                    <div className="border-t border-white/10 pt-3 flex items-center gap-3">
+                      <div className="flex items-center gap-1 text-white text-xs">
+                        <LinkIcon size={12} />
+                        <span>On-chain verification:</span>
+                      </div>
+                      <a href="/" className="flex-1 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center justify-between group/link hover:border-[#C19A4A]/30 transition-colors">
+                        <span className="font-mono text-[#C19A4A] text-xs truncate max-w-[120px]">{proof.tx_hash || 'Pending...'}</span>
+                      </a>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-            
-          {filteredProofs.length === 0 && (
+              );
+            })
+          )}
+
+          {!loading && !error && filteredProofs.length === 0 && (
             <div className="text-center py-10 text-gray-500 text-sm">
               No proofs found for this category.
             </div>

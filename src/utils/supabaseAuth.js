@@ -69,49 +69,44 @@ export const verifyOTP = async (email, token) => {
 };
 
 // Sign in with wallet (Solana)
-export const signInWithWallet = async (walletAddress, signature, message) => {
+export const signInWithWallet = async (walletAddress) => {
   try {
-    // For wallet authentication, we'll use a custom approach
-    // 1. Verify signature on client side
-    // 2. Create/get user with wallet address
-    // 3. Sign in with Supabase using custom token or session
-    
-    // Check if user exists with this wallet
-    const { data: existingUser, error: queryError } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('wallet_address', walletAddress)
-      .single();
+    // Create a pseudo-email from wallet address for Supabase auth
+    const walletEmail = `${walletAddress}@wallet.local`;
 
-    if (queryError && queryError.code !== 'PGRST116') { // PGRST116 = not found
-      throw queryError;
+    // Try to sign in with existing wallet user
+    try {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: walletEmail,
+        password: walletAddress // Use wallet address as password
+      });
+
+      if (!signInError) {
+        // Successfully signed in existing user
+        return { user: signInData.user, walletAddress, isNewUser: false };
+      }
+    } catch (signInError) {
+      // User doesn't exist, create new one
     }
 
-    let userId;
-
-    if (!existingUser) {
-      // Create new user with wallet address
-      const { data: newUser, error: insertError } = await supabase
-        .from('users')
-        .insert({
+    // Create new user account for wallet
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: walletEmail,
+      password: walletAddress,
+      options: {
+        data: {
           wallet_address: walletAddress,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+          auth_method: 'wallet'
+        }
+      }
+    });
 
-      if (insertError) throw insertError;
-      userId = newUser.id;
-    } else {
-      userId = existingUser.id;
-    }
+    if (signUpError) throw signUpError;
 
-    // Store wallet info in localStorage for now
-    // TODO: Implement proper wallet signature verification
+    // Store wallet info
     localStorage.setItem('wallet_address', walletAddress);
-    localStorage.setItem('user_id', userId);
 
-    return { userId, walletAddress };
+    return { user: signUpData.user, walletAddress, isNewUser: true };
   } catch (error) {
     console.error('Wallet sign-in error:', error);
     throw error;

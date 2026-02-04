@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
-import { sendOTPToEmail, verifyOTP, getCurrentUser } from '../../utils/supabaseAuth';
+import { sendOTPToEmail, verifyOTP, getCurrentUser, signInWithWallet } from '../../utils/supabaseAuth';
 import { createWelcomeMessage } from '../../utils/messagesApi';
 import { getProfile } from '../../utils/profileApi';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
@@ -31,11 +31,34 @@ function Login() {
     return emailRegex.test(emailValue);
   };
 
-  const handleWalletConnect = (walletName) => {
-    console.log('Connected with:', walletName);
-    localStorage.setItem('userLoggedIn', 'true');
-    localStorage.setItem('userWallet', walletName);
-    navigate('/home');
+  const handleWalletConnect = async (walletName) => {
+    setIsLoading(true);
+    setMessage('');
+
+    try {
+      // TODO: Replace with actual wallet provider integration
+      // For now, simulate getting a wallet address
+      // In production: const walletAddress = await window.phantom.solana.connect();
+      const walletAddress = `simulated_${walletName.toLowerCase()}_${Date.now()}`;
+
+      // Sign in with Supabase using wallet
+      const { user, isNewUser } = await signInWithWallet(walletAddress);
+
+      setMessage('✅ Wallet connected successfully!');
+
+      // Handle new users
+      if (isNewUser) {
+        const profile = await getProfile(user.id);
+        const firstName = profile?.full_name?.split(' ')[0] || 'User';
+        await createWelcomeMessage(user.id, firstName);
+      }
+
+      setTimeout(() => navigate('/dashboard'), 1000);
+    } catch (error) {
+      setMessage('❌ Wallet connection failed: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEmailSignIn = async (e) => {
@@ -69,9 +92,16 @@ function Login() {
       
       if (isNewUser) {
         const user = await getCurrentUser();
-        const profile = await getProfile(user.id);
-        const firstName = profile?.full_name?.split(' ')[0] || 'User';
-        await createWelcomeMessage(user.id, firstName);
+        try {
+          const profile = await getProfile(user.id);
+          const firstName = profile?.full_name?.split(' ')[0] || 'User';
+          await createWelcomeMessage(user.id, firstName);
+        } catch (profileError) {
+          // Profile may not exist yet if SQL trigger hasn't run
+          console.warn('Profile not found for new user, welcome message will be created later:', profileError);
+          // For now, just log the user in without creating welcome message
+          // The profile creation trigger should handle this
+        }
       }
       
       setTimeout(() => navigate('/dashboard'), 1000);
