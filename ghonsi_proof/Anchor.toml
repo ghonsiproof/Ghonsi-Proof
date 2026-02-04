@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-ghonsi_proof = "Etw4MKDBhZWtH2zK5CA9nALLq8LM1TXQfLhFjWtEJH1a"
+ghonsi_proof = "FAoVEXXpg5iBRvY8kFeMedSPy3a9VSgMZWj5739gEgTB"
 
 [registry]
 url = "https://api.apr.dev"

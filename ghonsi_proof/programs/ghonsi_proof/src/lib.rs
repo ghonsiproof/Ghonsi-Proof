@@ -9,7 +9,7 @@ use anchor_spl::{
     },
 };
 
-declare_id!("Etw4MKDBhZWtH2zK5CA9nALLq8LM1TXQfLhFjWtEJH1a");
+declare_id!("FAoVEXXpg5iBRvY8kFeMedSPy3a9VSgMZWj5739gEgTB");
 
 pub const PROOF_SEED: &[u8] = b"proof";
 pub const MINT_FEE_LAMPORTS: u64 = 10_000_000; // 0.01 SOL
