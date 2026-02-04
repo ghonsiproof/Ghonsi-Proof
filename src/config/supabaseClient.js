@@ -1,11 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 // Supabase configuration
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables. Please check your .env file.');
+  console.error(
+    "Missing Supabase environment variables. Please check your .env file."
+  );
 }
 
 // Create Supabase client
@@ -13,12 +15,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
-  }
+    detectSessionInUrl: true,
+  },
 });
 
+console.log(supabase);
 // Storage bucket name for proof files
-export const PROOF_FILES_BUCKET = 'proof-files';
+export const PROOF_FILES_BUCKET = "proof-files";
 
 // Helper to get public URL for uploaded files
 export const getPublicUrl = (bucket, filePath) => {
@@ -28,12 +31,16 @@ export const getPublicUrl = (bucket, filePath) => {
 
 // Helper to check if user is authenticated
 export const isAuthenticated = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   return !!session;
 };
 
 // Helper to get current user
 export const getCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 };

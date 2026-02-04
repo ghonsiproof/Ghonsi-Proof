@@ -3,52 +3,9 @@ import { X, Share2, Mail, Wallet, ExternalLink, ShieldCheck, Info, Check } from 
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { createPortfolioRequestMessage } from '../../utils/messagesApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
-
+import { useLocation, useNavigate } from 'react-router-dom';
 // Mock Data
-const mockDatabase = {
-  "alex_chen": {
-    profilePhotoUrl: "https://i.pravatar.cc/150?u=alexchen",
-    name: "Alex Chen",
-    role: "Senior Web3 Developer",
-    email: "alex.c***@gmail.com",
-    wallet: "7x9kAbCw5sDfGhJkLmN2pQrStUvWxYzAbCdEfGhIjK",
-    bio: "Passionate Web3 developer with 5+ years of experience building decentralized applications on Solana. Specialized in DeFi protocols, smart contract security, and full-stack dApp development...",
-    stats: { proofs: 12, achievements: 4 },
-    skills: ['Solana Development', 'React', 'Security Auditing', 'Smart Contracts', '+10 more...'],
-    proofs: [
-      {
-        id: "GH-C-012",
-        title: "Senior Frontend Developer Certification",
-        status: "Verified",
-        type: "Certificate",
-        icon: "award",
-        date: "2024-01-15",
-        desc: "Advanced React and TypeScript certification from a leading Web3 Academy.",
-        hash: "2z3g...K9hL"
-      },
-      {
-        id: "GH-M-018",
-        title: "Blockchain Security Audit",
-        status: "Verified",
-        type: "Milestone",
-        icon: "file-text",
-        date: "2023-12-20",
-        desc: "Completed comprehensive security audit for a major DeFi protocol, identifying and resolving critical vulnerabilities.",
-        hash: "5y6z...P2qR"
-      },
-      {
-        id: "GH-P-022",
-        title: "Contributor to Open-Source SPL Library",
-        status: "Pending",
-        type: "Contribution",
-        icon: "git-pull-request",
-        date: "2023-10-01",
-        desc: "Contributed performance improvements to the Solana Program Library.",
-        hash: "8a9b...T5uV"
-      }
-    ]
-  }
-};
+
 
 function Request() {
   const [profileData, setProfileData] = useState(null);
@@ -58,35 +15,49 @@ function Request() {
   const [formData, setFormData] = useState({ name: '', email: '' });
   const [showMore, setShowMore] = useState(false);
   const [copied, setCopied] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { bubble } = location.state || {};
 
+  // Process the real data from location state
   useEffect(() => {
-    const fetchProfile = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const username = urlParams.get('user') || 'alex_chen';
-      
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      if (mockDatabase[username]) {
-        setProfileData(mockDatabase[username]);
-      }
-      setLoading(false);
-    };
-    
-    const loadUserEmail = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user?.email) {
-          setFormData(prev => ({ ...prev, email: user.email }));
-        }
-      } catch (error) {
-        // User not logged in, ignore error
-      }
-    };
-    
-    fetchProfile();
-    loadUserEmail();
-  }, []);
+    // Redirect to home if no bubble data is received
+    if (!bubble?.fullProfile) {
+      navigate('/home');
+      return;
+    }
 
+    if (bubble?.fullProfile) {
+      const { fullProfile } = bubble;
+      // Transform the data to match the component's expected format
+      const processedData = {
+        name: fullProfile.displayName,
+        role: fullProfile.profession,
+        bio: fullProfile.bio,
+        email: '', // Email not provided in the data
+        wallet: '', // Wallet not provided in the data
+        profilePhotoUrl: fullProfile.avatarUrl,
+        stats: {
+          proofs: fullProfile.proofs.length,
+          achievements: 0 // Achievements not provided in the data
+        },
+        skills: [], // Skills not provided in the data
+        proofs: fullProfile.proofs.map(proof => ({
+          id: proof.id,
+          title: proof.proof_name,
+          status: proof.status,
+          type: proof.proof_type,
+          date: new Date(proof.proof_created_at).toLocaleDateString(),
+          desc: proof.summary,
+          hash: proof.blockchain_tx || 'N/A',
+          files: proof.files
+        }))
+      };
+      
+      setProfileData(processedData);
+    }
+    setLoading(false);
+  }, [bubble, navigate]);
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);

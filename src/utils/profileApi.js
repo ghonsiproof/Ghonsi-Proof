@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabaseClient';
+import { supabase } from "../config/supabaseClient";
 
 /**
  * Profile Management API
@@ -7,17 +7,17 @@ import { supabase } from '../config/supabaseClient';
 // Create a new profile
 export const createProfile = async (profileData) => {
   const user = await supabase.auth.getUser();
-  
+
   if (!user.data.user) {
-    throw new Error('User not authenticated');
+    throw new Error("User not authenticated");
   }
 
   const { data, error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .insert({
       user_id: user.data.user.id,
       ...profileData,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     })
     .select()
     .single();
@@ -29,40 +29,64 @@ export const createProfile = async (profileData) => {
 // Get profile by user ID
 export const getProfile = async (userId) => {
   const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', userId)
+    .from("profiles")
+    .select("*")
+    .eq("user_id", userId)
     .single();
 
-  if (error && error.code !== 'PGRST116') throw error; // Ignore "not found" error
+  if (error && error.code !== "PGRST116") throw error; // Ignore "not found" error
   return data;
+};
+//
+export const fetchProfiles = async () => {
+  const { data: profiles, error: proErr } = await supabase
+    .from("profile")
+    .select("*");
+  console.log(profiles);
+
+  // const { data: proofs, error: proofErr } = await supabase
+  //   .from("proof")
+  //   .select(`*, files(*)`);
+
+  // const combined = profiles.map((profile) => ({
+  //   ...profile,
+  //   proofs: proofs.filter((p) => p.user_id === profile.user_id),
+  // }));
+
+  if (proErr) {
+    throw new Error(proErr.message);
+  }
+
+  return [];
 };
 
 // Get profile by wallet address (for public profiles)
 export const getProfileByWallet = async (walletAddress) => {
   const { data, error } = await supabase
-    .from('profiles')
-    .select(`
+    .from("profiles")
+    .select(
+      `
       *,
       users!inner(wallet_address)
-    `)
-    .eq('users.wallet_address', walletAddress)
-    .eq('is_public', true)
+    `
+    )
+    .eq("users.wallet_address", walletAddress)
+    .eq("is_public", true)
     .single();
 
-  if (error && error.code !== 'PGRST116') throw error;
+  if (error && error.code !== "PGRST116") throw error;
   return data;
 };
 
 // Update profile
 export const updateProfile = async (userId, updates) => {
   const { data, error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .update({
       ...updates,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
-    .eq('user_id', userId)
+    .eq("user_id", userId)
     .select()
     .single();
 
@@ -73,9 +97,9 @@ export const updateProfile = async (userId, updates) => {
 // Delete profile
 export const deleteProfile = async (userId) => {
   const { error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .delete()
-    .eq('user_id', userId);
+    .eq("user_id", userId);
 
   if (error) throw error;
   return true;
@@ -84,11 +108,11 @@ export const deleteProfile = async (userId) => {
 // Check if profile exists
 export const profileExists = async (userId) => {
   const { data, error } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', userId)
+    .from("profiles")
+    .select("id")
+    .eq("user_id", userId)
     .single();
 
-  if (error && error.code !== 'PGRST116') throw error;
+  if (error && error.code !== "PGRST116") throw error;
   return !!data;
 };

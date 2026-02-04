@@ -1,28 +1,36 @@
-import { supabase, PROOF_FILES_BUCKET, getPublicUrl } from '../config/supabaseClient';
+import {
+  supabase,
+  PROOF_FILES_BUCKET,
+  getPublicUrl,
+} from "../config/supabaseClient";
 
 /**
  * Proof Management API
  */
 
 // Upload a proof with files
-export const uploadProof = async (proofData, referenceFiles = [], supportingFiles = []) => {
+export const uploadProof = async (
+  proofData,
+  referenceFiles = [],
+  supportingFiles = []
+) => {
   try {
     const user = await supabase.auth.getUser();
-    
+
     if (!user.data.user) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // 1. Insert proof record
     const { data: proof, error: proofError } = await supabase
-      .from('proofs')
+      .from("proofs")
       .insert({
         user_id: user.data.user.id,
         proof_type: proofData.proofType,
         proof_name: proofData.proofName,
         summary: proofData.summary,
         reference_link: proofData.referenceLink || null,
-        status: 'pending'
+        status: "pending",
       })
       .select()
       .single();
@@ -33,7 +41,7 @@ export const uploadProof = async (proofData, referenceFiles = [], supportingFile
     const referenceFileRecords = await uploadFiles(
       proof.id,
       referenceFiles,
-      'reference',
+      "reference",
       user.data.user.id
     );
 
@@ -41,17 +49,17 @@ export const uploadProof = async (proofData, referenceFiles = [], supportingFile
     const supportingFileRecords = await uploadFiles(
       proof.id,
       supportingFiles,
-      'supporting',
+      "supporting",
       user.data.user.id
     );
 
     return {
       proof,
       referenceFiles: referenceFileRecords,
-      supportingFiles: supportingFileRecords
+      supportingFiles: supportingFileRecords,
     };
   } catch (error) {
-    console.error('Upload proof error:', error);
+    console.error("Upload proof error:", error);
     throw error;
   }
 };
@@ -70,8 +78,8 @@ const uploadFiles = async (proofId, files, fileType, userId) => {
       const { data: storageData, error: storageError } = await supabase.storage
         .from(PROOF_FILES_BUCKET)
         .upload(filename, file, {
-          cacheControl: '3600',
-          upsert: false
+          cacheControl: "3600",
+          upsert: false,
         });
 
       if (storageError) throw storageError;
@@ -81,7 +89,7 @@ const uploadFiles = async (proofId, files, fileType, userId) => {
 
       // Save file record to database
       const { data: fileRecord, error: fileError } = await supabase
-        .from('files')
+        .from("files")
         .insert({
           proof_id: proofId,
           file_type: fileType,
@@ -90,7 +98,7 @@ const uploadFiles = async (proofId, files, fileType, userId) => {
           file_path: storageData.path,
           mime_type: file.type,
           size: file.size,
-          uploaded_at: new Date().toISOString()
+          uploaded_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -110,13 +118,15 @@ const uploadFiles = async (proofId, files, fileType, userId) => {
 // Get all proofs for a user
 export const getUserProofs = async (userId) => {
   const { data, error } = await supabase
-    .from('proofs')
-    .select(`
+    .from("proofs")
+    .select(
+      `
       *,
       files(*)
-    `)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    `
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
   return data;
@@ -125,13 +135,15 @@ export const getUserProofs = async (userId) => {
 // Get a single proof by ID
 export const getProof = async (proofId) => {
   const { data, error } = await supabase
-    .from('proofs')
-    .select(`
+    .from("proofs")
+    .select(
+      `
       *,
       files(*),
       users(wallet_address, email)
-    `)
-    .eq('id', proofId)
+    `
+    )
+    .eq("id", proofId)
     .single();
 
   if (error) throw error;
@@ -141,12 +153,12 @@ export const getProof = async (proofId) => {
 // Update proof
 export const updateProof = async (proofId, updates) => {
   const { data, error } = await supabase
-    .from('proofs')
+    .from("proofs")
     .update({
       ...updates,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
-    .eq('id', proofId)
+    .eq("id", proofId)
     .select()
     .single();
 
@@ -158,35 +170,36 @@ export const updateProof = async (proofId, updates) => {
 export const deleteProof = async (proofId) => {
   // First, get all files associated with this proof
   const { data: files, error: filesError } = await supabase
-    .from('files')
-    .select('file_path')
-    .eq('proof_id', proofId);
+    .from("files")
+    .select("file_path")
+    .eq("proof_id", proofId);
 
   if (filesError) throw filesError;
 
   // Delete files from storage
   if (files && files.length > 0) {
-    const filePaths = files.map(f => f.file_path);
+    const filePaths = files.map((f) => f.file_path);
     const { error: storageError } = await supabase.storage
       .from(PROOF_FILES_BUCKET)
       .remove(filePaths);
 
-    if (storageError) console.error('Error deleting files from storage:', storageError);
+    if (storageError)
+      console.error("Error deleting files from storage:", storageError);
   }
 
   // Delete file records from database (cascade should handle this, but being explicit)
   const { error: deleteFilesError } = await supabase
-    .from('files')
+    .from("files")
     .delete()
-    .eq('proof_id', proofId);
+    .eq("proof_id", proofId);
 
   if (deleteFilesError) throw deleteFilesError;
 
   // Delete proof record
   const { error: deleteProofError } = await supabase
-    .from('proofs')
+    .from("proofs")
     .delete()
-    .eq('id', proofId);
+    .eq("id", proofId);
 
   if (deleteProofError) throw deleteProofError;
 
@@ -197,44 +210,50 @@ export const deleteProof = async (proofId) => {
 export const updateProofStatus = async (proofId, status, verifierId = null) => {
   const updates = {
     status,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 
-  if (status === 'verified') {
+  if (status === "verified") {
     updates.verified_at = new Date().toISOString();
     if (verifierId) updates.verifier_id = verifierId;
   }
 
   const { data, error } = await supabase
-    .from('proofs')
+    .from("proofs")
     .update(updates)
-    .eq('id', proofId)
+    .eq("id", proofId)
     .select()
     .single();
 
   if (error) throw error;
   return data;
 };
-
+export const profileWithfileProofs = async () => {
+  const { data: profile, error } = await supabase
+    .from("profiles_with_proofs_files")
+    .select("*");
+  if (error) throw error;
+  return profile;
+};
 // Get proof statistics for a user
 export const getProofStats = async (userId) => {
   const { data, error } = await supabase
-    .from('proofs')
-    .select('status, proof_type')
-    .eq('user_id', userId);
+    .from("proofs")
+    .select("status, proof_type")
+    .eq("user_id", userId);
 
   if (error) throw error;
 
   const stats = {
     total: data.length,
-    verified: data.filter(p => p.status === 'verified').length,
-    pending: data.filter(p => p.status === 'pending').length,
-    rejected: data.filter(p => p.status === 'rejected').length,
-    byType: {}
+    verified: data.filter((p) => p.status === "verified").length,
+    pending: data.filter((p) => p.status === "pending").length,
+    rejected: data.filter((p) => p.status === "rejected").length,
+    byType: {},
   };
 
   // Count by proof type
-  data.forEach(proof => {
+  data.forEach((proof) => {
     if (!stats.byType[proof.proof_type]) {
       stats.byType[proof.proof_type] = 0;
     }
