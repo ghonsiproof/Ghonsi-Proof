@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { sendOTPToEmail, verifyOTP, getCurrentUser, signInWithWallet } from '../../utils/supabaseAuth';
 import { createWelcomeMessage } from '../../utils/messagesApi';
 import { getProfile } from '../../utils/profileApi';
+import { connectWallet, isWalletInstalled } from '../../utils/walletConnect';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
@@ -36,17 +37,17 @@ function Login() {
     setMessage('');
 
     try {
-      // TODO: Replace with actual wallet provider integration
-      // For now, simulate getting a wallet address
-      // In production: const walletAddress = await window.phantom.solana.connect();
-      const walletAddress = `simulated_${walletName.toLowerCase()}_${Date.now()}`;
+      if (!isWalletInstalled(walletName)) {
+        setMessage(`❌ ${walletName} wallet not installed. Please install it first.`);
+        setIsLoading(false);
+        return;
+      }
 
-      // Sign in with Supabase using wallet
+      const walletAddress = await connectWallet(walletName);
       const { user, isNewUser } = await signInWithWallet(walletAddress);
 
       setMessage('✅ Wallet connected successfully!');
 
-      // Handle new users
       if (isNewUser) {
         const profile = await getProfile(user.id);
         const firstName = profile?.full_name?.split(' ')[0] || 'User';
