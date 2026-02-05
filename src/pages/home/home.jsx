@@ -190,16 +190,28 @@ function Home() {
         <section className="max-w-6xl mx-auto px-6 pb-32">
             <div className="grid md:grid-cols-3 gap-6">
                 {[
-                    { title: "On-Chain Identity", icon: <Wallet size={32}/>, desc: "Aggregate your scattered contributions into one verifiable ID." },
-                    { title: "Proof of Work", icon: <Shield size={32}/>, desc: "No more fake resumes. Your history is backed by the blockchain." },
-                    { title: "Talent Discovery", icon: <Upload size={32}/>, desc: "Founders find you based on what you have actually built." }
+                    { 
+                      title: "On-Chain Identity", 
+                      icon: <Wallet size={32}/>, 
+                      desc: "Aggregate your scattered contributions into one verifiable ID." 
+                    },
+                    { 
+                      title: "Proof of Work", 
+                      icon: <Shield size={32}/>, 
+                      desc: "No more fake resumes. Your history is backed by the blockchain." 
+                    },
+                    { 
+                      title: "Talent Discovery", 
+                      icon: <Upload size={32}/>, 
+                      desc: "Founders find you based on what you have actually built."
+                    }
                 ].map((item, i) => (
                     <div key={i} className="p-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors group">
                         <div className="flex flex-col items-center mb-6">
                             <div className="text-[#C19A4A] mb-6 group-hover:scale-110 transition-transform">{item.icon}</div>
                             <h4 className="text-xl font-bold mb-3 text-center">{item.title}</h4>
                         </div>
-                        <p className="text-slate-400 text-sm leading-relaxed text-left">{item.desc}</p>
+                        <p className="text-slate-400 text-sm leading-relaxed text-center">{item.desc}</p>
                     </div>
                 ))}
             </div>
