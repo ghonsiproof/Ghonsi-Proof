@@ -7,6 +7,46 @@ import Footer from '../../components/footer/footer.jsx';
 import NotificationWidget from '../../components/NotificationWidget.jsx';
 import logo1 from '../../assets/ghonsi-proof-logos/png-logo/1.png';
 import { profileWithfileProofs } from '../../utils/proofsApi.js';
+=======
+import { useNavigate } from 'react-router-dom';
+import { getCurrentUser } from '../../utils/supabaseAuth';
+import { supabase } from '../../config/supabaseClient';
+import Header from '../../components/header/header.jsx';
+import Footer from '../../components/footer/footer.jsx';
+import NotificationWidget from '../../components/NotificationWidget';
+import { Wallet, Shield, Upload } from 'lucide-react';
+import bubbleData from '../../data/bubbleData';
+>>>>>>> f2c5efac591d52bb566b8b6e9e1aa7b108dbde97
+=======
+import React, { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
+import { Wallet, Shield, Upload, X, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Header from '../../components/header/header.jsx';
+import Footer from '../../components/footer/footer.jsx';
+import NotificationWidget from '../../components/NotificationWidget.jsx';
+import logo1 from '../../assets/ghonsi-proof-logos/png-logo/1.png';
+import { profileWithfileProofs } from '../../utils/proofsApi.js';
+=======
+import React, { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
+import { Wallet, Shield, Upload, X, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Header from '../../components/header/header.jsx';
+import Footer from '../../components/footer/footer.jsx';
+import NotificationWidget from '../../components/NotificationWidget.jsx';
+import logo1 from '../../assets/ghonsi-proof-logos/png-logo/1.png';
+import { profileWithfileProofs } from '../../utils/proofsApi.js';
+=======
+import { useNavigate } from 'react-router-dom';
+import { getCurrentUser } from '../../utils/supabaseAuth';
+import { supabase } from '../../config/supabaseClient';
+import Header from '../../components/header/header.jsx';
+import Footer from '../../components/footer/footer.jsx';
+import NotificationWidget from '../../components/NotificationWidget';
+import { Wallet, Shield, Upload } from 'lucide-react';
+import bubbleData from '../../data/bubbleData';
+>>>>>>> f2c5efac591d52bb566b8b6e9e1aa7b108dbde97
 
 import './home.css';
 
