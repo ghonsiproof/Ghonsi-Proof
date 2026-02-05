@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser } from '../utils/supabaseAuth';
-import supabase from '../utils/supabase';
-import Header from '../components/header/header';
-import Footer from '../components/footer/footer';
-import NotificationWidget from '../components/notificationWidget/notificationWidget';
+import { getCurrentUser } from '../../utils/supabaseAuth';
+import { supabase } from '../../config/supabaseClient';
+import Header from '../../components/header/header.jsx';
+import Footer from '../../components/footer/footer.jsx';
+import NotificationWidget from '../../components/NotificationWidget';
 import { Wallet, Shield, Upload } from 'lucide-react';
-import bubbleData from '../data/bubbleData';
+import bubbleData from '../../data/bubbleData';
 
 const Home = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
