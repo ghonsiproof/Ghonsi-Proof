@@ -1,64 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy } from 'lucide-react';
 import { getProofStats, getUserProofs } from '../../utils/proofsApi';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { getProfile } from '../../utils/profileApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
-// Mock components for other pages to demonstrate navigation
-const PlaceholderPage = ({ title, onNavigate }) => (
-  <div className="min-h-screen bg-[#0B0F1B] text-white flex flex-col items-center justify-center p-4">
-    <h1 className="text-3xl font-bold text-[#C19A4A] mb-4">{title}</h1>
-    <p className="mb-8 text-gray-400">This page is under construction.</p>
-    <button 
-      onClick={() => onNavigate('portfolio')}
-      className="flex items-center gap-2 px-4 py-2 bg-[#1A1F2E] border border-white/10 rounded-lg hover:bg-[#252b3d] transition-colors"
-    >
-      <ArrowLeft size={16} /> Back to Portfolio
-    </button>
-  </div>
-);
-
-// Main Application Component that handles routing
-export default function App() {
-  const [currentView, setCurrentView] = useState('portfolio');
-
-  // Simple router logic without external dependencies
-  const renderView = () => {
-    switch(currentView) {
-      case 'portfolio':
-        return <Portfolio onNavigate={setCurrentView} />;
-      case 'home':
-        return <PlaceholderPage title="Home Page" onNavigate={setCurrentView} />;
-      case 'publicProfile':
-        return <PlaceholderPage title="Public Profile" onNavigate={setCurrentView} />;
-      case 'upload':
-        return <PlaceholderPage title="Upload Proof" onNavigate={setCurrentView} />;
-      default:
-        return <Portfolio onNavigate={setCurrentView} />;
-    }
-  };
-
-  return (
-    <>
-      <style>
-        {`
-          .no-scrollbar::-webkit-scrollbar {
-            display: none;
-          }
-          .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-        `}
-      </style>
-      {renderView()}
-    </>
-  );
-}
-
-// Portfolio Component
-function Portfolio({ onNavigate }) {
+export default function Portfolio() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All Proofs');
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [emailCopied, setEmailCopied] = useState(false);
@@ -180,15 +129,15 @@ function Portfolio({ onNavigate }) {
       {/* NavBar */}
       <div className="flex items-center justify-between px-4 md:px-8 py-3 sticky top-0 z-50 bg-[#0B0F1B]/95 backdrop-blur-sm border-b border-white/5">
         <div className="flex items-center gap-3">
-          <button onClick={() => onNavigate('home')} className="logo bg-transparent border-none p-0 cursor-pointer">
+          <button onClick={() => navigate('/')} className="logo bg-transparent border-none p-0 cursor-pointer">
             <img src={logo} alt="Logo" style={{width: 'auto', height: '75px'}} />
           </button>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => onNavigate('home')} className={`${navItemClass} inline text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>
+          <button onClick={() => navigate('/')} className={`${navItemClass} inline text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>
             Home
           </button>
-          <button onClick={() => onNavigate('publicProfile')} className={`${navItemClass} inline text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>
+          <button onClick={() => navigate('/publicProfile')} className={`${navItemClass} inline text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>
             Public Profile
           </button>
           <button className="ml-2 bg-[#C19A4A] text-black text-[9px] px-3 py-1.5 rounded-md font-semibold flex items-center gap-2 hover:bg-[#a8853b] transition-colors">
@@ -374,12 +323,12 @@ function Portfolio({ onNavigate }) {
             <p className="text-[11px] text-white truncate">Start uploading your proofs and build your on-chain reputation</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => onNavigate('upload')} className="px-3 py-2 rounded-lg border border-[#C19A4A] text-[#C19A4A] text-xs font-semibold hover:bg-[#C19A4A]/10 transition-colors flex items-center gap-1.5">
+            <button onClick={() => navigate('/upload')} className="px-3 py-2 rounded-lg border border-[#C19A4A] text-[#C19A4A] text-xs font-semibold hover:bg-[#C19A4A]/10 transition-colors flex items-center gap-1.5">
               <Download size={14} />
               <span className="hidden sm:inline">Export Portfolio</span>
               <span className="sm:hidden">Export</span>
             </button>
-            <button onClick={() => onNavigate('upload')} className="px-3 py-2 rounded-lg bg-[#C19A4A] text-black text-xs font-semibold hover:bg-[#a8853b] transition-colors flex items-center gap-1.5">
+            <button onClick={() => navigate('/upload')} className="px-3 py-2 rounded-lg bg-[#C19A4A] text-black text-xs font-semibold hover:bg-[#a8853b] transition-colors flex items-center gap-1.5">
               <Plus size={14} />
               <span className="hidden sm:inline">Add New Proof</span>
               <span className="sm:hidden">Add</span>
