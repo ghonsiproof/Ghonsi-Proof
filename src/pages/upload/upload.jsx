@@ -50,10 +50,6 @@ function Upload() {
 
   const [isExtracting, setIsExtracting] = useState(false);
 
-  // eslint-disable-next-line no-unused-vars
-
-  const [extractedData, setExtractedData] = useState(null);
-
 
 
   const dropdownRef = useRef(null);
@@ -377,16 +373,7 @@ function Upload() {
 
 
       const result = await response.json();
-
       console.log('Extracted data:', result);
-
-
-
-      // Store extracted data for potential auto-fill
-
-      setExtractedData(result);
-
-
 
       return result;
 
@@ -539,33 +526,18 @@ function Upload() {
 
 
   const resetAll = () => {
-
     setProofType('');
-
     setProofName('');
-
     setSummary('');
-
     setReferenceLink('');
-
     setReferenceFiles([]);
-
     setSupportingFiles([]);
-
     setShowInstructions(false);
-
     setReferenceError('');
-
     setSupportingError('');
-
     setUploadError('');
-
     setIsUploading(false);
-
     setIsExtracting(false);
-
-    setExtractedData(null);
-
   };
 
 
