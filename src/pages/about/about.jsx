@@ -8,7 +8,6 @@ import missionDiagram from '../../assets/ghonsi-proof-logos/transparent-png-logo
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/ghonsi-proof1.png';
 import prosperImg from '../../assets/team/Prosper.png';
 import godwinImg from '../../assets/team/godwin.jpg';
-import nofiuImg from '../../assets/team/nofiu.jpg';
 import progressImg from '../../assets/team/progress.png';
 import nieImg from '../../assets/team/nie.jpg';
 import successImg from '../../assets/team/success.jpg';
@@ -54,12 +53,6 @@ function About() {
       role: 'Blockchain Engineer', 
       bio: 'Godwin is a Solana smart contract developer skilled in Rust and Anchor. He specializes in building scalable, decentralized applications (DApps) on Solana, combining deep technical expertise with a focus on reliability and real-world usability.', 
       image: godwinImg 
-    },
-    { 
-      name: 'Nofiu Moruf Pelumi', 
-      role: 'Lead Backend Engineer', 
-      bio: 'Pelumi is a full-stack developer, AI engineer and data-driven problem solver. Proficient in Python, R, SQL, and advanced analytics, he builds scalable web solutions, AI chatbots, and interactive dashboards on PHP/Laravel, JavaScript, and cloud platforms (AWS & Azure), and automates workflows with tools like Selenium and Power Automate. He also teaches and mentors aspiring analysts worldwide, helping them develop practical skills in Python, SQL, and cybersecurity.', 
-      image: nofiuImg 
     },
     { 
       name: 'Progress Ayere', 
@@ -144,7 +137,7 @@ function About() {
             <h2 className="text-[#0B0F1B] text-[1.875rem] mb-8 text-center font-[Inter] font-bold">Meet Our Team</h2>
           </div>
           <div className="relative w-full max-w-[350px] mx-auto overflow-hidden rounded-lg bg-white/[0.02] border border-white/5 p-4">
-            <button className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-none bg-black/40 text-white cursor-pointer flex items-center justify-center z-10 transition-[background] duration-300 hover:bg-[#C19A4A] hover:text-[#0B0F1B] left-2" id="teamPrev" onClick={() => setCurrentTeamSlide((prev) => (prev - 1 + 6) % 6)}>
+            <button className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-none bg-black/40 text-white cursor-pointer flex items-center justify-center z-10 transition-[background] duration-300 hover:bg-[#C19A4A] hover:text-[#0B0F1B] left-2" id="teamPrev" onClick={() => setCurrentTeamSlide((prev) => (prev - 1 + teamMembers.length) % teamMembers.length)}>
               <ChevronLeft size={20} />
             </button>
             <div className="flex transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]" style={{ transform: `translateX(-${currentTeamSlide * 100}%)` }}>
@@ -159,7 +152,7 @@ function About() {
                 </div>
               ))}
             </div>
-            <button className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-none bg-black/40 text-white cursor-pointer flex items-center justify-center z-10 transition-[background] duration-300 hover:bg-[#C19A4A] hover:text-[#0B0F1B] right-2" id="teamNext" onClick={() => setCurrentTeamSlide((prev) => (prev + 1) % 6)}>
+            <button className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-none bg-black/40 text-white cursor-pointer flex items-center justify-center z-10 transition-[background] duration-300 hover:bg-[#C19A4A] hover:text-[#0B0F1B] right-2" id="teamNext" onClick={() => setCurrentTeamSlide((prev) => (prev + 1) % teamMembers.length)}>
               <ChevronRight size={20} />
             </button>
           </div>
