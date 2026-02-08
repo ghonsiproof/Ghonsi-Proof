@@ -79,8 +79,8 @@ function Login() {
       setMessage('❌ Please request an OTP code first');
       return;
     }
-    if (!otpCode || otpCode.length < 8) {
-      setMessage('❌ Please enter the complete code from your email');
+    if (!otpCode || otpCode.length !== 6) {
+      setMessage('❌ Please enter the complete 6-digit code from your email');
       return;
     }
     
@@ -131,9 +131,10 @@ function Login() {
     try {
       await sendOTPToEmail(trimmedEmail);
       setOtpSent(true);
-      setMessage('✅ OTP sent! Check your email for the 8-digit code.');
+      setMessage('✅ OTP sent! Check your email for the 6-digit code.');
     } catch (error) {
-      setMessage('❌ Failed to send OTP: ' + error.message);
+      console.error('OTP Error:', error);
+      setMessage(`❌ Failed to send OTP: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -210,11 +211,11 @@ function Login() {
                     placeholder="Enter code from email"
                     value={otpCode}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
                       setOtpCode(value);
                     }}
                     disabled={isLoading || !otpSent}
-                    maxLength={8}
+                    maxLength={6}
                     className="w-full py-3 px-[15px] pr-[110px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
