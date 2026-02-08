@@ -4,10 +4,13 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
+// Log the values for debugging
+console.log('SUPABASE_URL:', supabaseUrl);
+console.log('SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Present' : 'Missing');
+
+// Ensure variables exist before initialization
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    "Missing Supabase environment variables. Please check your .env file."
-  );
+  throw new Error('Supabase URL and Key are required. Check your .env file.');
 }
 
 // Create Supabase client

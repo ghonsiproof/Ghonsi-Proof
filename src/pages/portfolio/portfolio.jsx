@@ -137,7 +137,7 @@ export default function Portfolio() {
           <button onClick={() => navigate('/')} className={`${navItemClass} inline text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>
             Home
           </button>
-          <button onClick={() => navigate('/publicProfile')} className={`${navItemClass} inline text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>
+          <button onClick={() => navigate(`/request?id=${user?.id}`)} className={`${navItemClass} inline text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>
             Public Profile
           </button>
           <button className="ml-2 bg-[#C19A4A] text-black text-[9px] px-3 py-1.5 rounded-md font-semibold flex items-center gap-2 hover:bg-[#a8853b] transition-colors">
@@ -186,7 +186,7 @@ export default function Portfolio() {
                       <Wallet size={12} className="text-[#C19A4A] shrink-0" />
                       <span className="font-mono">{profile?.users?.wallet_address || ''}</span>
                     </div>
-                    <a href={`https://explorer.solana.com/address/${(profile?.users?.wallet_address || '').replace(/\.\.\./g, '')}`} target="_blank" rel="noopener noreferrer" aria-label="Open wallet address in explorer" className="text-white hover:text-[#C19A4A] transition-colors flex items-center">
+                    <a href={`https://solscan.io/account/${profile?.users?.wallet_address || ''}`} target="_blank" rel="noopener noreferrer" aria-label="Open wallet address in explorer" className="text-white hover:text-[#C19A4A] transition-colors flex items-center">
                       <ExternalLink size={16} />
                     </a>
                   </div>

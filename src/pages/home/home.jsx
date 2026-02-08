@@ -10,6 +10,22 @@ import { profileWithfileProofs } from '../../utils/proofsApi.js';
 
 import './home.css';
 
+const getRandomPosition = (positions) => {
+  for (let attempts = 0; attempts < 100; attempts++) {
+    let top = Math.random() * 75 + 15;
+    let left = Math.random() * 80 + 10;
+    if (top < 25 && left > 40 && left < 60) {
+      top += 15;
+    }
+    const isValid = positions.every(pos => Math.sqrt((top - pos.top) ** 2 + (left - pos.left) ** 2) >= 15);
+    if (isValid) {
+      return { top, left };
+    }
+  }
+  // fallback if no valid position found
+  return { top: 50, left: 50 };
+};
+
 function Home() {
   const [bubbles, setBubbles] = useState([]);
   const [selectedBubble, setSelectedBubble] = useState(null);
@@ -24,7 +40,6 @@ function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Global listener to close popups when clicking blank areas
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.bubble-item') && !event.target.closest('.profile-popup-card')) {
@@ -41,32 +56,26 @@ function Home() {
       try {
         const data = await profileWithfileProofs();
         if (data && data.length > 0) {
+          const positions = [];
           const formatted = data.map((profile, index) => {
-            // Logic to disperse bubbles while subtly avoiding top-center
-            let top = Math.random() * 75 + 15; // 15% to 90%
-            let left = Math.random() * 80 + 10; // 10% to 90%
-
-            // Subtle avoidance: if bubble is in the top center 20% area, nudge it down
-            if (top < 25 && left > 40 && left < 60) {
-              top += 15;
-            }
+            const { top, left } = getRandomPosition(positions);
+            positions.push({ top, left });
 
             return {
               name: profile.display_name || 'Anonymous',
               bio: profile.bio || 'Web3 Professional',
               img: profile.avatar_url || logo1,
-              wallet: profile.users?.wallet_address || '',
-              id: profile.id,
+              id: profile.user_id, // We use this ID for the URL
               initialPos: { top: `${top}%`, left: `${left}%` },
               delay: index * 0.1
             };
           });
           setBubbles(formatted);
         }
-      } catch (error) { 
-        console.error('Error fetching bubbles:', error); 
-      } finally { 
-        setLoading(false); 
+      } catch (error) {
+        console.error('Error fetching bubbles:', error);
+      } finally {
+        setLoading(false);
       }
     };
     loadProfiles();
@@ -77,23 +86,18 @@ function Home() {
       setSelectedBubble(bubble);
       return;
     }
-
     if (type === 'click') setIsPinned(true);
 
     const rect = event.currentTarget.getBoundingClientRect();
     const container = event.currentTarget.closest('.bubbles-section');
     const containerRect = container.getBoundingClientRect();
-    
     const popupWidth = 320;
     const popupHeight = 220;
-
     const bubbleCenterX = rect.left - containerRect.left + rect.width / 2;
     const bubbleBottom = rect.bottom - containerRect.top;
 
     let leftPosition = bubbleCenterX - popupWidth / 2;
     let topPosition = bubbleBottom + 10;
-
-    // Keep popup within container boundaries
     leftPosition = Math.max(10, Math.min(leftPosition, containerRect.width - popupWidth - 10));
     topPosition = Math.max(10, Math.min(topPosition, containerRect.height - popupHeight - 10));
 
@@ -107,7 +111,6 @@ function Home() {
       <NotificationWidget />
 
       <main className="pt-24">
-        {/* HERO SECTION */}
         <section className="relative px-6 py-12 text-center max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
             <h1 className="text-4xl md:text-7xl font-bold tracking-tighter leading-tight mb-6">
@@ -122,10 +125,8 @@ function Home() {
           </motion.div>
         </section>
 
-        {/* BUBBLE EXPLORER */}
         <section className="relative h-[600px] md:h-[700px] mx-4 border border-white/5 rounded-[2rem] bg-gradient-to-b from-white/[0.02] to-transparent bubbles-section overflow-visible mb-20">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A10_0%,transparent_70%)]" />
-
           <p className="absolute top-8 left-1/2 -translate-x-1/2 z-20 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-[#C19A4A] text-xs font-bold uppercase tracking-widest whitespace-nowrap">
             Explore Verified Professionals
           </p>
@@ -177,7 +178,9 @@ function Home() {
                     </div>
                   </div>
                   <p className="text-gray-400 text-sm mb-6 leading-relaxed">{selectedBubble.bio}</p>
-                  <NavLink to={`/request?wallet=${selectedBubble.wallet}`} className="flex items-center justify-center gap-2 w-full py-3 bg-[#C19A4A] text-[#030712] font-bold rounded-xl hover:bg-[#d9b563] transition-all">
+                  
+                  {/* CHANGED: Navigation now uses ?id= for universal profile access */}
+                  <NavLink to={`/request?id=${selectedBubble.id}`} className="flex items-center justify-center gap-2 w-full py-3 bg-[#C19A4A] text-[#030712] font-bold rounded-xl hover:bg-[#d9b563] transition-all">
                     View Full Profile <ArrowRight size={18} />
                   </NavLink>
                 </motion.div>
@@ -186,25 +189,12 @@ function Home() {
           </AnimatePresence>
         </section>
 
-        {/* FEATURES GRID */}
         <section className="max-w-6xl mx-auto px-6 pb-32">
             <div className="grid md:grid-cols-3 gap-6">
                 {[
-                    { 
-                      title: "On-Chain Identity", 
-                      icon: <Wallet size={32}/>, 
-                      desc: "Aggregate your scattered contributions into one verifiable ID." 
-                    },
-                    { 
-                      title: "Proof of Work", 
-                      icon: <Shield size={32}/>, 
-                      desc: "No more fake resumes. Your history is backed by the blockchain." 
-                    },
-                    { 
-                      title: "Talent Discovery", 
-                      icon: <Upload size={32}/>, 
-                      desc: "Founders find you based on what you have actually built."
-                    }
+                    { title: "On-Chain Identity", icon: <Wallet size={32}/>, desc: "Aggregate your scattered contributions into one verifiable ID." },
+                    { title: "Proof of Work", icon: <Shield size={32}/>, desc: "No more fake resumes. Your history is backed by the blockchain." },
+                    { title: "Talent Discovery", icon: <Upload size={32}/>, desc: "Founders find you based on what you have actually built." }
                 ].map((item, i) => (
                     <div key={i} className="p-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors group">
                         <div className="flex flex-col items-center mb-6">

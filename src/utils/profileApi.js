@@ -1,118 +1,91 @@
-import { supabase } from "../config/supabaseClient";
+// Corrected import: Go up one level, then into 'config'
+import { supabase } from '../config/supabaseClient'; 
 
 /**
- * Profile Management API
+ * Fetches a user profile by their UUID (user_id)
+ * and joins with the users table for email/wallet info.
  */
-
-// Create a new profile
-export const createProfile = async (profileData) => {
-  const user = await supabase.auth.getUser();
-
-  if (!user.data.user) {
-    throw new Error("User not authenticated");
-  }
-
+export const getProfileById = async (userId) => {
   const { data, error } = await supabase
-    .from("profiles")
-    .insert({
-      user_id: user.data.user.id,
-      ...profileData,
-      created_at: new Date().toISOString(),
-    })
-    .select()
+    .from('profiles')
+    .select(`
+      *,
+      users (
+        email,
+        wallet_address
+      )
+    `)
+    .eq('user_id', userId)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching profile by ID:', error);
+    return null;
+  }
   return data;
 };
 
-// Get profile by user ID
+/**
+ * Fetches profile for the logged-in user
+ */
 export const getProfile = async (userId) => {
   const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", userId)
+    .from('profiles')
+    .select('*, users(email, wallet_address)')
+    .eq('user_id', userId)
     .single();
-
-  if (error && error.code !== "PGRST116") throw error; // Ignore "not found" error
+  if (error) return null;
   return data;
 };
-//
-export const fetchProfiles = async () => {
-  const { data: profiles, error: proErr } = await supabase
-    .from("profile")
-    .select("*");
-  console.log(profiles);
 
-  // const { data: proofs, error: proofErr } = await supabase
-  //   .from("proof")
-  //   .select(`*, files(*)`);
-
-  // const combined = profiles.map((profile) => ({
-  //   ...profile,
-  //   proofs: proofs.filter((p) => p.user_id === profile.user_id),
-  // }));
-
-  if (proErr) {
-    throw new Error(proErr.message);
-  }
-
-  return [];
-};
-
-// Get profile by wallet address (for public profiles)
+/**
+ * Required for publicProfile.jsx logic
+ */
 export const getProfileByWallet = async (walletAddress) => {
   const { data, error } = await supabase
-    .from("profiles")
-    .select(
-      `
-      *,
-      users!inner(wallet_address, email)
-    `
-    )
-    .eq("users.wallet_address", walletAddress)
-    .eq("is_public", true)
+    .from('profiles')
+    .select('*, users!inner(*)')
+    .eq('users.wallet_address', walletAddress)
     .single();
-
-  if (error && error.code !== "PGRST116") throw error;
+  if (error) return null;
   return data;
 };
 
-// Update profile
+/**
+ * Required for createProfile.jsx
+ */
+export const createProfile = async (profileData) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert([profileData])
+    .select();
+  if (error) throw error;
+  return data[0];
+};
+
+/**
+ * Required for createProfile.jsx
+ */
 export const updateProfile = async (userId, updates) => {
   const { data, error } = await supabase
-    .from("profiles")
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId)
-    .select()
-    .single();
-
+    .from('profiles')
+    .update(updates)
+    .eq('user_id', userId)
+    .select();
   if (error) throw error;
+  return data[0];
+};
+
+/**
+ * Required for home.jsx logic
+ */
+export const fetchProfiles = async () => {
+  const { data, error } = await supabase.from('profiles').select('*');
+  if (error) return [];
   return data;
 };
 
-// Delete profile
-export const deleteProfile = async (userId) => {
-  const { error } = await supabase
-    .from("profiles")
-    .delete()
-    .eq("user_id", userId);
-
-  if (error) throw error;
-  return true;
-};
-
-// Check if profile exists
 export const profileExists = async (userId) => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
-
-  if (error && error.code !== "PGRST116") throw error;
+  const { data } = await supabase.from('profiles').select('id').eq('user_id', userId).single();
   return !!data;
 };

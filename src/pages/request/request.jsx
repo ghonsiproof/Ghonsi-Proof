@@ -1,98 +1,90 @@
 import React, { useState, useEffect } from 'react';
 import { X, Share2, Mail, Wallet, ExternalLink, ShieldCheck, Info, Check } from 'lucide-react';
-// import { getCurrentUser } from '../../utils/supabaseAuth';
+import { getCurrentUser } from '../../utils/supabaseAuth';
 import { createPortfolioRequestMessage } from '../../utils/messagesApi';
-import { getProfileByWallet } from '../../utils/profileApi';
-import { getUserProofs } from '../../utils/proofsApi';
+import { getProfileById } from '../../utils/profileApi';
+import { getUserProofs, getProofStats } from '../../utils/proofsApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
-import { useLocation, useNavigate } from 'react-router-dom';
-// Mock Data
+
 
 
 function Request() {
   const [profileData, setProfileData] = useState(null);
-  const [proofs, setProofs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '' });
   const [showMore, setShowMore] = useState(false);
   const [copied, setCopied] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { bubble } = location.state || {};
 
-  // Process the real data from location state
   useEffect(() => {
-    const loadLiveProfile = async () => {
+    const fetchProfile = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get('id');
+
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        setLoading(true);
-        const urlParams = new URLSearchParams(window.location.search);
-        const wallet = urlParams.get('wallet');
-
-        if (!wallet) {
-          navigate('/home');
-          return;
-        }
-
-        // 1. Fetch Profile by wallet
-        const profile = await getProfileByWallet(wallet);
+        // Fetch profile data
+        const profile = await getProfileById(userId);
         if (!profile) {
-          navigate('/home');
+          setLoading(false);
           return;
         }
 
-        // 2. Fetch User's Proofs
-        const allProofs = await getUserProofs(profile.user_id);
-        // Display only verified proofs on this public-facing request page
-        const verifiedProofs = allProofs.filter(p => p.status === 'verified');
+        // Fetch user's proofs
+        const proofs = await getUserProofs(userId);
+        const stats = await getProofStats(userId);
 
-        // Transform the data to match the component's expected format
-        const processedData = {
-          name: profile.display_name,
-          role: profile.profession,
-          bio: profile.bio,
-          email: profile.users?.email || '', // Email from users table
-          wallet: profile.users?.wallet_address || '', // Wallet from users table
+        // Map to expected format
+        const mappedData = {
           profilePhotoUrl: profile.avatar_url,
-          social_links: profile.social_links || {},
+          name: profile.display_name,
+          role: profile.profession || 'Web3 Professional',
+          email: profile.users?.email ? `${profile.users.email.split('@')[0]}***@${profile.users.email.split('@')[1]}` : '',
+          wallet: profile.users?.wallet_address || '',
+          bio: profile.bio || 'No bio available.',
           stats: {
-            proofs: verifiedProofs.length,
-            achievements: 0 // Achievements not provided in the data
+            proofs: stats.total,
+            achievements: stats.verified
           },
-          skills: [], // Skills not provided in the data
-          proofs: verifiedProofs.map(proof => ({
-            id: proof.id,
+          skills: profile.skills || [],
+          proofs: proofs.map(proof => ({
+            id: `GH-${proof.proof_type?.charAt(0).toUpperCase()}-${String(proof.id).padStart(3, '0')}`,
             title: proof.proof_name,
-            status: proof.status,
+            status: proof.status === 'verified' ? 'Verified' : 'Pending',
             type: proof.proof_type,
             date: new Date(proof.created_at).toLocaleDateString(),
             desc: proof.summary,
-            hash: proof.blockchain_tx || 'N/A',
-            files: proof.files
+            hash: proof.blockchain_tx || 'Pending...'
           }))
         };
 
-        setProfileData(processedData);
-        setProofs(verifiedProofs.map(proof => ({
-          id: proof.id,
-          title: proof.proof_name,
-          status: proof.status,
-          type: proof.proof_type,
-          date: new Date(proof.created_at).toLocaleDateString(),
-          desc: proof.summary,
-          hash: proof.blockchain_tx || 'N/A',
-          files: proof.files
-        })));
-      } catch (err) {
-        console.error('Error loading live data:', err);
-        navigate('/home');
-      } finally {
-        setLoading(false);
+        setProfileData(mappedData);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+      setLoading(false);
+    };
+
+    const loadUserEmail = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user?.email) {
+          setFormData(prev => ({ ...prev, email: user.email }));
+        }
+      } catch (error) {
+        // User not logged in, ignore error
       }
     };
-    loadLiveProfile();
-  }, [bubble, navigate]);
+
+    fetchProfile();
+    loadUserEmail();
+  }, []);
+
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -103,10 +95,13 @@ function Request() {
     e.preventDefault();
 
     try {
-      // Send notification to profile owner
-      // Note: You'll need to get the actual profile owner's user_id from your database
-      // For now, this is a placeholder - replace with actual user_id lookup
-      const profileOwnerUserId = 'PROFILE_OWNER_USER_ID'; // TODO: Get from database
+      // Send notification to profile owner using the userId from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const profileOwnerUserId = urlParams.get('id');
+      if (!profileOwnerUserId) {
+        alert('Invalid profile. Please try again.');
+        return;
+      }
       await createPortfolioRequestMessage(profileOwnerUserId, formData.name);
 
       setShowRequestModal(false);
@@ -141,7 +136,7 @@ function Request() {
   }
 
   const shortWallet = `${profileData.wallet.substring(0, 4)}...${profileData.wallet.substring(profileData.wallet.length - 4)}`;
-  const proofsToShow = showMore ? proofs : proofs.slice(0, 2);
+  const proofsToShow = showMore ? profileData.proofs : profileData.proofs.slice(0, 2);
 
   return (
     <div className="max-w-full mx-auto bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">
@@ -151,11 +146,11 @@ function Request() {
           to { transform: scale(1); opacity: 1; }
         }
       `}</style>
-
+      
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0B0F1B]/95 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <a href="/home" className="logo">
-            <img src={logo} alt="Logo" style={{ width: 'auto', height: '75px' }} />
+            <img src={logo} alt="Logo" style={{width: 'auto', height: '75px'}} />
           </a>
         </div>
         <div className="flex items-center gap-4">
@@ -173,7 +168,7 @@ function Request() {
           <button className="absolute top-4 right-4 text-gray-400 hover:text-white">
             <X className="w-5 h-5" />
           </button>
-
+          
           <div className="flex flex-col gap-4">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 rounded-full bg-[#C19A4A] flex items-center justify-center flex-shrink-0 text-[#0B0F1B] overflow-hidden">
@@ -201,26 +196,6 @@ function Request() {
                 <span className="font-mono">{shortWallet}</span>
                 <ExternalLink className="w-2.5 h-2.5 text-gray-500" />
               </a>
-              {/* Only render if linkedin exists in social_links JSONB */}
-              {profileData?.social_links?.linkedin && (
-                <a href={profileData.social_links.linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#C19A4A] transition-colors">
-                  <span>LinkedIn</span>
-                  <ExternalLink className="w-2.5 h-2.5 text-gray-500" />
-                </a>
-              )}
-              {/* Repeat for twitter, github, etc. */}
-              {profileData?.social_links?.twitter && (
-                <a href={profileData.social_links.twitter} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#C19A4A] transition-colors">
-                  <span>Twitter</span>
-                  <ExternalLink className="w-2.5 h-2.5 text-gray-500" />
-                </a>
-              )}
-              {profileData?.social_links?.github && (
-                <a href={profileData.social_links.github} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#C19A4A] transition-colors">
-                  <span>GitHub</span>
-                  <ExternalLink className="w-2.5 h-2.5 text-gray-500" />
-                </a>
-              )}
             </div>
 
             <div className="pt-2">
@@ -233,7 +208,7 @@ function Request() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#131825] border border-gray-800 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-white">{proofs.length}</div>
+            <div className="text-2xl font-bold text-white">{profileData.stats.proofs}</div>
             <div className="text-xs text-gray-400 mt-1">Total Proofs</div>
           </div>
           <div className="bg-[#131825] border border-gray-800 rounded-xl p-4 text-center">
@@ -274,7 +249,7 @@ function Request() {
                     <Share2 className="w-3.5 h-3.5 text-gray-500 cursor-pointer hover:text-white" />
                   </div>
                 </div>
-
+                
                 <div className="flex items-center gap-4 text-[10px] text-gray-400 mb-3">
                   <div className="flex items-center gap-1">
                     <span>{proof.type}</span>
@@ -326,8 +301,8 @@ function Request() {
             </p>
           </div>
           <div className="shrink-0">
-            <button
-              onClick={() => setShowRequestModal(true)}
+            <button 
+              onClick={() => setShowRequestModal(true)} 
               className="px-4 py-2 rounded-lg bg-[#C19A4A] text-black text-xs font-semibold hover:bg-[#a8853b] transition-colors whitespace-nowrap"
             >
               Request Portfolio
@@ -339,7 +314,7 @@ function Request() {
       {showRequestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-[#0B0F1B]/80 backdrop-blur-sm" onClick={() => setShowRequestModal(false)}></div>
-
+          
           <div className="relative bg-[#0B0F1B] border border-gray-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 animate-[scaleIn_0.2s_ease-out]">
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -354,11 +329,11 @@ function Request() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-1.5">
                 <label className="text-sm text-gray-300">Full Name</label>
-                <input
-                  type="text"
+                <input 
+                  type="text" 
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="Enter your full name"
                   className="w-full bg-[#131825] border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#C19A4A] transition-colors"
                 />
@@ -366,11 +341,11 @@ function Request() {
 
               <div className="space-y-1.5">
                 <label className="text-sm text-gray-300">Email Address</label>
-                <input
-                  type="email"
+                <input 
+                  type="email" 
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="Enter your email"
                   className="w-full bg-[#131825] border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#C19A4A] transition-colors"
                 />
@@ -393,14 +368,14 @@ function Request() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button
+                <button 
                   type="button"
                   onClick={() => setShowRequestModal(false)}
                   className="flex-1 px-4 py-3 rounded-lg border border-gray-600 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
                 >
                   Cancel
                 </button>
-                <button
+                <button 
                   type="submit"
                   className="flex-1 px-4 py-3 rounded-lg bg-[#C19A4A] text-[#0B0F1B] text-sm font-bold hover:bg-[#d4a852] transition-colors"
                 >
@@ -415,7 +390,7 @@ function Request() {
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-[#0B0F1B]/80 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)}></div>
-
+          
           <div className="relative bg-[#0B0F1B] border border-gray-800 rounded-2xl w-full max-w-sm shadow-2xl p-8 text-center animate-[scaleIn_0.2s_ease-out]">
             <button onClick={() => setShowSuccessModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
               <X className="w-6 h-6" />
@@ -426,7 +401,7 @@ function Request() {
             </div>
 
             <h2 className="text-2xl font-bold text-white mb-4">Request Sent</h2>
-
+            
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
               We've notified {profileData.name}. You'll receive their portfolio via email once they approve
             </p>
