@@ -87,7 +87,6 @@ function Upload() {
 
 
 
-  const [referenceError, setReferenceError] = useState('');
 
 
 
@@ -579,11 +578,11 @@ function Upload() {
 
 
 
-  const extractDataFromFile = async (file) => {
+  // const extractDataFromFile = async (file) => {
 
 
 
-    if (!file) return null;
+  //   if (!file) return null;
 
 
 
@@ -591,19 +590,19 @@ function Upload() {
 
 
 
-    setIsExtracting(true);
+  //   setIsExtracting(true);
 
 
 
-    try {
+  //   try {
 
 
 
-      const formData = new FormData();
+  //     const formData = new FormData();
 
 
 
-      formData.append('file', file);
+  //     formData.append('file', file);
 
 
 
