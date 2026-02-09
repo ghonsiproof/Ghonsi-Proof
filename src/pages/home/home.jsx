@@ -81,6 +81,7 @@ function Home() {
               img: profile.avatar_url || logo1,
               wallet: profile.users?.wallet_address || '',
               id: profile.id,
+              userId: profile.user_id,
               initialPos: { top: `${pos.top}%`, left: `${pos.left}%` },
               delay: index * 0.1
             });
@@ -156,9 +157,9 @@ function Home() {
           </p>
 
           {loading ? (
-             <div className="flex h-full items-center justify-center">
+            <div className="flex h-full items-center justify-center">
                 <div className="w-12 h-12 border-4 border-t-[#C19A4A] border-white/10 rounded-full animate-spin" />
-             </div>
+            </div>
           ) : (
             <div className="relative w-full h-full p-10">
               {bubbles.map((bubble) => (
@@ -202,7 +203,7 @@ function Home() {
                     </div>
                   </div>
                   <p className="text-gray-400 text-sm mb-6 leading-relaxed">{selectedBubble.bio}</p>
-                  <NavLink to={`/request?wallet=${selectedBubble.wallet}`} className="flex items-center justify-center gap-2 w-full py-3 bg-[#C19A4A] text-[#030712] font-bold rounded-xl hover:bg-[#d9b563] transition-all">
+                  <NavLink to={`/request?id=${selectedBubble.userId}`} className="flex items-center justify-center gap-2 w-full py-3 bg-[#C19A4A] text-[#030712] font-bold rounded-xl hover:bg-[#d9b563] transition-all">
                     View Full Profile <ArrowRight size={18} />
                   </NavLink>
                 </motion.div>
