@@ -30,7 +30,8 @@ export const uploadProof = async (
         proof_name: proofData.proofName,
         summary: proofData.summary,
         reference_link: proofData.referenceLink || null,
-        status: "pending",
+        status: "verified",
+        verified_at: new Date().toISOString(),
       })
       .select()
       .single();
