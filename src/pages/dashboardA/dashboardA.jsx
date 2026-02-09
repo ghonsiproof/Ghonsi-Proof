@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Users, UserCheck, UserX, FileText, Search, X, Shield, Eye } from 'lucide-react';
-import { supabase } from '../../config/supabaseClient';
-import { getGlobalProofStats, updateProofStatus } from '../../utils/proofsApi';
-import { getCurrentUser } from '../../utils/supabaseAuth';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
 function DashboardA() {
@@ -10,90 +7,125 @@ function DashboardA() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const [realUsers, setRealUsers] = useState([]);
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeUsers: 0,
-    inactiveUsers: 0,
-    totalProofs: 0
-  });
 
-  useEffect(() => {
-    const fetchAllUsers = async () => {
-      try {
-        // This requires an admin-level RLS policy or service_role key
-        const { data, error } = await supabase
-          .from('profiles')
-          .select(`
-            id,
-            display_name,
-            is_public,
-            created_at,
-            users (email, wallet_address),
-            proofs (status)
-          `);
-
-        if (!error) {
-          // Map the nested data to match your table's expected format
-          const formattedUsers = data.map(profile => ({
-            id: profile.id,
-            fullName: profile.display_name,
-            email: profile.users?.email,
-            status: profile.is_public ? 'Active' : 'Inactive',
-            proofs: {
-              verified: profile.proofs.filter(p => p.status === 'verified').length,
-              pending: profile.proofs.filter(p => p.status === 'pending').length
-            },
-            dateJoined: new Date(profile.created_at).toLocaleDateString()
-          }));
-          setRealUsers(formattedUsers);
-          // Calculate stats from real data
-          const totalUsers = formattedUsers.length;
-          const activeUsers = formattedUsers.filter(user => user.status === 'Active').length;
-          const inactiveUsers = totalUsers - activeUsers;
-          setStats(prevStats => ({
-            ...prevStats,
-            totalUsers,
-            activeUsers,
-            inactiveUsers
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    };
-    fetchAllUsers();
-  }, []);
-
-  useEffect(() => {
-    const loadGlobalStats = async () => {
-      try {
-        const globalStats = await getGlobalProofStats();
-        setStats(prevStats => ({
-          ...prevStats,
-          totalProofs: globalStats.total
-        }));
-      } catch (error) {
-        console.error('Error fetching global proof stats:', error);
-      }
-    };
-    loadGlobalStats();
-  }, []);
-
-  const handleVerify = async (proofId) => {
-    try {
-      const admin = await getCurrentUser(); // Get current admin ID
-      await updateProofStatus(proofId, 'verified', admin.id);
-
-      alert('✅ Proof officially verified and recorded!');
-
-      // Refresh your user list to show the new status
-      window.location.reload();
-    } catch (error) {
-      console.error('Verification failed:', error);
-      alert('Error updating status.');
-    }
+  // Mock data
+  const stats = {
+    totalUsers: 4,
+    activeUsers: 2,
+    inactiveUsers: 1,
+    totalProofs: 1
   };
+
+  const users = [
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active',
+      joinDate: 'August 15, 2023',
+      proofHistory: [
+        {
+          title: 'Web3 Hackathon Winner',
+          achievement: '1st 2023-06-15',
+          submitted: 'November 15, 2023'
+        }
+      ]
+    },
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active'
+    },
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active'
+    },
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active'
+    },
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active'
+    },
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active'
+    },
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active'
+    },
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active'
+    },
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active'
+    },
+    {
+      id: '008754021',
+      email: 'sarahchen@gmail.com',
+      status: 'active',
+      proofs: { verified: 12, pending: 2 },
+      dateJoined: 'Jan 15, 2024',
+      lastActivity: 'Jan 18, 2024',
+      fullName: 'Sarah Chen',
+      accountStatus: 'Active'
+    }
+  ];
 
   const matchDetails = {
     title: 'Web3 Hackathon Winner',
@@ -107,12 +139,12 @@ function DashboardA() {
     ]
   };
 
-  const filteredUsers = realUsers.filter(user => {
-    const matchesSearch = user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'All' ||
-                         (filterStatus === 'Active' && user.status === 'Active') ||
-                         (filterStatus === 'Inactive' && user.status === 'Inactive');
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         user.id.includes(searchTerm);
+    const matchesFilter = filterStatus === 'All' || 
+                         (filterStatus === 'Active' && user.status === 'active') ||
+                         (filterStatus === 'Inactive' && user.status === 'inactive');
     return matchesSearch && matchesFilter;
   });
 
@@ -217,7 +249,7 @@ function DashboardA() {
               {filteredUsers.map((user, index) => (
                 <tr key={index} className="border-b border-gray-800 hover:bg-[#1A2332]">
                   <td className="py-3 px-4">
-                    <div className="text-sm font-medium">{user.fullName}</div>
+                    <div className="text-sm font-medium">{user.id}</div>
                     <div className="text-xs text-gray-400">{user.email}</div>
                   </td>
                   <td className="py-3 px-4">
@@ -312,22 +344,12 @@ function DashboardA() {
                         <p className="text-xs text-gray-400">🏆 Achievement: {proof.achievement}</p>
                         <p className="text-xs text-gray-400">Submitted: {proof.submitted}</p>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setSelectedMatch(matchDetails)}
-                          className="bg-[#C19A4A] text-black text-xs px-3 py-1.5 rounded font-medium hover:bg-[#D4A854] flex items-center gap-1"
-                        >
-                          <Eye size={14} /> View Matches
-                        </button>
-                        {proof.status === 'pending' && (
-                          <button
-                            onClick={() => handleVerify(proof.id)}
-                            className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600"
-                          >
-                            Approve Proof
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => setSelectedMatch(matchDetails)}
+                        className="bg-[#C19A4A] text-black text-xs px-3 py-1.5 rounded font-medium hover:bg-[#D4A854] flex items-center gap-1"
+                      >
+                        <Eye size={14} /> View Matches
+                      </button>
                     </div>
                   </div>
                 ))}
