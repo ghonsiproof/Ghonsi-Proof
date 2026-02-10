@@ -49,7 +49,7 @@ function AdminLogin() {
       setLoading(false);
     } else if (data.user) {
       localStorage.setItem('adminAuth', 'true');
-      navigate('/admin/dashboard');
+      navigate('/dashboardA');
     }
   };
 

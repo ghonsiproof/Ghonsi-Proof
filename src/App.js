@@ -53,7 +53,7 @@ function App() {
         <Route path="/publicProfile" element={<PublicProfile />} />
         <Route path="/request" element={<Request />} />
         <Route path="/dashboardA" element={<DashboardA />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/adminLogin" element={<AdminLogin />} />
 
         {/* Protected Routes */}
         <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />

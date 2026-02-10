@@ -18,7 +18,7 @@ function DashboardA() {
   useEffect(() => {
     const isAuth = localStorage.getItem('adminAuth');
     if (!isAuth) {
-      navigate('/admin/login');
+      navigate('/adminLogin');
     }
   }, [navigate]);
 
@@ -163,7 +163,7 @@ function DashboardA() {
         <button 
           onClick={() => {
             localStorage.removeItem('adminAuth');
-            navigate('/admin/login');
+            navigate('/adminLogin');
           }}
           className="text-sm text-gray-400 hover:text-white"
         >
