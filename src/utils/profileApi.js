@@ -16,35 +16,7 @@ const generateUID = (userId) => {
   return Math.abs(hash).toString().padStart(9, '0').slice(0, 9);
 };
 
-// Create a new profile
-export const createProfile = async (profileData) => {
-  const user = await supabase.auth.getUser();
 
-  if (!user.data.user) {
-    throw new Error("User not authenticated");
-  }
-
-  const uid = generateUID(user.data.user.id);
-  const email = user.data.user.email;
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .insert({
-      user_id: user.data.user.id,
-      uid,
-      email,
-      ...profileData,
-      created_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error fetching profile by ID:', error);
-    return null;
-  }
-  return data;
-};
 
 /**
  * Fetches profile for the logged-in user
@@ -101,10 +73,26 @@ export const getProfileByWallet = async (walletAddress) => {
  * Required for createProfile.jsx
  */
 export const createProfile = async (profileData) => {
+  const user = await supabase.auth.getUser();
+
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  const uid = generateUID(user.data.user.id);
+  const email = user.data.user.email;
+
   const { data, error } = await supabase
-    .from('profiles')
-    .insert([profileData])
+    .from("profiles")
+    .insert([{
+      user_id: user.data.user.id,
+      uid,
+      email,
+      ...profileData,
+      created_at: new Date().toISOString(),
+    }])
     .select();
+
   if (error) throw error;
   return data[0];
 };
