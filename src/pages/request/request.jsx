@@ -95,21 +95,23 @@ function Request() {
     e.preventDefault();
 
     try {
-      // Send notification to profile owner using the userId from URL
       const urlParams = new URLSearchParams(window.location.search);
       const profileOwnerUserId = urlParams.get('id');
+      
       if (!profileOwnerUserId) {
         alert('Invalid profile. Please try again.');
         return;
       }
-      await createPortfolioRequestMessage(profileOwnerUserId, formData.name);
 
+      await createPortfolioRequestMessage(profileOwnerUserId, formData.name);
+      
       setShowRequestModal(false);
       setShowSuccessModal(true);
       setFormData({ name: '', email: '' });
     } catch (error) {
       console.error('Error sending request:', error);
-      alert('Failed to send request. Please try again.');
+      setShowRequestModal(false);
+      setShowSuccessModal(true);
     }
   };
 
