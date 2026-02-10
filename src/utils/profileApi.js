@@ -2,20 +2,41 @@
 import { supabase } from '../config/supabaseClient'; 
 
 /**
- * Fetches a user profile by their UUID (user_id)
- * and joins with the users table for email/wallet info.
+ * Profile Management API
  */
-export const getProfileById = async (userId) => {
+
+// Generate 9-digit UID from user_id
+const generateUID = (userId) => {
+  if (!userId) return '000000000';
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString().padStart(9, '0').slice(0, 9);
+};
+
+// Create a new profile
+export const createProfile = async (profileData) => {
+  const user = await supabase.auth.getUser();
+
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  const uid = generateUID(user.data.user.id);
+  const email = user.data.user.email;
+
   const { data, error } = await supabase
-    .from('profiles')
-    .select(`
-      *,
-      users (
-        email,
-        wallet_address
-      )
-    `)
-    .eq('user_id', userId)
+    .from("profiles")
+    .insert({
+      user_id: user.data.user.id,
+      uid,
+      email,
+      ...profileData,
+      created_at: new Date().toISOString(),
+    })
+    .select()
     .single();
 
   if (error) {
@@ -34,7 +55,32 @@ export const getProfile = async (userId) => {
     .select('*, users(email, wallet_address)')
     .eq('user_id', userId)
     .single();
-  if (error) return null;
+
+  if (error && error.code !== "PGRST116") throw error; // Ignore "not found" error
+  
+  // If profile exists but has no UID or email, update it
+  if (data) {
+    const updates = {};
+    if (!data.uid) {
+      updates.uid = generateUID(userId);
+      data.uid = updates.uid;
+    }
+    if (!data.email) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        updates.email = user.email;
+        data.email = updates.email;
+      }
+    }
+    if (Object.keys(updates).length > 0) {
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("user_id", userId);
+      if (updateError) console.error('Profile update error:', updateError);
+    }
+  }
+  
   return data;
 };
 

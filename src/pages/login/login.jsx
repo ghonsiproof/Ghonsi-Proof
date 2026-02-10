@@ -49,9 +49,15 @@ function Login() {
       setMessage('✅ Wallet connected successfully!');
 
       if (isNewUser) {
-        const profile = await getProfile(user.id);
-        const firstName = profile?.full_name?.split(' ')[0] || 'User';
-        await createWelcomeMessage(user.id, firstName);
+        setTimeout(async () => {
+          try {
+            const profile = await getProfile(user.id);
+            const firstName = profile?.display_name?.split(' ')[0] || profile?.full_name?.split(' ')[0] || 'User';
+            await createWelcomeMessage(user.id, firstName);
+          } catch (err) {
+            console.log('Could not send welcome message');
+          }
+        }, 60000);
       }
 
       setTimeout(() => navigate('/dashboard'), 1000);
@@ -93,16 +99,15 @@ function Login() {
       
       if (isNewUser) {
         const user = await getCurrentUser();
-        try {
-          const profile = await getProfile(user.id);
-          const firstName = profile?.full_name?.split(' ')[0] || 'User';
-          await createWelcomeMessage(user.id, firstName);
-        } catch (profileError) {
-          // Profile may not exist yet if SQL trigger hasn't run
-          console.warn('Profile not found for new user, welcome message will be created later:', profileError);
-          // For now, just log the user in without creating welcome message
-          // The profile creation trigger should handle this
-        }
+        setTimeout(async () => {
+          try {
+            const profile = await getProfile(user.id);
+            const firstName = profile?.display_name?.split(' ')[0] || profile?.full_name?.split(' ')[0] || 'User';
+            await createWelcomeMessage(user.id, firstName);
+          } catch (err) {
+            console.log('Could not send welcome message');
+          }
+        }, 60000);
       }
       
       setTimeout(() => navigate('/dashboard'), 1000);

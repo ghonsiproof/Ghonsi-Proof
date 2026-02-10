@@ -20,6 +20,7 @@ import Message from './pages/message/message.jsx';
 import DashboardA from './pages/dashboardA/dashboardA.jsx';
 import TestSupabase from './pages/test/testSupabase.jsx';
 import AuthCallback from './pages/auth/AuthCallback.jsx';
+import AdminLogin from './pages/adminLogin/AdminLogin.jsx';
 import './App.css';
 
 function ScrollToTop() {
@@ -52,6 +53,7 @@ function App() {
         <Route path="/publicProfile" element={<PublicProfile />} />
         <Route path="/request" element={<Request />} />
         <Route path="/dashboardA" element={<DashboardA />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* Protected Routes */}
         <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />

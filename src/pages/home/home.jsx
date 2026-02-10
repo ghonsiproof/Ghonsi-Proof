@@ -137,13 +137,18 @@ function Home() {
         <section className="relative px-6 py-12 text-center max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
             <h1 className="text-4xl md:text-7xl font-bold tracking-tighter leading-tight mb-6">
-              Prove what you've <span className="text-[#C19A4A] drop-shadow-[0_0_15px_rgba(193,154,74,0.3)]">built.</span>
+              Prove your <span className="text-[#C19A4A] drop-shadow-[0_0_15px_rgba(193,154,74,0.3)]">work.</span>
               <br />
-              <span className="text-gray-400">Unlock your potential.</span>
+              <span className="text-gray-400">Unlock who you can work with.</span>
             </h1>
-            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-              Ghonsi Proof is the on-chain trust engine for the Web3 workforce. 
-              Verify your work history and store your portfolio on the blockchain.
+            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed" style={{ textAlign: 'justify' }}>
+              Ghonsi proof is the on-chain trust engine for the Web3 workforce. We transform your scattered contributions into a single, verifiable on-chain portfolio so you can get noticed for the work you've actually done.
+              <br /><br />
+              Web3 professionals often leave their best work scattered across multiple platforms (Static Portfolios, Discord, Telegram, X, and GitHub). When it is time to get hired, gathering proof is slow and unconvincing. Ghonsi proof fixes this by turning your daily contributions into one verifiable living profile.
+              <br /><br />
+              Now, as a builder or professional in Web3 you can store your portfolio on the blockchain.
+              <br /><br />
+              As an employer or hirer, you can now verify talents and their track records.
             </p>
           </motion.div>
         </section>
@@ -217,19 +222,19 @@ function Home() {
             <div className="grid md:grid-cols-3 gap-6">
                 {[
                     { 
-                      title: "On-Chain Identity", 
+                      title: "Connect", 
                       icon: <Wallet size={32}/>, 
-                      desc: "Aggregate your scattered contributions into one verifiable ID." 
+                      desc: "Sign up and connect your wallet." 
                     },
                     { 
-                      title: "Proof of Work", 
+                      title: "Upload", 
                       icon: <Shield size={32}/>, 
-                      desc: "No more fake resumes. Your history is backed by the blockchain." 
+                      desc: "Upload and sync your work history." 
                     },
                     { 
-                      title: "Talent Discovery", 
+                      title: "Share", 
                       icon: <Upload size={32}/>, 
-                      desc: "Founders find you based on what you have actually built."
+                      desc: "Instantly share your on-chain portfolio with employers and founders."
                     }
                 ].map((item, i) => (
                     <div key={i} className="p-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors group">
