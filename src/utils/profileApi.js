@@ -69,6 +69,16 @@ export const getProfileByWallet = async (walletAddress) => {
   return data;
 };
 
+export const getProfileById = async (profileId) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', profileId)
+    .single();
+  if (error) return null;
+  return data;
+};
+
 /**
  * Required for createProfile.jsx
  */
