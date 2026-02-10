@@ -69,11 +69,11 @@ export const getProfileByWallet = async (walletAddress) => {
   return data;
 };
 
-export const getProfileById = async (profileId) => {
+export const getProfileById = async (userId) => {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
-    .eq('id', profileId)
+    .select('*, users(*)')
+    .eq('user_id', userId)
     .single();
   if (error) return null;
   return data;
