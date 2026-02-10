@@ -97,7 +97,8 @@ export default function Portfolio() {
     { name: "Work History", value: "job_history", count: proofs.filter(p => p.proof_type === "job_history").length },
     { name: "Certificates", value: "certificates", count: proofs.filter(p => p.proof_type === "certificates").length },
     { name: "Milestones", value: "milestones", count: proofs.filter(p => p.proof_type === "milestones").length },
-    { name: "Community", value: "community", count: proofs.filter(p => p.proof_type === "community").length }
+    { name: "Community", value: "community", count: proofs.filter(p => p.proof_type === "community").length },
+    { name: "Skills", value: "skills", count: proofs.filter(p => p.proof_type === "skills").length }
   ];
 
   const activeTabValue = tabs.find(tab => tab.name === activeTab)?.value || 'All Proofs';
@@ -158,9 +159,17 @@ export default function Portfolio() {
 
             <div className="relative z-10 flex gap-4 flex-wrap">
               <div className="shrink-0">
-                <div className="w-16 h-16 rounded-full bg-[#C19A4A]/20 border border-[#C19A4A] flex items-center justify-center text-[#C19A4A] text-2xl font-bold">
-                  {initials}
-                </div>
+                {profile?.avatar_url ? (
+                  <img 
+                    src={profile.avatar_url} 
+                    alt={profile.display_name || 'Profile'} 
+                    className="w-16 h-16 rounded-full object-cover border-2 border-[#C19A4A]"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-[#C19A4A]/20 border border-[#C19A4A] flex items-center justify-center text-[#C19A4A] text-2xl font-bold">
+                    {initials}
+                  </div>
+                )}
               </div>
                 
               <div className="flex-1 min-w-0">
