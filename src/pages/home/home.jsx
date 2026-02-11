@@ -260,37 +260,38 @@ function Home() {
       <Header />
       <NotificationWidget />
 
-      <main className="pt-24 relative z-10">
-        {/* HERO SECTION */}
-        <section className="relative px-6 py-16 text-center max-w-6xl mx-auto">
-          {/* Decorative floating elements */}
-          <div className="absolute top-10 left-10 w-2 h-2 bg-white rounded-full animate-pulse" />
-          <div className="absolute top-20 right-20 w-3 h-3 bg-white rounded-full animate-pulse animation-delay-1000" />
-          <div className="absolute bottom-10 left-1/4 w-2 h-2 bg-white rounded-full animate-pulse animation-delay-2000" />
+      <main className="pt-16 md:pt-24 relative z-10">
+        {/* HERO SECTION - Mobile Optimized */}
+        <section className="relative px-4 md:px-6 py-8 md:py-16 text-center max-w-6xl mx-auto">
+          {/* Decorative floating elements - hidden on mobile */}
+          <div className="hidden md:block absolute top-10 left-10 w-2 h-2 bg-white rounded-full animate-pulse" />
+          <div className="hidden md:block absolute top-20 right-20 w-3 h-3 bg-white rounded-full animate-pulse animation-delay-1000" />
+          <div className="hidden md:block absolute bottom-10 left-1/4 w-2 h-2 bg-white rounded-full animate-pulse animation-delay-2000" />
           
           <motion.div 
             initial={{ opacity: 0, y: 30 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            {/* Premium badge */}
+            {/* Premium badge - Mobile Optimized */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-gradient-to-r from-[#C19A4A]/20 to-[#d9b563]/20 border border-[#C19A4A]/30 backdrop-blur-xl"
+              className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 mb-4 md:mb-8 rounded-full bg-gradient-to-r from-[#C19A4A]/20 to-[#d9b563]/20 border border-[#C19A4A]/30 backdrop-blur-xl"
             >
-              <Sparkles size={16} className="text-[#C19A4A]" />
-              <span className="text-sm font-semibold bg-gradient-to-r from-[#C19A4A] to-[#d9b563] bg-clip-text text-transparent">
+              <Sparkles size={14} className="text-[#C19A4A]" />
+              <span className="text-xs md:text-sm font-semibold bg-gradient-to-r from-[#C19A4A] to-[#d9b563] bg-clip-text text-transparent">
                 Ghonsi Proof
               </span>
             </motion.div>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-8">
+            {/* Headline - Mobile Optimized */}
+            <h1 className="text-[2.5rem] leading-[1.1] sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-4 md:mb-8">
               <span className="block bg-gradient-to-br from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
                 Prove your work
               </span>
-              <span className="block mt-2">
+              <span className="block mt-1 md:mt-2">
                 <span className="bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 bg-clip-text text-transparent">as you </span>
                 <span className="relative inline-block">
                   <span className="bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-[#C19A4A] bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
@@ -301,75 +302,77 @@ function Home() {
               </span>
             </h1>
 
-            <div className="max-w-3xl mx-auto space-y-4 mb-12">
-              <p className="text-gray-300 text-lg md:text-xl leading-relaxed">
+            {/* Description - Mobile Optimized */}
+            <div className="max-w-3xl mx-auto space-y-2 md:space-y-4 mb-6 md:mb-12">
+              <p className="text-gray-300 text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed px-2">
                 Ghonsi Proof lets you turn your work into a{' '}
                 <span className="text-[#C19A4A] font-semibold">verifiable on-chain portfolio</span>
                 —so you get noticed for the contributions you've actually made.
               </p>
-              <p className="text-gray-400 text-base md:text-lg leading-relaxed">
+              <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed px-2">
                 Scattered work across GitHub, Discord, X, and other platforms makes proving your skills slow and frustrating. 
                 Ghonsi Proof solves this by letting you upload and verify your work in one trusted place.
               </p>
             </div>
 
+            {/* CTAs - Mobile Optimized */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center px-4"
             >
               <NavLink 
                 to="/dashboard" 
-                className="group relative px-8 py-4 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(193,154,74,0.4)] flex items-center gap-2"
+                className="group relative px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(193,154,74,0.4)] flex items-center gap-2 text-sm md:text-base w-full sm:w-auto justify-center"
               >
                 <span className="relative z-10">Create my portfolio</span>
-                <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
               </NavLink>
               
               <button
                 onClick={scrollToBubbleSection}
-                className="group relative px-8 py-4 rounded-xl font-bold overflow-hidden transition-all hover:scale-105 flex items-center gap-2"
+                className="group relative px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold overflow-hidden transition-all hover:scale-105 flex items-center gap-2 text-sm md:text-base w-full sm:w-auto justify-center"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-xl" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/0 via-[#C19A4A]/10 to-[#C19A4A]/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                 <div className="absolute inset-[1px] bg-[#0B0F1B]/80 backdrop-blur-xl rounded-[11px]" />
                 <span className="relative z-10">Verify talent now</span>
-                <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
               </button>
             </motion.div>
           </motion.div>
         </section>
 
-        {/* HOW IT WORKS SECTION */}
-        <section className="max-w-5xl mx-auto px-6 py-20">
+        {/* HOW IT WORKS SECTION - Mobile Optimized */}
+        <section className="max-w-5xl mx-auto px-4 md:px-6 py-12 md:py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="text-center mb-8 md:mb-16"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
               How It Works
             </h2>
           </motion.div>
           
-          {/* Premium layered container */}
+          {/* Premium layered container - Mobile Optimized */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative p-[2px] rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
+            className="relative p-[2px] rounded-[2rem] md:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
           >
-            <div className="relative p-[1px] rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
-              <div className="relative rounded-[2.3rem] bg-[#0B0F1B]/90 backdrop-blur-2xl p-8 md:p-12 overflow-hidden">
+            <div className="relative p-[1px] rounded-[1.95rem] md:rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
+              <div className="relative rounded-[1.9rem] md:rounded-[2.3rem] bg-[#0B0F1B]/90 backdrop-blur-2xl p-6 md:p-8 lg:p-12 overflow-hidden">
                 {/* Inner glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/5 via-transparent to-[#d9b563]/5 rounded-[2.3rem]" />
+                <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/5 via-transparent to-[#d9b563]/5 rounded-[1.9rem] md:rounded-[2.3rem]" />
                 
-                <div className="relative space-y-8">
+                <div className="relative space-y-6 md:space-y-8">
                   {[
                     { 
                       icon: Wallet, 
@@ -399,37 +402,37 @@ function Home() {
                       className="group relative"
                     >
                       {/* Card with gradient border */}
-                      <div className="relative p-[1px] rounded-2xl bg-gradient-to-r from-white/10 to-white/5 hover:from-[#C19A4A]/30 hover:to-[#d9b563]/30 transition-all duration-500">
-                        <div className="flex flex-col md:flex-row items-start gap-6 p-6 rounded-[15px] bg-gradient-to-br from-white/[0.03] to-white/[0.01] backdrop-blur-xl">
+                      <div className="relative p-[1px] rounded-xl md:rounded-2xl bg-gradient-to-r from-white/10 to-white/5 hover:from-[#C19A4A]/30 hover:to-[#d9b563]/30 transition-all duration-500">
+                        <div className="flex flex-col md:flex-row items-start gap-4 md:gap-6 p-4 md:p-6 rounded-[11px] md:rounded-[15px] bg-gradient-to-br from-white/[0.03] to-white/[0.01] backdrop-blur-xl">
                           {/* Icon container with gradient */}
                           <div className="relative flex-shrink-0">
-                            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${item.gradient} p-[2px]`}>
-                              <div className="w-full h-full rounded-[14px] bg-[#0B0F1B] flex items-center justify-center">
-                                <item.icon size={28} className="text-[#C19A4A]" />
+                            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-br ${item.gradient} p-[2px]`}>
+                              <div className="w-full h-full rounded-[10px] md:rounded-[14px] bg-[#0B0F1B] flex items-center justify-center">
+                                <item.icon size={24} className="text-[#C19A4A] md:w-7 md:h-7" />
                               </div>
                             </div>
                             {/* Glow effect */}
-                            <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
+                            <div className={`absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
                           </div>
                           
                           <div className="flex-1">
-                            <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                            <h3 className="text-xl md:text-2xl font-bold mb-1 md:mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                               {item.title}
                             </h3>
-                            <p className="text-gray-400 text-base leading-relaxed">{item.desc}</p>
+                            <p className="text-gray-400 text-sm md:text-base leading-relaxed">{item.desc}</p>
                           </div>
                         </div>
                       </div>
                     </motion.div>
                   ))}
 
-                  <div className="pt-6 flex justify-center">
+                  <div className="pt-4 md:pt-6 flex justify-center">
                     <NavLink 
                       to="/dashboard" 
-                      className="group relative px-8 py-4 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(193,154,74,0.4)] flex items-center gap-2"
+                      className="group relative px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(193,154,74,0.4)] flex items-center gap-2 text-sm md:text-base w-full sm:w-auto justify-center"
                     >
                       <span className="relative z-10">Create my portfolio</span>
-                      <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform md:w-[18px] md:h-[18px]" />
                       <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
                     </NavLink>
                   </div>
@@ -439,8 +442,8 @@ function Home() {
           </motion.div>
         </section>
 
-        {/* TRUST LAYER SECTION */}
-        <section className="max-w-6xl mx-auto px-6 py-20">
+        {/* TRUST LAYER SECTION - Mobile Optimized */}
+        <section className="max-w-6xl mx-auto px-4 md:px-6 py-12 md:py-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -448,30 +451,30 @@ function Home() {
             transition={{ duration: 0.8 }}
             className="relative"
           >
-            {/* Decorative gradient orbs */}
-            <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#C19A4A] rounded-full opacity-20 blur-[100px]" />
-            <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-[#d9b563] rounded-full opacity-20 blur-[100px]" />
+            {/* Decorative gradient orbs - adjusted for mobile */}
+            <div className="absolute -top-10 md:-top-20 -left-10 md:-left-20 w-32 h-32 md:w-40 md:h-40 bg-[#C19A4A] rounded-full opacity-20 blur-[80px] md:blur-[100px]" />
+            <div className="absolute -bottom-10 md:-bottom-20 -right-10 md:-right-20 w-32 h-32 md:w-40 md:h-40 bg-[#d9b563] rounded-full opacity-20 blur-[80px] md:blur-[100px]" />
             
             <div className="relative text-center">
               <motion.h2 
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="text-4xl md:text-6xl font-bold mb-6"
+                className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6"
               >
                 <span className="block bg-gradient-to-br from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
                   Building the trust layer
                 </span>
-                <span className="block mt-2 bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-[#C19A4A] bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
+                <span className="block mt-1 md:mt-2 bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-[#C19A4A] bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
                   for the global workforce.
                 </span>
               </motion.h2>
               
-              <div className="max-w-3xl mx-auto space-y-4 mb-12">
-                <p className="text-gray-300 text-lg md:text-xl leading-relaxed">
+              <div className="max-w-3xl mx-auto space-y-2 md:space-y-4 mb-6 md:mb-12 px-2">
+                <p className="text-gray-300 text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed">
                   Your reputation should be easy to prove and accessible anytime.
                 </p>
-                <p className="text-gray-400 text-base md:text-lg leading-relaxed">
+                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
                   Ghonsi Proof bridges the gap between doing the work and getting the credit you deserve.
                 </p>
               </div>
@@ -481,75 +484,75 @@ function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+                className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center px-4"
               >
                 <NavLink 
                   to="/dashboard" 
-                  className="group relative px-8 py-4 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(193,154,74,0.4)] flex items-center gap-2"
+                  className="group relative px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(193,154,74,0.4)] flex items-center gap-2 text-sm md:text-base w-full sm:w-auto justify-center"
                 >
                   <span className="relative z-10">Create my portfolio</span>
-                  <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform md:w-[18px] md:h-[18px]" />
                   <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </NavLink>
                 
                 <button
                   onClick={scrollToBubbleSection}
-                  className="group relative px-8 py-4 rounded-xl font-bold overflow-hidden transition-all hover:scale-105 flex items-center gap-2"
+                  className="group relative px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold overflow-hidden transition-all hover:scale-105 flex items-center gap-2 text-sm md:text-base w-full sm:w-auto justify-center"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-xl" />
                   <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/0 via-[#C19A4A]/10 to-[#C19A4A]/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                   <div className="absolute inset-[1px] bg-[#0B0F1B]/80 backdrop-blur-xl rounded-[11px]" />
                   <span className="relative z-10">Verify talent now</span>
-                  <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform md:w-[18px] md:h-[18px]" />
                 </button>
               </motion.div>
             </div>
           </motion.div>
         </section>
 
-        {/* DISCOVER VERIFIED TALENT - BUBBLE EXPLORER */}
-        <section id="bubble-section" className="max-w-6xl mx-auto px-6 pb-12">
+        {/* DISCOVER VERIFIED TALENT - BUBBLE EXPLORER - Mobile Optimized */}
+        <section id="bubble-section" className="max-w-6xl mx-auto px-4 md:px-6 pb-8 md:pb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 md:mb-12"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
               Discover Verified Talent
             </h2>
-            <p className="text-gray-300 text-lg">Browse on-chain portfolios of proven Web3 builders.</p>
-            <p className="text-gray-400 text-base mt-2">Explore profiles with verifiable work history and skills you trust.</p>
+            <p className="text-gray-300 text-sm md:text-base lg:text-lg px-2">Browse on-chain portfolios of proven Web3 builders.</p>
+            <p className="text-gray-400 text-xs md:text-sm lg:text-base mt-1 md:mt-2 px-2">Explore profiles with verifiable work history and skills you trust.</p>
           </motion.div>
         </section>
 
-        {/* Premium Bubble Container */}
-        <section className="mx-4 mb-20">
+        {/* Premium Bubble Container - Mobile Optimized */}
+        <section className="mx-2 md:mx-4 mb-12 md:mb-20">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative p-[2px] rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
+            className="relative p-[2px] rounded-[2rem] md:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
           >
-            <div className="relative p-[1px] rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
-              <div className="relative h-[600px] md:h-[700px] rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-visible">
+            <div className="relative p-[1px] rounded-[1.95rem] md:rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
+              <div className="relative h-[500px] md:h-[600px] lg:h-[700px] rounded-[1.9rem] md:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-visible">
                 {/* Radial gradient overlay */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A15_0%,transparent_70%)] rounded-[2.3rem]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A15_0%,transparent_70%)] rounded-[1.9rem] md:rounded-[2.3rem]" />
                 
                 {/* Animated gradient lines */}
-                <div className="absolute inset-0 opacity-30 rounded-[2.3rem]" style={{
+                <div className="absolute inset-0 opacity-30 rounded-[1.9rem] md:rounded-[2.3rem]" style={{
                   backgroundImage: `
                     radial-gradient(circle at 20% 50%, rgba(193,154,74,0.15) 0%, transparent 50%),
                     radial-gradient(circle at 80% 50%, rgba(147,51,234,0.15) 0%, transparent 50%)
                   `
                 }} />
 
-                <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20">
-                  <div className="relative px-6 py-3 rounded-full bg-gradient-to-r from-[#C19A4A]/20 to-[#d9b563]/20 border border-[#C19A4A]/30 backdrop-blur-xl">
+                <div className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 z-20">
+                  <div className="relative px-4 md:px-6 py-2 md:py-3 rounded-full bg-gradient-to-r from-[#C19A4A]/20 to-[#d9b563]/20 border border-[#C19A4A]/30 backdrop-blur-xl">
                     <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/10 to-[#d9b563]/10 rounded-full animate-pulse" />
-                    <span className="relative text-[#C19A4A] text-xs font-bold uppercase tracking-widest whitespace-nowrap flex items-center gap-2">
-                      <Sparkles size={14} />
+                    <span className="relative text-[#C19A4A] text-[10px] md:text-xs font-bold uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5 md:gap-2">
+                      <Sparkles size={12} className="md:w-[14px] md:h-[14px]" />
                       Explore Verified Professionals
                     </span>
                   </div>
@@ -558,12 +561,12 @@ function Home() {
                 {loading ? (
                   <div className="flex h-full items-center justify-center">
                     <div className="relative">
-                      <div className="w-16 h-16 border-4 border-t-[#C19A4A] border-r-[#d9b563] border-b-blue-500 border-l-[#C19A4A]/20 rounded-full animate-spin" />
-                      <div className="absolute inset-0 w-16 h-16 border-4 border-[#C19A4A] rounded-full opacity-20 blur-xl animate-pulse" />
+                      <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-t-[#C19A4A] border-r-[#d9b563] border-b-blue-500 border-l-[#C19A4A]/20 rounded-full animate-spin" />
+                      <div className="absolute inset-0 w-12 h-12 md:w-16 md:h-16 border-4 border-[#C19A4A] rounded-full opacity-20 blur-xl animate-pulse" />
                     </div>
                   </div>
                 ) : (
-                  <div className="relative w-full h-full p-10">
+                  <div className="relative w-full h-full p-6 md:p-10">
                     {bubbles.map((bubble) => (
                       <motion.div
                         key={bubble.id}
@@ -581,7 +584,7 @@ function Home() {
                             <img 
                               src={bubble.img} 
                               alt="" 
-                              className="w-12 h-12 md:w-16 md:h-16 rounded-full grayscale group-hover:grayscale-0 transition-all shadow-xl" 
+                              className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full grayscale group-hover:grayscale-0 transition-all shadow-xl" 
                             />
                           </div>
                           {/* Glow effect on hover */}
@@ -608,52 +611,52 @@ function Home() {
                         initial={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
                         animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1 }}
                         exit={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
-                        className={`z-[1002] profile-popup-card ${isMobile ? 'fixed bottom-0 left-0 right-0' : 'absolute w-[320px]'}`}
+                        className={`z-[1002] profile-popup-card ${isMobile ? 'fixed bottom-0 left-0 right-0' : 'absolute w-[300px] md:w-[320px]'}`}
                         style={!isMobile ? { top: cardPos.top, left: cardPos.left } : {}}
                       >
                         {/* Premium card with gradient border */}
-                        <div className="relative p-[2px] rounded-3xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500">
-                          <div className="relative rounded-[22px] bg-[#0B0F1B] backdrop-blur-2xl p-6 shadow-2xl">
+                        <div className="relative p-[2px] rounded-t-3xl md:rounded-3xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500">
+                          <div className="relative rounded-t-[22px] md:rounded-[22px] bg-[#0B0F1B] backdrop-blur-2xl p-5 md:p-6 shadow-2xl">
                             {/* Inner glow */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/10 via-transparent to-[#d9b563]/10 rounded-[22px]" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/10 via-transparent to-[#d9b563]/10 rounded-t-[22px] md:rounded-[22px]" />
                             
                             <button 
                               onClick={() => { setSelectedBubble(null); setIsPinned(false); }} 
-                              className="absolute top-4 right-4 z-10 text-gray-400 hover:text-white transition-colors"
+                              className="absolute top-3 md:top-4 right-3 md:right-4 z-10 text-gray-400 hover:text-white transition-colors"
                             >
-                              <X size={20} />
+                              <X size={18} className="md:w-5 md:h-5" />
                             </button>
                             
-                            <div className="relative flex items-center gap-4 mb-4">
+                            <div className="relative flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
                               <div className="relative">
                                 <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A] to-[#d9b563] rounded-full blur-md opacity-50" />
                                 <img 
                                   src={selectedBubble.img} 
-                                  className="relative w-16 h-16 rounded-full border-2 border-[#C19A4A]" 
+                                  className="relative w-14 h-14 md:w-16 md:h-16 rounded-full border-2 border-[#C19A4A]" 
                                   alt="" 
                                 />
                               </div>
                               <div>
-                                <h3 className="font-bold text-lg bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                                <h3 className="font-bold text-base md:text-lg bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                                   {selectedBubble.name}
                                 </h3>
-                                <p className="text-[#C19A4A] text-sm uppercase font-bold tracking-tighter flex items-center gap-1">
-                                  <Sparkles size={12} />
+                                <p className="text-[#C19A4A] text-xs md:text-sm uppercase font-bold tracking-tighter flex items-center gap-1">
+                                  <Sparkles size={10} className="md:w-3 md:h-3" />
                                   Verified Member
                                 </p>
                               </div>
                             </div>
                             
-                            <p className="relative text-gray-400 text-sm mb-6 leading-relaxed">
+                            <p className="relative text-gray-400 text-xs md:text-sm mb-5 md:mb-6 leading-relaxed">
                               {selectedBubble.bio}
                             </p>
                             
                             <NavLink 
                               to={`/request?id=${selectedBubble.userId}`} 
-                              className="relative group flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(193,154,74,0.4)]"
+                              className="relative group flex items-center justify-center gap-2 w-full py-2.5 md:py-3 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(193,154,74,0.4)] text-sm md:text-base"
                             >
                               <span className="relative z-10">View Full Profile</span>
-                              <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                              <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform md:w-[18px] md:h-[18px]" />
                               <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
                             </NavLink>
                           </div>
