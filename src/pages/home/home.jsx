@@ -166,7 +166,7 @@ function Home() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="flex flex-col items-start text-left"
             >
-              <h1 className="text-[2.5rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter mb-6 max-w-xl">
+              <h1 className="text-[2.5rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter mb-6 max-w-xl lg:max-w-2xl lg:tracking-wide">
                 <span className="block">
                   Prove your <span className="relative inline-block">
                     <span className="bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-[#C19A4A] bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
@@ -244,9 +244,6 @@ function Home() {
                     <div>
                       <h4 className="font-bold text-white text-lg">Clara Nekamoto</h4>
                       <p className="text-gray-400 text-xs">Fullstack Developer</p>
-                      <div className="flex items-center gap-1.5 text-[#C19A4A] text-[10px] font-bold uppercase mt-1">
-                        <Sparkles size={10} /> Reputation Verified
-                      </div>
                     </div>
                   </div>
 
@@ -255,13 +252,13 @@ function Home() {
                       <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tighter">
                         <FileText size={12} className="text-[#C19A4A]" /> Total Proofs
                       </div>
-                      <div className="text-base font-bold text-white">12 Records</div>
+                      <div className="text-base font-bold text-white">12 </div>
                     </div>
                     <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20">
                       <div className="flex items-center gap-2 text-[#C19A4A] text-[10px] mb-1 uppercase font-bold tracking-tighter">
                         <ShieldCheck size={12} /> Verified
                       </div>
-                      <div className="text-base font-bold text-white">9 On-Chain</div>
+                      <div className="text-base font-bold text-white">9 </div>
                     </div>
                     <div className="bg-white/5 rounded-2xl p-4 border border-white/5 col-span-2">
                       <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tighter">
@@ -302,9 +299,6 @@ function Home() {
                       <div>
                         <h4 className="font-bold text-white text-lg">Clara Nekamoto</h4>
                         <p className="text-gray-400 text-xs">Fullstack Developer</p>
-                        <div className="flex items-center gap-1.5 text-[#C19A4A] text-[10px] font-bold uppercase mt-1">
-                          <Sparkles size={10} /> Reputation Verified
-                        </div>
                       </div>
                     </div>
 
@@ -313,13 +307,13 @@ function Home() {
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tighter">
                           <FileText size={12} className="text-[#C19A4A]" /> Total Proofs
                         </div>
-                        <div className="text-base font-bold text-white">12 Records</div>
+                        <div className="text-base font-bold text-white">12</div>
                       </div>
                       <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20">
                         <div className="flex items-center gap-2 text-[#C19A4A] text-[10px] mb-1 uppercase font-bold tracking-tighter">
                           <ShieldCheck size={12} /> Verified
                         </div>
-                        <div className="text-base font-bold text-white">9 On-Chain</div>
+                        <div className="text-base font-bold text-white">9 </div>
                       </div>
                       <div className="bg-white/5 rounded-2xl p-4 border border-white/5 col-span-2">
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tighter">
@@ -436,6 +430,62 @@ function Home() {
           </motion.div>
         </section>
 
+        {/* MOBILE CARD SECTION - Shows Clara Nekamoto card below How It Works on mobile */}
+        <section className="md:hidden max-w-6xl mx-auto px-4 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex justify-center"
+          >
+            <div className="relative w-full max-w-[320px]">
+              <motion.div
+                className="p-6 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20 flex flex-col gap-6"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <img src={logo1} className="w-16 h-16 rounded-full border-2 border-[#C19A4A]" alt="Profile" />
+                    <div className="absolute -bottom-1 -right-1 bg-[#C19A4A] rounded-full p-1 border-2 border-[#0B0F1B]">
+                      <ShieldCheck size={12} className="text-black" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-lg">Clara Nekamoto</h4>
+                    <p className="text-gray-400 text-xs">Fullstack Developer</p>
+                    <div className="flex items-center gap-1.5 text-[#C19A4A] text-[10px] font-bold uppercase mt-1">
+                      <Sparkles size={10} /> Reputation Verified
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                    <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tighter">
+                      <FileText size={12} className="text-[#C19A4A]" /> Total Proofs
+                    </div>
+                    <div className="text-base font-bold text-white">12 Records</div>
+                  </div>
+                  <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20">
+                    <div className="flex items-center gap-2 text-[#C19A4A] text-[10px] mb-1 uppercase font-bold tracking-tighter">
+                      <ShieldCheck size={12} /> Verified
+                    </div>
+                    <div className="text-base font-bold text-white">9 On-Chain</div>
+                  </div>
+                  <div className="bg-white/5 rounded-2xl p-4 border border-white/5 col-span-2">
+                    <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tighter">
+                      <Trophy size={12} className="text-[#C19A4A]" /> Recent Achievement
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-white">Hackathon Winner</span>
+                      <span className="text-[10px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">System Verified</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </section>
+
         {/* TRUST LAYER SECTION - Mobile Optimized */}
         <section className="max-w-6xl mx-auto px-4 md:px-6 py-12 md:py-20">
           <motion.div
@@ -459,7 +509,7 @@ function Home() {
                 Building the trust layer for the global workforce.
               </motion.h2>
               
-              <div className="max-w-3xl space-y-2 md:space-y-4 mb-6 md:mb-12 px-2">
+              <div className="max-w-3xl space-y-2 md:space-y-4 mb-6 md:mb-12">
                 <p className="text-gray-300 text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed">
                   Your reputation should be easy to prove and accessible anytime.
                 </p>
@@ -468,12 +518,12 @@ function Home() {
                 </p>
               </div>
 
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center px-4"
+                className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-start items-start"
               >
                 <NavLink 
                   to="/dashboard" 
@@ -500,7 +550,7 @@ function Home() {
         </section>
 
         {/* DISCOVER VERIFIED TALENT - BUBBLE EXPLORER - Mobile Optimized */}
-        <section id="bubble-section" className="max-w-6xl mx-auto px-4 md:px-6 pb-8 md:pb-12">
+        <section id="bubble-section" className="max-w-6xl mx-auto px-4 md:px-6 pt-10 md:pt-14 pb-0">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
