@@ -164,24 +164,26 @@ function Home() {
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="flex flex-col items-start text-left"
+              className="flex flex-col items-start text-left w-full"
             >
-              <h1 className="text-[2.5rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter mb-6 max-w-xl lg:max-w-2xl lg:tracking-wide">
-                <span className="block">
-                  Prove your <span className="relative inline-block">
-                    <span className="bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-[#C19A4A] bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
-                      work
+              <div className="w-full text-center mb-6">
+                <h1 className="text-[2.5rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter max-w-xl lg:max-w-2xl lg:tracking-wide inline-block">
+                  <span className="block">
+                    Prove your <span className="relative inline-block">
+                      <span className="bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-[#C19A4A] bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
+                        work
+                      </span>
+                      <span className="absolute -inset-1 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] opacity-30 blur-2xl" />
                     </span>
-                    <span className="absolute -inset-1 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] opacity-30 blur-2xl" />
                   </span>
-                </span>
-                <span className="block mt-1">
-                  <span className="bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 bg-clip-text text-transparent">as you </span>
-                  <span className="bg-gradient-to-br from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
-                    GO
+                  <span className="block mt-1">
+                    <span className="bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 bg-clip-text text-transparent">as you </span>
+                    <span className="bg-gradient-to-br from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+                      GO
+                    </span>
                   </span>
-                </span>
-              </h1>
+                </h1>
+              </div>
 
               <div className="max-w-lg space-y-4 mb-8">
                 <p className="text-gray-300 text-sm sm:text-base md:text-lg leading-relaxed">
@@ -452,10 +454,7 @@ function Home() {
                   <div>
                     <h4 className="font-bold text-white text-lg">Clara Nekamoto</h4>
                     <p className="text-gray-400 text-xs">Fullstack Developer</p>
-                    <div className="flex items-center gap-1.5 text-[#C19A4A] text-[10px] font-bold uppercase mt-1">
-                      <Sparkles size={10} /> Reputation Verified
-                    </div>
-                  </div>
+                </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -463,13 +462,13 @@ function Home() {
                     <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tighter">
                       <FileText size={12} className="text-[#C19A4A]" /> Total Proofs
                     </div>
-                    <div className="text-base font-bold text-white">12 Records</div>
+                    <div className="text-base font-bold text-white">12</div>
                   </div>
                   <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20">
                     <div className="flex items-center gap-2 text-[#C19A4A] text-[10px] mb-1 uppercase font-bold tracking-tighter">
                       <ShieldCheck size={12} /> Verified
                     </div>
-                    <div className="text-base font-bold text-white">9 On-Chain</div>
+                    <div className="text-base font-bold text-white">9</div>
                   </div>
                   <div className="bg-white/5 rounded-2xl p-4 border border-white/5 col-span-2">
                     <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tighter">
