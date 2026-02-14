@@ -6,7 +6,7 @@ import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import NotificationWidget from '../../components/NotificationWidget.jsx';
 import logo1 from '../../assets/ghonsi-proof-logos/png-logo/1.png';
-import queenSmithProfile from '../../assets/home/queen-smith-profile.jpg'; // Dark-skinned African American woman with braids
+import queenSmithProfile from '../../assets/home/queen-smith-profile.jpg'; 
 import { profileWithfileProofs } from '../../utils/proofsApi.js';
 
 import './home.css';
@@ -571,7 +571,7 @@ function Home() {
             className="relative p-[2px] rounded-3xl lg:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
           >
             <div className="relative p-[1px] rounded-[22px] lg:rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
-              <div className="relative h-[450px] sm:h-[550px] lg:h-[650px] xl:h-[700px] rounded-[20px] lg:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-hidden">
+<div className="relative h-[600px] sm:h-[750px] lg:h-[850px] xl:h-[950px] rounded-[20px] lg:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A15_0%,transparent_70%)] rounded-[20px] lg:rounded-[2.3rem]" />
                 
                 <div className="absolute inset-0 opacity-30 rounded-[20px] lg:rounded-[2.3rem]" style={{
