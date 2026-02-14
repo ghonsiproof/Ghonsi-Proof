@@ -6,12 +6,13 @@ import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import NotificationWidget from '../../components/NotificationWidget.jsx';
 import logo1 from '../../assets/ghonsi-proof-logos/png-logo/1.png';
+import queenSmithProfile from '../../assets/home/queen-smith-profile.jpg'; // Dark-skinned African American woman with braids
 import { profileWithfileProofs } from '../../utils/proofsApi.js';
 
 import './home.css';
 
-// David Princess dummy profile photo from randomuser.me
-const DAVID_PROFILE_IMG = 'https://randomuser.me/api/portraits/women/44.jpg';
+// Queen Smith profile photo - using imported image from assets/home folder
+const DAVID_PROFILE_IMG = queenSmithProfile;
 
 function Home() {
   const [bubbles, setBubbles] = useState([]);
@@ -171,7 +172,7 @@ function Home() {
             >
               {/* Heading - CENTER on mobile, LEFT on desktop */}
               <div className="w-full text-center md:text-left mb-6 sm:mb-8">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1] max-w-2xl mx-auto md:mx-0">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.15] max-w-2xl mx-auto md:mx-0">
                   <span className="block">
                     Prove your <span className="relative inline-block">
                       <span className="bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-[#C19A4A] bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
@@ -246,30 +247,25 @@ function Home() {
                     <div className="flex items-center gap-4 mb-6">
                       <div className="relative flex-shrink-0">
                         <img src={DAVID_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
-                        <div className="absolute -bottom-1 -right-1 bg-[#C19A4A] rounded-full p-1 border-2 border-[#0B0F1B]">
-                          <ShieldCheck size={12} className="text-black" />
-                        </div>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-white text-lg truncate">David Princess</h4>
+                        <h4 className="font-bold text-white text-lg truncate">Queen Smith</h4>
                         <p className="text-gray-400 text-xs">Product Designer</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
-                          <FileText size={12} className="text-[#C19A4A] flex-shrink-0" /> 
-                          <span className="truncate">Total Proofs</span>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center min-h-[80px]">
+                        <div className="text-3xl font-bold text-white mb-2">12</div>
+                        <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                          Total Proofs
                         </div>
-                        <div className="text-base font-bold text-white">12</div>
                       </div>
-                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20">
-                        <div className="flex items-center gap-2 text-[#C19A4A] text-[10px] mb-1 uppercase font-bold tracking-tight">
-                          <ShieldCheck size={12} className="flex-shrink-0" /> 
-                          <span className="truncate">Verified</span>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center min-h-[80px]">
+                        <div className="text-3xl font-bold text-white mb-2">9</div>
+                        <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                          Achievements
                         </div>
-                        <div className="text-base font-bold text-white">9</div>
                       </div>
                       <div className="bg-white/5 rounded-2xl p-4 border border-white/5 col-span-2">
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
@@ -309,30 +305,25 @@ function Home() {
                     <div className="flex items-center gap-4">
                       <div className="relative flex-shrink-0">
                         <img src={DAVID_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
-                        <div className="absolute -bottom-1 -right-1 bg-[#C19A4A] rounded-full p-1 border-2 border-[#0B0F1B]">
-                          <ShieldCheck size={12} className="text-black" />
-                        </div>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-white text-lg truncate">David Princess</h4>
+                        <h4 className="font-bold text-white text-lg truncate">Queen Smith</h4>
                         <p className="text-gray-400 text-xs">Product Designer</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
-                          <FileText size={12} className="text-[#C19A4A] flex-shrink-0" /> 
-                          <span className="truncate">Total Proofs</span>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center min-h-[80px]">
+                        <div className="text-3xl font-bold text-white mb-2">12</div>
+                        <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                          Total Proofs
                         </div>
-                        <div className="text-base font-bold text-white">12</div>
                       </div>
-                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20">
-                        <div className="flex items-center gap-2 text-[#C19A4A] text-[10px] mb-1 uppercase font-bold tracking-tight">
-                          <ShieldCheck size={12} className="flex-shrink-0" /> 
-                          <span className="truncate">Verified</span>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center min-h-[80px]">
+                        <div className="text-3xl font-bold text-white mb-2">9</div>
+                        <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                          Achievements
                         </div>
-                        <div className="text-base font-bold text-white">9</div>
                       </div>
                       <div className="bg-white/5 rounded-2xl p-4 border border-white/5 col-span-2">
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
@@ -461,30 +452,25 @@ function Home() {
                 <div className="flex items-center gap-4">
                   <div className="relative flex-shrink-0">
                     <img src={DAVID_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
-                    <div className="absolute -bottom-1 -right-1 bg-[#C19A4A] rounded-full p-1 border-2 border-[#0B0F1B]">
-                      <ShieldCheck size={12} className="text-black" />
-                    </div>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-white text-base sm:text-lg truncate">David Princess</h4>
+                    <h4 className="font-bold text-white text-base sm:text-lg truncate">Queen Smith</h4>
                     <p className="text-gray-400 text-xs">Product Designer</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-white/5">
-                    <div className="flex items-center gap-1.5 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
-                      <FileText size={12} className="text-[#C19A4A] flex-shrink-0" /> 
-                      <span className="truncate">Total Proofs</span>
+                  <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-white/5 flex flex-col items-center justify-center text-center min-h-[80px]">
+                    <div className="text-3xl font-bold text-white mb-2">12</div>
+                    <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                      Total Proofs
                     </div>
-                    <div className="text-base font-bold text-white">12</div>
                   </div>
-                  <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-[#C19A4A]/20">
-                    <div className="flex items-center gap-1.5 text-[#C19A4A] text-[10px] mb-1 uppercase font-bold tracking-tight">
-                      <ShieldCheck size={12} className="flex-shrink-0" /> 
-                      <span className="truncate">Verified</span>
+                  <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center min-h-[80px]">
+                    <div className="text-3xl font-bold text-white mb-2">9</div>
+                    <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                      Achievements
                     </div>
-                    <div className="text-base font-bold text-white">9</div>
                   </div>
                   <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-white/5 col-span-2">
                     <div className="flex items-center gap-1.5 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
