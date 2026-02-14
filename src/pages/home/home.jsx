@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Wallet, Upload, X, ArrowRight, Sparkles, ShieldCheck, FileText, Trophy, Share } from 'lucide-react';
+import { Wallet, Upload, X, ArrowRight, Sparkles, Trophy, Share } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
@@ -12,7 +12,7 @@ import { profileWithfileProofs } from '../../utils/proofsApi.js';
 import './home.css';
 
 // Queen Smith profile photo - using imported image from assets/home folder
-const DAVID_PROFILE_IMG = queenSmithProfile;
+const QUEEN_SMITH_PROFILE_IMG = queenSmithProfile;
 
 function Home() {
   const [bubbles, setBubbles] = useState([]);
@@ -246,7 +246,7 @@ function Home() {
                   >
                     <div className="flex items-center gap-4 mb-6">
                       <div className="relative flex-shrink-0">
-                        <img src={DAVID_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
+                        <img src={QUEEN_SMITH_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="font-bold text-white text-lg truncate">Queen Smith</h4>
@@ -281,11 +281,6 @@ function Home() {
                   </motion.div>
 
                   {/* Main Card (Front Layer) */}
-                  {/* 
-                    CHANGE: The old hover state values (rotateY: -6, translateZ: 20) are now 
-                    baked into the default `style` transform. The whileHover now nudges the 
-                    card slightly further for continued interactivity feedback.
-                  */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -304,7 +299,7 @@ function Home() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="relative flex-shrink-0">
-                        <img src={DAVID_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
+                        <img src={QUEEN_SMITH_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="font-bold text-white text-lg truncate">Queen Smith</h4>
@@ -435,7 +430,7 @@ function Home() {
           </motion.div>
         </section>
 
-        {/* DAVID PRINCESS CARD - MOBILE/TABLET ONLY */}
+        {/* QUEEN SMITH PROFILE CARD - MOBILE/TABLET ONLY */}
         <section className="lg:hidden max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -451,7 +446,7 @@ function Home() {
               >
                 <div className="flex items-center gap-4">
                   <div className="relative flex-shrink-0">
-                    <img src={DAVID_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
+                    <img src={QUEEN_SMITH_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-white text-base sm:text-lg truncate">Queen Smith</h4>
