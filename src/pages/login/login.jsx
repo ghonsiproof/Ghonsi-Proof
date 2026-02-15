@@ -54,7 +54,7 @@ function Login() {
       setMessage('✅ Wallet connected successfully!');
 
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/home');
       }, 1000);
     } catch (error) {
       console.error(`[${walletName}] Full error:`, error);
