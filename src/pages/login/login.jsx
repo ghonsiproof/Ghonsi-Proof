@@ -41,34 +41,29 @@ function Login() {
         return;
       }
 
-      console.log(`[${walletName}] Starting connection...`);
       const walletAddress = await connectWallet(walletName);
-      console.log(`[${walletName}] Got address:`, walletAddress);
 
       if (!walletAddress) {
         throw new Error('Failed to get wallet address');
       }
 
       await signInWithWallet(walletAddress);
-
       setMessage('✅ Wallet connected successfully!');
 
-      setTimeout(() => {
-        navigate('/home');
-      }, 1000);
+      setTimeout(() => navigate('/home'), 1000);
     } catch (error) {
-      console.error(`[${walletName}] Full error:`, error);
-      console.error(`[${walletName}] Error message:`, error.message);
-      console.error(`[${walletName}] Error code:`, error.code);
+      console.error('Wallet connection error:', error);
 
-      let errorMessage = 'Unexpected error';
+      // Don't show error if redirecting to mobile wallet
+      if (error.message?.includes('Redirecting to mobile wallet')) {
+        setMessage('🔄 Opening wallet app...');
+        return;
+      }
+
+      let errorMessage = error.message || 'Unexpected error';
 
       if (error.message?.includes('rejected')) {
         errorMessage = 'Connection request rejected';
-      } else if (error.message?.includes('not installed')) {
-        errorMessage = error.message;
-      } else if (error.message) {
-        errorMessage = error.message;
       }
 
       setMessage(`❌ ${errorMessage}`);
@@ -105,8 +100,7 @@ function Login() {
     try {
       await verifyOTP(trimmedEmail, otpCode);
       setMessage('✅ Successfully signed in!');
-
-      setTimeout(() => navigate('/dashboard'), 1000);
+      setTimeout(() => navigate('/home'), 1000);
     } catch (error) {
       setMessage('❌ Invalid or expired code. Please try again.');
     } finally {
@@ -134,7 +128,6 @@ function Login() {
       setOtpSent(true);
       setMessage('✅ OTP sent! Check your email for the 6-digit code.');
     } catch (error) {
-      console.error('OTP Error:', error);
       setMessage(`❌ Failed to send OTP: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
@@ -174,7 +167,6 @@ function Login() {
               <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Glow</h4>
             </div>
 
-            {/* Loading/Error message display */}
             {message && (
               <div className={`mt-4 p-3 rounded-lg text-sm ${message.startsWith('✅') ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
                 {message}
@@ -216,7 +208,6 @@ function Login() {
                 className="w-full py-3 px-[15px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed mb-4"
               />
 
-              {/* OTP Code Input */}
               <div className="relative mb-4">
                 <input
                   type="text"
