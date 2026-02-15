@@ -118,16 +118,41 @@ function Header() {
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(walletAddress);
     setIsWalletMenuOpen(false);
-    // Show a temporary success message
-    const originalText = walletButtonRef.current?.innerText;
-    if (walletButtonRef.current) {
-      walletButtonRef.current.innerText = 'Copied!';
-      setTimeout(() => {
-        if (walletButtonRef.current) {
-          walletButtonRef.current.innerText = originalText;
-        }
-      }, 1500);
-    }
+
+    // Show a better visual feedback without changing button text
+    const tempDiv = document.createElement('div');
+    tempDiv.textContent = '✓ Copied!';
+    tempDiv.style.cssText = `
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      background: #C19A4A;
+      color: #0B0F1B;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 9999;
+      animation: fadeInOut 2s ease-in-out;
+    `;
+
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(-10px); }
+        15% { opacity: 1; transform: translateY(0); }
+        85% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-10px); }
+      }
+    `;
+    document.head.appendChild(style);
+    document.body.appendChild(tempDiv);
+
+    setTimeout(() => {
+      document.body.removeChild(tempDiv);
+      document.head.removeChild(style);
+    }, 2000);
   };
 
   const handleDisconnect = async () => {
