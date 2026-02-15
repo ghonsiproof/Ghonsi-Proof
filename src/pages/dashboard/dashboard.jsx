@@ -1,11 +1,15 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser } from '../../utils/supabaseAuth';
+// FIX: Removed 'supabase' and added 'updateUserEmail'
+import { getCurrentUser, updateUserEmail } from '../../utils/supabaseAuth'; 
 import { getUserProofs, getProofStats } from '../../utils/proofsApi';
-import { getProfile } from '../../utils/profileApi';
+import { getProfile, updateProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
-import { CheckCircle2, ExternalLink, FileText, Award, Plus, Briefcase, Share2, Settings, Copy, User, Clock } from 'lucide-react';
+import { 
+  CheckCircle2, ExternalLink, FileText, Award, Plus, Briefcase, 
+  Share2, Settings, Copy, User, Clock, Wallet, Mail, Save, X, Loader2 
+} from 'lucide-react';
 
 const Card = ({ children, className = "" }) => (
   <div className={`bg-[#151925] rounded-2xl p-5 border border-white/5 ${className}`}>
@@ -31,15 +35,26 @@ const Badge = ({ status }) => {
   return null;
 };
 
-const ProfileSection = ({ user, profile }) => {
+// --- Updated Profile Section ---
+const ProfileSection = ({ user, profile, onProfileUpdate }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [uidCopied, setUidCopied] = useState(false);
-  const walletAddress = profile?.wallet_address || "Not connected";
-  const truncatedAddress = walletAddress !== "Not connected" 
-    ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-    : walletAddress;
+  
+  // Edit States
+  const [isAddingEmail, setIsAddingEmail] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [isConnectingWallet, setIsConnectingWallet] = useState(false);
 
+  const walletAddress = profile?.wallet_address;
+  const hasWallet = walletAddress && walletAddress !== "Not connected";
+  
+  const truncatedAddress = hasWallet
+    ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+    : "Not connected";
+
+  // UID Generator
   const generateUID = useCallback((userId) => {
     if (!userId) return '000000000';
     let hash = 0;
@@ -52,11 +67,14 @@ const ProfileSection = ({ user, profile }) => {
 
   const userUID = generateUID(user?.id);
 
+  // --- Handlers ---
+
   const handleCopy = useCallback(() => {
+    if (!hasWallet) return;
     navigator.clipboard.writeText(walletAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [walletAddress]);
+  }, [walletAddress, hasWallet]);
 
   const handleUIDCopy = useCallback(() => {
     navigator.clipboard.writeText(userUID);
@@ -64,8 +82,65 @@ const ProfileSection = ({ user, profile }) => {
     setTimeout(() => setUidCopied(false), 2000);
   }, [userUID]);
 
+  // Handle Wallet Connection
+  const connectWallet = async () => {
+    setIsConnectingWallet(true);
+    try {
+      if (typeof window.ethereum !== 'undefined') {
+        // Request account access
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const address = accounts[0];
+        
+        // Save to profile
+        if (user && address) {
+          const { error } = await updateProfile(user.id, { wallet_address: address });
+          if (error) throw error;
+          
+          // Trigger refresh in parent
+          onProfileUpdate(); 
+        }
+      } else {
+        alert("Please install MetaMask or another wallet extension.");
+      }
+    } catch (error) {
+      console.error("Wallet connection failed:", error);
+      alert("Failed to connect wallet. Please try again.");
+    } finally {
+      setIsConnectingWallet(false);
+    }
+  };
+
+  // Handle Email Update
+  const handleSaveEmail = async () => {
+    if (!emailInput || !emailInput.includes('@')) {
+      alert("Please enter a valid email.");
+      return;
+    }
+    setIsSavingEmail(true);
+    try {
+      // 1. Update Supabase Auth via our new helper
+      const { error: authError } = await updateUserEmail(emailInput);
+      
+      if (authError) throw authError;
+
+      // 2. Update Public Profile (so it shows immediately)
+       await updateProfile(user.id, { email: emailInput });
+
+      // Refresh data
+      onProfileUpdate();
+      setIsAddingEmail(false);
+      alert("Email updated! Please check your inbox to confirm.");
+    } catch (error) {
+      console.error("Email update failed:", error);
+      alert("Error updating email: " + error.message);
+    } finally {
+      setIsSavingEmail(false);
+    }
+  };
+
   return (
     <Card className="flex flex-col items-center text-center relative overflow-hidden !bg-[#151925] !border-white/5 shadow-lg ">
+      {/* Avatar Section */}
       {profile?.avatar_url ? (
         <img 
           src={profile.avatar_url} 
@@ -81,26 +156,86 @@ const ProfileSection = ({ user, profile }) => {
       <h2 className="text-lg font-medium text-white mb-1">{profile?.display_name || 'Profile Not Set'}</h2>
       <p className="text-xs text-gray-400 mb-6 font-light">{profile?.bio || 'Complete your profile'}</p>
 
-      <div className="w-full space-y-3 mb-7 px-2">
-        <div className="flex justify-between items-center text-xs">
-          <span className="text-gray-500 font-medium">Wallet</span>
-          <button onClick={handleCopy} className="flex items-center gap-2 text-gray-200 font-mono tracking-tight hover:text-white transition-colors">
-            {copied ? 'Copied!' : truncatedAddress}
-            <Copy size={12} className={copied ? 'text-green-500' : 'text-gray-500'} />
-          </button>
+      {/* Info List */}
+      <div className="w-full space-y-4 mb-7 px-2">
+        
+        {/* Wallet Row */}
+        <div className="flex justify-between items-center text-xs h-8">
+          <span className="text-gray-500 font-medium flex items-center gap-2">
+            <Wallet size={14} /> Wallet
+          </span>
+          {hasWallet ? (
+            <button onClick={handleCopy} className="flex items-center gap-2 text-gray-200 font-mono tracking-tight hover:text-white transition-colors">
+              {copied ? 'Copied!' : truncatedAddress}
+              <Copy size={12} className={copied ? 'text-green-500' : 'text-gray-500'} />
+            </button>
+          ) : (
+            <button 
+              onClick={connectWallet}
+              disabled={isConnectingWallet}
+              className="px-3 py-1 bg-[#C19A4A]/10 text-[#C19A4A] rounded-lg hover:bg-[#C19A4A] hover:text-black transition-all flex items-center gap-2"
+            >
+              {isConnectingWallet ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+              Connect Wallet
+            </button>
+          )}
         </div>
-        <div className="flex justify-between items-center text-xs">
-          <span className="text-gray-500 font-medium">Email</span>
-          <span className="text-gray-200 font-mono">{user?.email || 'Not set'}</span>
+
+        {/* Email Row */}
+        <div className="flex justify-between items-center text-xs h-8">
+          <span className="text-gray-500 font-medium flex items-center gap-2">
+            <Mail size={14} /> Email
+          </span>
+          
+          {user?.email || profile?.email ? (
+             <span className="text-gray-200 font-mono">{user?.email || profile?.email}</span>
+          ) : isAddingEmail ? (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
+              <input 
+                type="email" 
+                placeholder="name@example.com"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                className="bg-[#0B0F1B] border border-white/10 text-white px-2 py-1 rounded text-xs w-32 focus:outline-none focus:border-[#C19A4A]"
+                autoFocus
+              />
+              <button 
+                onClick={handleSaveEmail} 
+                disabled={isSavingEmail}
+                className="text-green-500 hover:text-green-400 p-1"
+              >
+                {isSavingEmail ? <Loader2 size={14} className="animate-spin"/> : <Save size={14} />}
+              </button>
+              <button 
+                onClick={() => setIsAddingEmail(false)}
+                className="text-gray-500 hover:text-white p-1"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setIsAddingEmail(true)}
+              className="px-3 py-1 bg-white/5 text-gray-300 rounded-lg hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
+            >
+              <Plus size={12} /> Add Email
+            </button>
+          )}
         </div>
-        <div className="flex justify-between items-center text-xs">
-          <span className="text-gray-500 font-medium">UID</span>
+
+        {/* UID Row */}
+        <div className="flex justify-between items-center text-xs h-8">
+          <span className="text-gray-500 font-medium flex items-center gap-2">
+            <User size={14} /> UID
+          </span>
           <button onClick={handleUIDCopy} className="flex items-center gap-2 text-gray-200 font-mono tracking-tight hover:text-white transition-colors">
             {uidCopied ? 'Copied!' : userUID}
             <Copy size={12} className={uidCopied ? 'text-green-500' : 'text-gray-500'} />
           </button>
         </div>
-        <div className="flex justify-between items-center text-xs">
+
+        {/* Status Row */}
+        <div className="flex justify-between items-center text-xs h-8">
           <span className="text-gray-500 font-medium">Status</span>
           <span className="text-green-500 flex items-center gap-1.5 font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
@@ -110,7 +245,7 @@ const ProfileSection = ({ user, profile }) => {
       </div>
 
       <button className="w-full py-3 rounded-xl border border-[#C19A4A] text-[#C19A4A] text-sm font-medium hover:bg-[#C19A4A] hover:text-[#0B0F1B] transition-all duration-300 active:scale-[0.98]" onClick={() => navigate('/createProfile')} >
-        {profile ? 'Edit Profile' : 'Create Profile'}
+        {profile?.display_name ? 'Edit Profile Details' : 'Create Profile'}
       </button>
     </Card>
   );
@@ -196,7 +331,6 @@ const ActionButton = ({ icon: Icon, label, onClick }) => (
 const QuickActions = () => { 
   const navigate = useNavigate();
   
-  
   return (
   <div className="space-y-3">
     <h3 className="text-sm font-medium text-white px-1">Quick Actions</h3>
@@ -228,8 +362,6 @@ const QuickActions = () => {
 );
 };
 
-
-
 function Dashboard() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -237,13 +369,9 @@ function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
+  // Moved loadData to be accessible by children for refreshing
   const loadDashboardData = async () => {
     try {
-      setLoading(true);
       const currentUser = await getCurrentUser();
       setUser(currentUser);
 
@@ -267,6 +395,10 @@ function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
   if (loading) {
     return (
       <>
@@ -288,7 +420,11 @@ function Dashboard() {
       <div className="min-h-screen bg-[#0B0F1B] font-sans text-white selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">
         <div className="max-w-full mx-auto min-h-screen bg-[#0B0F1B] relative flex flex-col border-x border-white/5 shadow-2xl">
           <main className="flex-1 px-5 py-6 space-y-8">
-            <ProfileSection user={user} profile={profile} />
+            <ProfileSection 
+              user={user} 
+              profile={profile} 
+              onProfileUpdate={loadDashboardData} 
+            />
             <StatsRow stats={stats} />
             <RecentProofs proofs={proofs} />
             <QuickActions />

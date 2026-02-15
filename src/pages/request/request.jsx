@@ -47,8 +47,8 @@ function Request() {
           email: profile.users?.email ? `${profile.users.email.split('@')[0]}***@${profile.users.email.split('@')[1]}` : '',
           wallet: profile.users?.wallet_address || '',
           bio: profile.bio || 'No bio available.',
-          stats: {
-            proofs: stats.total,
+        stats: {
+            proofs: stats.verified,
             achievements: stats.verified
           },
           skills: profile.skills || [],
@@ -138,7 +138,7 @@ function Request() {
   }
 
   const shortWallet = `${profileData.wallet.substring(0, 4)}...${profileData.wallet.substring(profileData.wallet.length - 4)}`;
-  const proofsToShow = showMore ? profileData.proofs : profileData.proofs.slice(0, 2);
+  const proofsToShow = profileData.proofs.slice(0, 3);
 
   return (
     <div className="max-w-full mx-auto bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B] mt-[105px]">

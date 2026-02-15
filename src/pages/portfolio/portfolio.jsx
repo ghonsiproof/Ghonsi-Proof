@@ -233,14 +233,14 @@ export default function Portfolio() {
             <div className="grid grid-cols-2 gap-4">
               <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#C19A4A]/30 to-transparent">
                 <div className="bg-[#1A1F2E] rounded-xl p-4 text-center border border-white/5 h-full">
-                  <div className="text-2xl font-bold text-white mb-1">{stats.total}</div>
+                  <div className="text-2xl font-bold text-white mb-1">{stats.verified}</div>
                   <div className="text-xs text-gray-400">Total Proofs</div>
                 </div>
               </div>
               <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#C19A4A] to-[#d9b563]">
                 <div className="bg-[#1A1F2E] rounded-xl p-4 text-center h-full">
                   <div className="text-2xl font-bold text-[#C19A4A] mb-1">{stats.verified}</div>
-                  <div className="text-xs text-white">Verified</div>
+                  <div className="text-xs text-white">Achievements</div>
                 </div>
               </div>
             </div>

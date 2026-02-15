@@ -229,3 +229,9 @@ export const login = async (email, walletAddress) => {
   }
   throw new Error('Either email or wallet address is required');
 };
+
+export const updateUserEmail = async (email) => {
+  // We assume 'supabase' is defined in this file (since you have login/logout working)
+  const { data, error } = await supabase.auth.updateUser({ email });
+  return { data, error };
+};
