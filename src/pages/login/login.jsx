@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
-import { connectWallet, checkPendingConnection, checkIfMobile } from '../../utils/walletAdapter';
+import { connectWallet, checkIfMobile } from '../../utils/walletAdapter';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
@@ -15,6 +15,8 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isGetStarted, setIsGetStarted] = useState(false);
+  const [showMobileInstructions, setShowMobileInstructions] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,10 +39,12 @@ function Login() {
     } catch (error) {
       console.error('Wallet connection error:', error);
 
-      // Handle mobile redirect
-      if (error.message === 'REDIRECTING_TO_WALLET') {
-        setMessage('🔄 Opening wallet app...');
-        // Don't set loading to false - user is being redirected
+      // Handle mobile instructions
+      if (error.message?.startsWith('MOBILE_INSTRUCTIONS:')) {
+        const wallet = error.message.split(':')[1];
+        setSelectedWallet(wallet);
+        setShowMobileInstructions(true);
+        setIsLoading(false);
         return;
       }
 
@@ -59,18 +63,6 @@ function Login() {
     setActiveTab('wallet');
     const params = new URLSearchParams(location.search);
     setIsGetStarted(params.get('mode') === 'getstarted');
-
-    // Check if returning from mobile wallet
-    const pendingWallet = checkPendingConnection();
-    if (pendingWallet && checkIfMobile()) {
-      setMessage(`🔄 Reconnecting to ${pendingWallet}...`);
-      setIsLoading(true);
-
-      // Give wallet time to inject provider
-      setTimeout(() => {
-        handleWalletConnect(pendingWallet);
-      }, 500);
-    }
   }, [location, handleWalletConnect]);
 
   const validateEmail = (emailValue) => {
@@ -256,6 +248,30 @@ function Login() {
         <h4 className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">Continue without connecting (limited access)</h4>
         <h4 className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">By connecting you agree to our <a href="/terms" className="text-[#C19A4A] no-underline cursor-pointer transition-colors duration-200 ease-in-out hover:text-[#C19A4A]">Terms of Service</a> and <a href="/policy" className="text-[#C19A4A] no-underline cursor-pointer transition-colors duration-200 ease-in-out hover:text-[#C19A4A]">Privacy Policy</a></h4>
       </div>
+
+      {/* Mobile Instructions Modal */}
+      {showMobileInstructions && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-5" onClick={() => setShowMobileInstructions(false)}>
+          <div className="bg-[#0B0F1B] border border-[#C19A4A] rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-white mb-4">📱 Connect on Mobile</h3>
+            <p className="text-gray-300 text-sm mb-4">
+              To connect your {selectedWallet} wallet on mobile:
+            </p>
+            <ol className="text-left text-gray-300 text-sm space-y-3 mb-6 list-decimal list-inside">
+              <li>Open the <span className="text-[#C19A4A] font-semibold">{selectedWallet} app</span> on your phone</li>
+              <li>Tap the <span className="text-[#C19A4A] font-semibold">Browser</span> icon (🌐) inside the app</li>
+              <li>Enter or paste this URL: <code className="bg-black/50 px-2 py-1 rounded text-xs block mt-1 break-all">{window.location.href}</code></li>
+              <li>Click <span className="text-[#C19A4A] font-semibold">Connect Wallet</span> again</li>
+            </ol>
+            <button
+              onClick={() => setShowMobileInstructions(false)}
+              className="w-full py-3 bg-[#C19A4A] text-[#0B0F1B] font-semibold rounded-lg hover:bg-[#d9b563] transition-colors"
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
