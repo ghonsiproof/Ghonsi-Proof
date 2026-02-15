@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
-import { connectWallet } from '../../utils/walletAdapter';
+import { connectWallet, checkPendingConnection, checkIfMobile } from '../../utils/walletAdapter';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
@@ -19,18 +19,7 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    setActiveTab('wallet');
-    const params = new URLSearchParams(location.search);
-    setIsGetStarted(params.get('mode') === 'getstarted');
-  }, [location]);
-
-  const validateEmail = (emailValue) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(emailValue);
-  };
-
-  const handleWalletConnect = async (walletName) => {
+  const handleWalletConnect = useCallback(async (walletName) => {
     setIsLoading(true);
     setMessage('');
 
@@ -48,21 +37,45 @@ function Login() {
     } catch (error) {
       console.error('Wallet connection error:', error);
 
+      // Handle mobile redirect
+      if (error.message === 'REDIRECTING_TO_WALLET') {
+        setMessage('🔄 Opening wallet app...');
+        // Don't set loading to false - user is being redirected
+        return;
+      }
+
       let errorMessage = error.message || 'Unexpected error';
 
       if (error.message?.includes('rejected')) {
         errorMessage = 'Connection request rejected';
-      } else if (error.message?.includes('Please open this page')) {
-        // Mobile instruction - show as info, not error
-        setMessage(`ℹ️ ${errorMessage}`);
-        setIsLoading(false);
-        return;
       }
 
       setMessage(`❌ ${errorMessage}`);
-    } finally {
       setIsLoading(false);
     }
+  }, [navigate]);
+
+  useEffect(() => {
+    setActiveTab('wallet');
+    const params = new URLSearchParams(location.search);
+    setIsGetStarted(params.get('mode') === 'getstarted');
+
+    // Check if returning from mobile wallet
+    const pendingWallet = checkPendingConnection();
+    if (pendingWallet && checkIfMobile()) {
+      setMessage(`🔄 Reconnecting to ${pendingWallet}...`);
+      setIsLoading(true);
+
+      // Give wallet time to inject provider
+      setTimeout(() => {
+        handleWalletConnect(pendingWallet);
+      }, 500);
+    }
+  }, [location, handleWalletConnect]);
+
+  const validateEmail = (emailValue) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(emailValue);
   };
 
   const handleEmailSignIn = async (e) => {
