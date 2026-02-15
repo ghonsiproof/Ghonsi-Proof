@@ -17,6 +17,11 @@ import './about.css';
 function About() {
   const [activeValueSlide, setActiveValueSlide] = useState(0);
   const [currentTeamSlide, setCurrentTeamSlide] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
 
   useEffect(() => {
     const valueInterval = setInterval(() => {
@@ -41,7 +46,7 @@ function About() {
     return () => obs.disconnect();
   }, []);
 
- const teamMembers = [
+   const teamMembers = [
     { 
       name: 'Prosper Ayere', 
       role: 'Founder & Product Lead', 
@@ -73,7 +78,6 @@ function About() {
       image: successImg 
     }
   ];
-
   // Define values as plain objects without JSX
   const valuesData = [
     { 
@@ -96,13 +100,6 @@ function About() {
       title: 'Inclusivity', 
       desc: 'Creating opportunities for all builders' 
     }
-  ];
-
-  const roadmapMilestones = [
-    { quarter: 'Q4 2025', title: 'Foundation', desc: 'Strategic partnerships and waitlist launch.' },
-    { quarter: 'Q1 2026', title: 'MVP Launch', desc: 'Beta and Public MVP launch (open signup & onboarding).' },
-    { quarter: 'Q2 2026', title: 'Community Growth', desc: 'Talent & hiring features. (job listings, applications, DMs)' },
-    { quarter: 'Q3 2026', title: 'Ecosystem Expansion', desc: 'Ecosystem expansion.' }
   ];
 
   // Helper function to render icons
@@ -145,6 +142,30 @@ function About() {
     }
   };
 
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      handleNextTeamSlide();
+    }
+    if (isRightSwipe) {
+      handlePrevTeamSlide();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0B0F1B] text-white selection:bg-[#C19A4A]/30 relative overflow-hidden">
       
@@ -175,49 +196,43 @@ function About() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           id="about" 
-          className="p-4 text-center max-w-[80%] my-0 mx-auto mt-[110px] rounded-lg relative z-10"
+          className="p-4 text-center max-w-[80%] my-0 mx-auto mt-[110px] relative z-10"
         >
-          <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A]/30 via-[#d9b563]/20 to-blue-500/30">
-            <div className="bg-[#0B0F1B]/80 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
-              <div className="opacity-85 font-semibold mb-2 text-xl">
-                <span className="text-[#C19A4A]">About</span>
-                <span className="text-white"> Ghonsi proof</span>
-              </div>
-              <h1 className="text-base text-center leading-[1.4] mb-3 font-normal text-gray-300">
-                We are building the essential infrastructure that makes your work and project contributions verifiable.
-              </h1>
-            </div>
+          <div className="opacity-85 font-semibold mb-2 text-xl">
+            <span className="text-[#C19A4A]">About</span>
+            <span className="text-white"> Ghonsi proof</span>
           </div>
+          <h1 className="text-base text-center leading-[1.4] mb-3 font-normal text-gray-300">
+            We are building the essential infrastructure that makes your work and project contributions verifiable.
+          </h1>
         </motion.section>
 
-        {/* Mission Section */}
+        {/* Mission Section - SHRUNKEN */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
           id="mission" 
-          className="m-4 p-6 rounded-lg w-auto relative"
+          className="m-4 p-3 max-w-5xl mx-auto relative"
           aria-labelledby="missionTitle"
         >
           <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-white/50">
-            <div className="bg-white rounded-2xl p-8">
-              <h2 id="missionTitle" className="text-lg mb-4 text-[#07090d] font-bold tracking-[0.1px]">Our Mission</h2>
-              <p className="text-base leading-[1.7] text-[#222] mb-4 text-justify">
+            <div className="bg-white rounded-2xl p-5">
+              <h2 id="missionTitle" className="text-base mb-2.5 text-[#07090d] font-bold tracking-[0.1px]">Our Mission</h2>
+              <p className="text-sm leading-[1.5] text-[#222] mb-2">
                 Ghonsi proof was founded on a simple, frustrating truth: the web3 talent ecosystem is broken. Genuine builders struggle to prove their value, while projects risk time and capital on unverified claims. We realized that for web3 to truly thrive, it needed a verifiable, tamper-proof professional identity layer.
               </p>
-              <p className="text-base leading-[1.7] text-[#222] mb-4 text-justify">
+              <p className="text-sm leading-[1.5] text-[#222] mb-2">
                 Our mission is to provide that layer, ensuring every contribution is permanently recorded and easily verifiable using the blockchain technology.
               </p>
-              <p className="text-base leading-[1.7] text-[#222] mb-6 text-justify">
+              <p className="text-sm leading-[1.5] text-[#222] mb-3.5">
                 We are committed to making trust a fundamental, on-chain primitive.
               </p>
-              <button className="inline-flex gap-2.5 bg-[#C19A4A] text-[#0B0F1B] py-2.5 px-3.5 rounded-lg font-bold cursor-pointer border-none shadow-[0_6px_18px_rgba(193,154,74,0.12)] hover:bg-[#a8853b] transition-all hover:shadow-[0_8px_24px_rgba(193,154,74,0.25)]">
+              <button className="inline-flex gap-2 bg-[#C19A4A] text-[#0B0F1B] py-2 px-3 rounded-lg font-bold cursor-pointer border-none shadow-[0_6px_18px_rgba(193,154,74,0.12)] hover:bg-[#a8853b] transition-all hover:shadow-[0_8px_24px_rgba(193,154,74,0.25)] text-sm">
                 Join Our Mission
               </button>
-              <div className="my-6 mx-4 p-6 min-h-[8.75rem] rounded-xl bg-gradient-to-br from-[#C19A4A]/5 to-[#d9b563]/5 border border-[#C19A4A]/20 flex justify-center items-center">
-                <div className="flex justify-center items-center">
-                  <img src={missionDiagram} alt="Ghonsi proof mission infrastructure diagram" width="180" className="max-w-full h-auto" />
-                </div>
+              <div className="mt-4 mb-3 p-3 min-h-[5.5rem] rounded-xl bg-gradient-to-br from-[#C19A4A]/5 to-[#d9b563]/5 border border-[#C19A4A]/20 flex justify-center items-center">
+                <img src={missionDiagram} alt="Ghonsi proof mission infrastructure diagram" width="140" className="max-w-full h-auto" />
               </div>
             </div>
           </div>
@@ -229,51 +244,52 @@ function About() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           id="values" 
-          className="py-16 px-5 text-center rounded-lg m-4 relative"
+          className="py-16 px-5 text-center rounded-lg m-4 relative max-w-5xl mx-auto"
         >
-          <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A]/30 to-blue-500/30">
-            <div className="bg-[#0B0F1B]/80 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
-              <div>
-                <h2 className="text-white text-[1.875rem] mb-10 font-[Inter] font-bold">Our Values</h2>
-              </div>
-              <div 
-                className="relative max-w-[25rem] mx-auto h-72" 
-                id="valuesGallery"
-                role="region"
-                aria-label="Company values carousel"
+          <div>
+            <h2 className="text-white text-[1.875rem] mb-10 font-[Inter] font-bold">Our Values</h2>
+          </div>
+          <div 
+            className="relative max-w-[25rem] mx-auto h-72 cursor-pointer" 
+            id="valuesGallery"
+            role="region"
+            aria-label="Company values carousel"
+            onClick={() => setActiveValueSlide((prev) => (prev + 1) % 4)}
+          >
+        
+            {valuesData.map((value, index) => (
+              <div
+                key={value.title}
+                className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 ${
+                  activeValueSlide === index ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                }`}
               >
-                {valuesData.map((value, index) => (
-                  <div
-                    key={value.title}
-                    className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 ${
-                      activeValueSlide === index ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-                    }`}
-                  >
-                    <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A] to-[#d9b563] mb-6">
-                      <div className="bg-[#0B0F1B] rounded-2xl p-4 text-[#C19A4A]">
-                        {renderIcon(value.iconName)}
-                      </div>
-                    </div>
-                    <h3 className="text-white text-xl font-bold mb-3">{value.title}</h3>
-                    <p className="text-gray-400 text-sm max-w-[300px]">{value.desc}</p>
+                <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A] to-[#d9b563] mb-6">
+                  <div className="bg-[#0B0F1B] rounded-2xl p-4 text-[#C19A4A]">
+                    {renderIcon(value.iconName)}
                   </div>
-                ))}
+                </div>
+                <h3 className="text-white text-xl font-bold mb-3">{value.title}</h3>
+                <p className="text-gray-400 text-sm max-w-[300px]">{value.desc}</p>
               </div>
-              <div className="flex justify-center gap-2 mt-6" role="tablist" aria-label="Values navigation">
-                {valuesData.map((value, i) => (
-                  <button
-                    key={value.title}
-                    onClick={() => handleValueSlideClick(i)}
-                    className={`w-2.5 h-2.5 rounded-full transition-all ${
-                      activeValueSlide === i ? 'bg-[#C19A4A] w-8' : 'bg-white/20 hover:bg-white/40'
-                    }`}
-                    aria-label={`Show ${value.title} value`}
-                    aria-current={activeValueSlide === i ? 'true' : 'false'}
-                    role="tab"
-                  />
-                ))}
-              </div>
-            </div>
+            ))}
+          </div>
+          <div className="flex justify-center gap-2 mt-6" role="tablist" aria-label="Values navigation">
+            {valuesData.map((value, i) => (
+              <button
+                key={value.title}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleValueSlideClick(i);
+                }}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  activeValueSlide === i ? 'bg-[#C19A4A] w-8' : 'bg-white/20 hover:bg-white/40'
+                }`}
+                aria-label={`Show ${value.title} value`}
+                aria-current={activeValueSlide === i ? 'true' : 'false'}
+                role="tab"
+              />
+            ))}
           </div>
         </motion.section>
 
@@ -288,9 +304,9 @@ function About() {
           <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A]/30 to-blue-500/30">
             <div className="bg-[#0B0F1B]/80 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
               <h2 className="text-white text-[1.875rem] mb-8 font-[Inter] font-bold">Meet Our Team</h2>
-              <div className="relative max-w-[600px] mx-auto">
+              <div className="relative max-w-[700px] mx-auto">
                 <button 
-                  className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-none bg-black/40 text-white cursor-pointer flex items-center justify-center z-10 transition-[background] duration-300 hover:bg-[#C19A4A] hover:text-[#0B0F1B] left-2" 
+                  className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-none bg-black/40 text-white cursor-pointer flex items-center justify-center z-10 transition-[background] duration-300 hover:bg-[#C19A4A] hover:text-[#0B0F1B] -left-12" 
                   id="teamPrev" 
                   onClick={handlePrevTeamSlide}
                   onKeyDown={(e) => handleKeyboardNavigation(e, 'prev')}
@@ -299,7 +315,12 @@ function About() {
                   <ChevronLeft size={20} />
                 </button>
                 
-                <div className="overflow-hidden min-h-[400px] relative">
+                <div 
+                  className="overflow-hidden min-h-[400px] relative"
+                  onTouchStart={onTouchStart}
+                  onTouchMove={onTouchMove}
+                  onTouchEnd={onTouchEnd}
+                >
                   {teamMembers.map((member, index) => (
                     <div
                       key={member.name}
@@ -316,16 +337,16 @@ function About() {
                             className="relative w-full h-full rounded-full border-4 border-[#C19A4A] object-cover"
                           />
                         </div>
-                        <h3 className="text-white text-xl font-bold mb-2">{member.name}</h3>
-                        <p className="text-[#C19A4A] text-sm font-semibold mb-4">{member.role}</p>
-                        <p className="text-gray-400 text-sm leading-relaxed max-w-[500px] mx-auto">{member.bio}</p>
+                        <h3 className="text-white text-xl font-bold mb-2 text-center">{member.name}</h3>
+                        <p className="text-[#C19A4A] text-sm font-semibold mb-4 text-center">{member.role}</p>
+                        <p className="text-gray-400 text-sm leading-relaxed max-w-full text-left">{member.bio}</p>
                       </div>
                     </div>
                   ))}
                 </div>
                 
                 <button 
-                  className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-none bg-black/40 text-white cursor-pointer flex items-center justify-center z-10 transition-[background] duration-300 hover:bg-[#C19A4A] hover:text-[#0B0F1B] right-2" 
+                  className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-none bg-black/40 text-white cursor-pointer flex items-center justify-center z-10 transition-[background] duration-300 hover:bg-[#C19A4A] hover:text-[#0B0F1B] -right-12" 
                   id="teamNext" 
                   onClick={handleNextTeamSlide}
                   onKeyDown={(e) => handleKeyboardNavigation(e, 'next')}
@@ -356,43 +377,68 @@ function About() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="py-16 px-5 text-center rounded-lg m-4 relative"
+          id="journey" 
+          className="py-16 px-5 text-center rounded-lg m-4 relative max-w-5xl mx-auto"
         >
-          <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A]/30 to-blue-500/30">
-            <div className="bg-[#0B0F1B]/80 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
-              <div className="max-w-[25rem] mx-auto overflow-y-auto">
+          <div>
+            <h2 className="text-white text-[1.875rem] mb-8 font-[Inter] font-bold">Our Journey</h2>
+            <p className="text-white/80 mb-8">From concept to reality here's how we're building the future of Web3 professional verification.</p>
+          </div>
+            <div className="grid grid-cols-[60px_30px_1fr] items-start relative mb-6">
+              <div className="text-sm text-white/60">Q4 2025</div>
+              <div className="relative h-full flex justify-center">
+                <span className="w-2.5 h-2.5 bg-[#C19A4A] rounded-full relative z-[2]"></span>
+                <span className="absolute top-[14px] left-1/2 -translate-x-1/2 w-0.5 h-[calc(100%+30px)] bg-white/20"></span>
+              </div>
+              <div className="pl-5">
                 <div>
-                  <h2 className="text-white text-[1.875rem] mb-8 font-[Inter] font-bold">Our Journey</h2>
-                  <p className="text-white/80 mb-8">From concept to reality here's how we're building the future of Web3 professional verification.</p>
+                  <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">Foundation</h3>
+                  <hr className="border-0 border-t border-white/15 my-2" />
+                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Strategic partnerships and waitlist launch.</p>
                 </div>
-                
-                {roadmapMilestones.map((milestone, index) => (
-                  <motion.div
-                    key={milestone.quarter}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-                    className="grid grid-cols-[60px_30px_1fr] items-start relative mb-6"
-                  >
-                    <div className="text-sm text-white/60">{milestone.quarter}</div>
-                    <div className="relative h-full flex justify-center">
-                      <span className="w-2.5 h-2.5 bg-[#C19A4A] rounded-full relative z-[2] shadow-[0_0_10px_rgba(193,154,74,0.5)]"></span>
-                      {index < roadmapMilestones.length - 1 && (
-                        <span className="absolute top-[14px] left-1/2 -translate-x-1/2 w-0.5 h-[calc(100%+30px)] bg-gradient-to-b from-white/20 to-transparent"></span>
-                      )}
-                    </div>
-                    <div className="pl-5 text-left">
-                      <div>
-                        <h3 className="m-0 text-xl text-white font-bold font-[Inter]">{milestone.title}</h3>
-                        <hr className="border-0 border-t border-white/15 my-2" />
-                        <p className="m-0 text-white/80 text-sm leading-[1.6]">{milestone.desc}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
               </div>
             </div>
-          </div>
+            <div className="grid grid-cols-[60px_30px_1fr] items-start relative mb-6">
+              <div className="text-sm text-white/60">Q1 2026</div>
+              <div className="relative h-full flex justify-center">
+                <span className="w-2.5 h-2.5 bg-[#C19A4A] rounded-full relative z-[2]"></span>
+                <span className="absolute top-[14px] left-1/2 -translate-x-1/2 w-0.5 h-[calc(100%+30px)] bg-white/20"></span>
+              </div>
+              <div className="pl-5">
+                <div>
+                  <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">MVP Launch</h3>
+                  <hr className="border-0 border-t border-white/15 my-2" />
+                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Beta and Public MVP launch (open signup & onboarding).</p>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-[60px_30px_1fr] items-start relative mb-6">
+              <div className="text-sm text-white/60">Q2 2026</div>
+              <div className="relative h-full flex justify-center">
+                <span className="w-2.5 h-2.5 bg-[#C19A4A] rounded-full relative z-[2]"></span>
+                <span className="absolute top-[14px] left-1/2 -translate-x-1/2 w-0.5 h-[calc(100%+30px)] bg-white/20"></span>
+              </div>
+              <div className="pl-5">
+                <div>
+                  <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">Community Growth</h3>
+                  <hr className="border-0 border-t border-white/15 my-2" />
+                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Talent & hiring features. (job listings, applications, DMs)</p>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-[60px_30px_1fr] items-start relative mb-6">
+              <div className="text-sm text-white/60"> Q3 2026</div>
+              <div className="relative h-full flex justify-center">
+                <span className="w-2.5 h-2.5 bg-[#C19A4A] rounded-full relative z-[2]"></span>
+              </div>
+              <div className="pl-5">
+                <div>
+                  <h3 className="m-0 text-xl text-white font-bold font-[Inter] text-left">Ecosystem Expansion</h3>
+                  <hr className="border-0 border-t border-white/15 my-2" />
+                  <p className="m-0 text-white/80 text-sm leading-[1.6] text-left">Ecosystem expansion.</p>
+                </div>
+              </div>
+            </div>
         </motion.section>
 
         {/* Footer */}
