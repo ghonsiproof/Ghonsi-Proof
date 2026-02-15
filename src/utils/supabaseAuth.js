@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabaseClient';
+import { disconnectWallet } from './walletAdapter';
 
 /**
  * Authentication Utilities using Supabase Auth
@@ -58,6 +59,10 @@ export const sendOTPToEmail = async (email) => {
 
 // Verify OTP code
 export const verifyOTP = async (email, token) => {
+  // First check if user exists
+  const { data: existingSession } = await supabase.auth.getSession();
+  const wasNewUser = !existingSession?.session;
+
   const { data, error } = await supabase.auth.verifyOtp({
     email,
     token,
@@ -65,48 +70,35 @@ export const verifyOTP = async (email, token) => {
   });
 
   if (error) throw error;
-  return data;
+
+  return {
+    ...data,
+    isNewUser: wasNewUser
+  };
 };
 
-// Sign in with wallet (Solana)
+// Sign in with wallet (Solana) - Simplified version without database operations
 export const signInWithWallet = async (walletAddress) => {
   try {
-    // Create a pseudo-email from wallet address for Supabase auth
-    const walletEmail = `${walletAddress}@wallet.local`;
-
-    // Try to sign in with existing wallet user
-    try {
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: walletEmail,
-        password: walletAddress // Use wallet address as password
-      });
-
-      if (!signInError) {
-        // Successfully signed in existing user
-        return { user: signInData.user, walletAddress, isNewUser: false };
-      }
-    } catch (signInError) {
-      // User doesn't exist, create new one
-    }
-
-    // Create new user account for wallet
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: walletEmail,
-      password: walletAddress,
-      options: {
-        data: {
-          wallet_address: walletAddress,
-          auth_method: 'wallet'
-        }
-      }
-    });
-
-    if (signUpError) throw signUpError;
-
-    // Store wallet info
+    // Just store wallet info locally - no database operations
     localStorage.setItem('wallet_address', walletAddress);
+    localStorage.setItem('connected_wallet', localStorage.getItem('connected_wallet') || 'Phantom');
 
-    return { user: signUpData.user, walletAddress, isNewUser: true };
+    // Create a mock user object for compatibility with existing code
+    const mockUser = {
+      id: walletAddress, // Use wallet address as user ID
+      wallet_address: walletAddress,
+      email: null,
+      created_at: new Date().toISOString()
+    };
+
+    // Return mock data that matches expected structure
+    return {
+      user: mockUser,
+      session: null,
+      walletAddress,
+      isNewUser: true // Always treat as new for now
+    };
   } catch (error) {
     console.error('Wallet sign-in error:', error);
     throw error;
@@ -115,11 +107,33 @@ export const signInWithWallet = async (walletAddress) => {
 
 // Sign out
 export const logout = async () => {
-  const { error } = await supabase.auth.signOut();
-  localStorage.removeItem('wallet_address');
-  localStorage.removeItem('user_id');
-  
-  if (error) throw error;
+  try {
+    // Disconnect wallet if connected
+    await disconnectWallet();
+
+    // Only sign out from Supabase if there's an actual Supabase session
+    try {
+      const session = await getSession();
+      if (session) {
+        const { error } = await supabase.auth.signOut();
+        if (error) console.error('Supabase signout error:', error);
+      }
+    } catch (error) {
+      // Ignore Supabase errors for wallet-only users
+      console.log('No Supabase session to sign out from');
+    }
+
+    // Clean up localStorage
+    localStorage.removeItem('wallet_address');
+    localStorage.removeItem('connected_wallet');
+    localStorage.removeItem('user_id');
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Still clean up localStorage even if disconnect fails
+    localStorage.removeItem('wallet_address');
+    localStorage.removeItem('connected_wallet');
+    localStorage.removeItem('user_id');
+  }
 };
 
 // Get current session
@@ -131,24 +145,47 @@ export const getSession = async () => {
 
 // Get current user
 export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  
-  // Also check for wallet-based auth
+  // Check for wallet-based auth first
   const walletAddress = localStorage.getItem('wallet_address');
-  
-  return {
-    ...user,
-    wallet_address: walletAddress
-  };
+  const connectedWallet = localStorage.getItem('connected_wallet');
+
+  if (walletAddress) {
+    // Return wallet user (no database lookup)
+    return {
+      id: walletAddress,
+      wallet_address: walletAddress,
+      connected_wallet: connectedWallet,
+      email: null
+    };
+  }
+
+  // Fall back to Supabase auth for email users
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+
+    return {
+      ...user,
+      wallet_address: walletAddress,
+      connected_wallet: connectedWallet
+    };
+  } catch (error) {
+    // If no Supabase user and no wallet, return null
+    return null;
+  }
 };
 
 // Check if user is authenticated
 export const isAuthenticated = async () => {
-  const session = await getSession();
-  const walletAddress = localStorage.getItem('wallet_address');
-  
-  return !!(session || walletAddress);
+  try {
+    const session = await getSession();
+    const walletAddress = localStorage.getItem('wallet_address');
+
+    return !!(session || walletAddress);
+  } catch (error) {
+    console.error('Error checking authentication:', error);
+    return false;
+  }
 };
 
 // Password reset
