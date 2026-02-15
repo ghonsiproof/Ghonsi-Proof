@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
-import { connectWallet, checkIfMobile } from '../../utils/walletAdapter';
+import { connectWallet } from '../../utils/walletAdapter';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
