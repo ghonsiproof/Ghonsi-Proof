@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
-import { connectWallet, isWalletInstalled } from '../../utils/walletAdapter';
+import { connectWallet } from '../../utils/walletAdapter';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
@@ -35,12 +35,6 @@ function Login() {
     setMessage('');
 
     try {
-      if (!isWalletInstalled(walletName)) {
-        setMessage(`❌ ${walletName} wallet not installed. Please install it first.`);
-        setIsLoading(false);
-        return;
-      }
-
       const walletAddress = await connectWallet(walletName);
 
       if (!walletAddress) {
@@ -54,16 +48,15 @@ function Login() {
     } catch (error) {
       console.error('Wallet connection error:', error);
 
-      // Don't show error if redirecting to mobile wallet
-      if (error.message?.includes('Redirecting to mobile wallet')) {
-        setMessage('🔄 Opening wallet app...');
-        return;
-      }
-
       let errorMessage = error.message || 'Unexpected error';
 
       if (error.message?.includes('rejected')) {
         errorMessage = 'Connection request rejected';
+      } else if (error.message?.includes('Please open this page')) {
+        // Mobile instruction - show as info, not error
+        setMessage(`ℹ️ ${errorMessage}`);
+        setIsLoading(false);
+        return;
       }
 
       setMessage(`❌ ${errorMessage}`);
