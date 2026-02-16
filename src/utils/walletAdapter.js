@@ -3,8 +3,6 @@
  * Uses native deeplinks for proper mobile wallet connections
  */
 
-import { Connection, PublicKey } from '@solana/web3.js';
-
 // Detect mobile
 const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
