@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.jsx';
+import { WalletContextProvider } from './context/WalletContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Home from './pages/home/home.jsx';
 import FAQ from './pages/faq/faq.jsx';
@@ -35,35 +36,37 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <Router>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/policy" element={<Policy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/settingsPage" element={<SettingsPage />} />
-        <Route path="/test" element={<TestSupabase />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/publicProfile" element={<PublicProfile />} />
-        <Route path="/request" element={<Request />} />
-        <Route path="/dashboardA" element={<DashboardA />} />
-        <Route path="/adminLogin" element={<AdminLogin />} />
+    <WalletContextProvider>
+      <ThemeProvider>
+        <Router>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/policy" element={<Policy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/settingsPage" element={<SettingsPage />} />
+            <Route path="/test" element={<TestSupabase />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/publicProfile" element={<PublicProfile />} />
+            <Route path="/request" element={<Request />} />
+            <Route path="/dashboardA" element={<DashboardA />} />
+            <Route path="/adminLogin" element={<AdminLogin />} />
 
-        {/* Protected Routes */}
-        <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/createProfile" element={<ProtectedRoute><CreateProfile /></ProtectedRoute>} />
-        <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
-        <Route path="/message" element={<ProtectedRoute><Message /></ProtectedRoute>} />
-      </Routes>
-    </Router>
-    </ThemeProvider>
+            {/* Protected Routes */}
+            <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/createProfile" element={<ProtectedRoute><CreateProfile /></ProtectedRoute>} />
+            <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+            <Route path="/message" element={<ProtectedRoute><Message /></ProtectedRoute>} />
+          </Routes>
+        </Router>
+      </ThemeProvider>
+    </WalletContextProvider>
   );
 }
 

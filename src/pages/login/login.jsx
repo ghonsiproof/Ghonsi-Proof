@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
-import { connectWallet, checkPendingConnection, checkIfMobile, checkIfInWalletBrowser } from '../../utils/walletAdapter';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
@@ -15,68 +16,42 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isGetStarted, setIsGetStarted] = useState(false);
-  const [showMobileInstructions, setShowMobileInstructions] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { publicKey, connected, select, wallets, disconnect } = useWallet();
 
-  // Check for pending wallet connection on mount (user returning from wallet app)
+  // Handle wallet connection
   useEffect(() => {
-    const checkConnection = async () => {
-      const result = await checkPendingConnection();
-      if (result.success) {
-        await signInWithWallet(result.address);
-        setMessage(`✅ ${result.wallet} wallet connected successfully!`);
-        setTimeout(() => navigate('/home'), 1000);
+    const handleWalletConnect = async () => {
+      if (connected && publicKey) {
+        try {
+          const walletAddress = publicKey.toString();
+          await signInWithWallet(walletAddress);
+          setMessage('✅ Wallet connected successfully!');
+          setTimeout(() => navigate('/home'), 1000);
+        } catch (error) {
+          console.error('Wallet sign-in error:', error);
+          setMessage('❌ Failed to sign in with wallet');
+        }
       }
     };
-    checkConnection();
-  }, [navigate]);
 
-  const handleWalletConnect = useCallback(async (walletName) => {
-    setIsLoading(true);
-    setMessage('');
-
-    try {
-      const walletAddress = await connectWallet(walletName);
-
-      if (!walletAddress) {
-        throw new Error('Failed to get wallet address');
-      }
-
-      await signInWithWallet(walletAddress);
-      setMessage('✅ Wallet connected successfully!');
-
-      setTimeout(() => navigate('/home'), 1000);
-    } catch (error) {
-      console.error('Wallet connection error:', error);
-
-      // Handle mobile instructions
-      if (error.message?.startsWith('MOBILE_INSTRUCTION:')) {
-        const wallet = error.message.split(':')[1];
-        setSelectedWallet(wallet);
-        setShowMobileInstructions(true);
-        setIsLoading(false);
-        return;
-      }
-
-      let errorMessage = error.message || 'Unexpected error';
-
-      if (error.message?.includes('rejected')) {
-        errorMessage = 'Connection request rejected';
-      }
-
-      setMessage(`❌ ${errorMessage}`);
-      setIsLoading(false);
-    }
-  }, [navigate]);
+    handleWalletConnect();
+  }, [connected, publicKey, navigate]);
 
   useEffect(() => {
     setActiveTab('wallet');
     const params = new URLSearchParams(location.search);
     setIsGetStarted(params.get('mode') === 'getstarted');
   }, [location]);
+
+  const handleWalletClick = (walletName) => {
+    const wallet = wallets.find(w => w.adapter.name === walletName);
+    if (wallet) {
+      select(wallet.adapter.name);
+    }
+  };
 
   const validateEmail = (emailValue) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -145,27 +120,6 @@ function Login() {
     }
   };
 
-  const getWalletBrowserUrl = (walletName) => {
-    const currentUrl = window.location.href;
-    const urls = {
-      Phantom: `https://phantom.app/ul/browse/${encodeURIComponent(currentUrl)}`,
-      Solflare: `https://solflare.com/ul/v1/browse/${encodeURIComponent(currentUrl)}`,
-      Backpack: `https://backpack.app/browse?url=${encodeURIComponent(currentUrl)}`,
-      Glow: `https://glow.app/browser?url=${encodeURIComponent(currentUrl)}`
-    };
-    return urls[walletName] || currentUrl;
-  };
-
-  const handleOpenInWallet = () => {
-    const browserUrl = getWalletBrowserUrl(selectedWallet);
-    window.location.href = browserUrl;
-  };
-
-  const handleCopyUrl = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert('URL copied! Paste it in your wallet\'s browser.');
-  };
-
   return (
     <main>
       <div className="mt-[115px] mx-auto py-10 px-5 text-center flex flex-col">
@@ -173,8 +127,18 @@ function Login() {
         {isGetStarted && <h2 className="text-2xl font-bold text-white mb-2.5">Get Started</h2>}
         <p className="text-sm text-[#ccc] leading-[1.5] mb-[30px]">Connect your wallet or sign in to access your proof portfolio</p>
         <div className="flex flex-row gap-2.5 justify-center items-center mt-5">
-          <button className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${activeTab === 'wallet' ? 'bg-[#C19A4A] text-[#1a1a2e] border-none' : 'bg-white/10 text-white border border-white/20'}`} onClick={() => setActiveTab('wallet')}>Wallet Connect</button>
-          <button className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${activeTab === 'email' ? 'bg-[#C19A4A] text-[#1a1a2e] border-none' : 'bg-white/10 text-white border border-white/20'}`} onClick={() => setActiveTab('email')}>Email Login</button>
+          <button
+            className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${activeTab === 'wallet' ? 'bg-[#C19A4A] text-[#1a1a2e] border-none' : 'bg-white/10 text-white border border-white/20'}`}
+            onClick={() => setActiveTab('wallet')}
+          >
+            Wallet Connect
+          </button>
+          <button
+            className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${activeTab === 'email' ? 'bg-[#C19A4A] text-[#1a1a2e] border-none' : 'bg-white/10 text-white border border-white/20'}`}
+            onClick={() => setActiveTab('email')}
+          >
+            Email Login
+          </button>
         </div>
       </div>
 
@@ -183,32 +147,44 @@ function Login() {
           <div className="bg-white/5 py-[30px] px-5 my-5 mx-5 rounded-xl border border-white/10">
             <h3 className="text-lg font-bold text-white mb-5 text-center">Choose your wallet</h3>
 
-            {checkIfMobile() && !checkIfInWalletBrowser() && (
-              <div className="mb-6 p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-                <p className="text-center text-blue-300 text-sm mb-2">
-                  📱 <strong>Mobile Users:</strong>
-                </p>
-                <p className="text-center text-gray-300 text-xs">
-                  Open this page in your wallet's browser to connect
-                </p>
+            {/* Custom wallet buttons */}
+            <div className="space-y-3 mb-6">
+              <div
+                className="bg-white/[0.08] py-[15px] px-5 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group"
+                onClick={() => handleWalletClick('Phantom')}
+              >
+                <img src={phantomIcon} alt="Phantom" className="w-5 h-5 flex-shrink-0 object-contain" />
+                <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Phantom</h4>
               </div>
-            )}
 
-            <div className="bg-white/[0.08] py-[15px] px-5 mb-3 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group" onClick={() => handleWalletConnect('Phantom')}>
-              <img src={phantomIcon} alt="Phantom" className="w-5 h-5 flex-shrink-0 object-contain" />
-              <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Phantom</h4>
+              <div
+                className="bg-white/[0.08] py-[15px] px-5 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group"
+                onClick={() => handleWalletClick('Solflare')}
+              >
+                <img src={solflareIcon} alt="Solflare" className="w-5 h-5 flex-shrink-0 object-contain" />
+                <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Solflare</h4>
+              </div>
+
+              <div
+                className="bg-white/[0.08] py-[15px] px-5 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group"
+                onClick={() => handleWalletClick('Backpack')}
+              >
+                <img src={backpackIcon} alt="Backpack" className="w-5 h-5 flex-shrink-0 object-contain" />
+                <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Backpack</h4>
+              </div>
+
+              <div
+                className="bg-white/[0.08] py-[15px] px-5 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group"
+                onClick={() => handleWalletClick('Glow')}
+              >
+                <img src={glowIcon} alt="Glow" className="w-5 h-5 flex-shrink-0 object-contain" />
+                <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Glow</h4>
+              </div>
             </div>
-            <div className="bg-white/[0.08] py-[15px] px-5 mb-3 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group" onClick={() => handleWalletConnect('Solflare')}>
-              <img src={solflareIcon} alt="Solflare" className="w-5 h-5 flex-shrink-0 object-contain" />
-              <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Solflare</h4>
-            </div>
-            <div className="bg-white/[0.08] py-[15px] px-5 mb-3 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group" onClick={() => handleWalletConnect('Backpack')}>
-              <img src={backpackIcon} alt="Backpack" className="w-5 h-5 flex-shrink-0 object-contain" />
-              <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Backpack</h4>
-            </div>
-            <div className="bg-white/[0.08] py-[15px] px-5 mb-0 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group" onClick={() => handleWalletConnect('Glow')}>
-              <img src={glowIcon} alt="Glow" className="w-5 h-5 flex-shrink-0 object-contain" />
-              <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Glow</h4>
+
+            {/* Fallback: Standard WalletMultiButton (if custom buttons don't work) */}
+            <div className="hidden">
+              <WalletMultiButton className="!bg-[#C19A4A] !text-[#0B0F1B] hover:!bg-[#d9b563]" />
             </div>
 
             {message && (
@@ -217,9 +193,9 @@ function Login() {
               </div>
             )}
 
-            {isLoading && (
-              <div className="mt-4 text-center text-[#C19A4A] text-sm">
-                Connecting...
+            {connected && publicKey && (
+              <div className="mt-4 p-3 rounded-lg text-sm bg-green-500/20 text-green-400 border border-green-500/30">
+                Connected: {publicKey.toString().slice(0, 4)}...{publicKey.toString().slice(-4)}
               </div>
             )}
           </div>
@@ -294,52 +270,6 @@ function Login() {
         <h4 className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">Continue without connecting (limited access)</h4>
         <h4 className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">By connecting you agree to our <a href="/terms" className="text-[#C19A4A] no-underline cursor-pointer transition-colors duration-200 ease-in-out hover:text-[#C19A4A]">Terms of Service</a> and <a href="/policy" className="text-[#C19A4A] no-underline cursor-pointer transition-colors duration-200 ease-in-out hover:text-[#C19A4A]">Privacy Policy</a></h4>
       </div>
-
-      {/* Mobile Instructions Modal */}
-      {showMobileInstructions && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-5" onClick={() => setShowMobileInstructions(false)}>
-          <div className="bg-[#0B0F1B] border border-[#C19A4A] rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-white mb-4">📱 Connect on Mobile</h3>
-            <p className="text-gray-300 text-sm mb-4">
-              To connect your {selectedWallet} wallet on mobile, you need to open this page in {selectedWallet}'s built-in browser:
-            </p>
-
-            <div className="bg-white/5 p-4 rounded-lg mb-4 border border-white/10">
-              <p className="text-white text-sm font-semibold mb-2">Option 1: Auto-Open (Recommended)</p>
-              <button
-                onClick={handleOpenInWallet}
-                className="w-full py-3 bg-[#C19A4A] text-[#0B0F1B] font-semibold rounded-lg hover:bg-[#d9b563] transition-colors mb-3"
-              >
-                🚀 Open in {selectedWallet}
-              </button>
-              <p className="text-gray-400 text-xs">This will open the {selectedWallet} app with this page loaded in its browser</p>
-            </div>
-
-            <div className="bg-white/5 p-4 rounded-lg mb-4 border border-white/10">
-              <p className="text-white text-sm font-semibold mb-2">Option 2: Manual Steps</p>
-              <ol className="text-left text-gray-300 text-xs space-y-2 list-decimal list-inside">
-                <li>Open the <span className="text-[#C19A4A] font-semibold">{selectedWallet} app</span></li>
-                <li>Tap the <span className="text-[#C19A4A] font-semibold">Browser</span> icon (🌐)</li>
-                <li>Paste this URL or search for "Ghonsi Proof"</li>
-                <li>Click <span className="text-[#C19A4A] font-semibold">Connect Wallet</span> again</li>
-              </ol>
-              <button
-                onClick={handleCopyUrl}
-                className="w-full mt-3 py-2 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors text-sm"
-              >
-                📋 Copy URL
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowMobileInstructions(false)}
-              className="w-full py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
