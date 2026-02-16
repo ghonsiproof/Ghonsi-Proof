@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
-import { connectWallet, checkPendingConnection, checkIfMobile } from '../../utils/walletAdapter';
+import { connectWallet, checkPendingConnection, checkIfMobile, checkIfInWalletBrowser } from '../../utils/walletAdapter';
 import phantomIcon from '../../assets/wallet-icons/phantom.png';
 import solflareIcon from '../../assets/wallet-icons/solflare.png';
 import backpackIcon from '../../assets/wallet-icons/backpack.png';
@@ -15,7 +15,8 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isGetStarted, setIsGetStarted] = useState(false);
-  const [isMobileConnecting, setIsMobileConnecting] = useState(false);
+  const [showMobileInstructions, setShowMobileInstructions] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,6 +26,7 @@ function Login() {
     const checkConnection = async () => {
       const result = await checkPendingConnection();
       if (result.success) {
+        await signInWithWallet(result.address);
         setMessage(`✅ ${result.wallet} wallet connected successfully!`);
         setTimeout(() => navigate('/home'), 1000);
       }
@@ -33,16 +35,8 @@ function Login() {
   }, [navigate]);
 
   const handleWalletConnect = useCallback(async (walletName) => {
-    const isMobile = checkIfMobile();
-
     setIsLoading(true);
     setMessage('');
-
-    // Show different message for mobile
-    if (isMobile) {
-      setIsMobileConnecting(true);
-      setMessage(`Opening ${walletName} app...`);
-    }
 
     try {
       const walletAddress = await connectWallet(walletName);
@@ -53,19 +47,24 @@ function Login() {
 
       await signInWithWallet(walletAddress);
       setMessage('✅ Wallet connected successfully!');
-      setIsMobileConnecting(false);
 
       setTimeout(() => navigate('/home'), 1000);
     } catch (error) {
       console.error('Wallet connection error:', error);
-      setIsMobileConnecting(false);
+
+      // Handle mobile instructions
+      if (error.message?.startsWith('MOBILE_INSTRUCTION:')) {
+        const wallet = error.message.split(':')[1];
+        setSelectedWallet(wallet);
+        setShowMobileInstructions(true);
+        setIsLoading(false);
+        return;
+      }
 
       let errorMessage = error.message || 'Unexpected error';
 
-      if (error.message?.includes('rejected') || error.message?.includes('cancelled')) {
+      if (error.message?.includes('rejected')) {
         errorMessage = 'Connection request rejected';
-      } else if (error.message?.includes('timeout')) {
-        errorMessage = 'Connection timeout - please try again';
       }
 
       setMessage(`❌ ${errorMessage}`);
@@ -146,6 +145,27 @@ function Login() {
     }
   };
 
+  const getWalletBrowserUrl = (walletName) => {
+    const currentUrl = window.location.href;
+    const urls = {
+      Phantom: `https://phantom.app/ul/browse/${encodeURIComponent(currentUrl)}`,
+      Solflare: `https://solflare.com/ul/v1/browse/${encodeURIComponent(currentUrl)}`,
+      Backpack: `https://backpack.app/browse?url=${encodeURIComponent(currentUrl)}`,
+      Glow: `https://glow.app/browser?url=${encodeURIComponent(currentUrl)}`
+    };
+    return urls[walletName] || currentUrl;
+  };
+
+  const handleOpenInWallet = () => {
+    const browserUrl = getWalletBrowserUrl(selectedWallet);
+    window.location.href = browserUrl;
+  };
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert('URL copied! Paste it in your wallet\'s browser.');
+  };
+
   return (
     <main>
       <div className="mt-[115px] mx-auto py-10 px-5 text-center flex flex-col">
@@ -163,13 +183,13 @@ function Login() {
           <div className="bg-white/5 py-[30px] px-5 my-5 mx-5 rounded-xl border border-white/10">
             <h3 className="text-lg font-bold text-white mb-5 text-center">Choose your wallet</h3>
 
-            {isMobileConnecting && (
-              <div className="mb-6 p-4 bg-[#C19A4A]/20 border border-[#C19A4A] rounded-lg">
-                <p className="text-center text-white text-sm mb-2">
-                  📱 Opening wallet app...
+            {checkIfMobile() && !checkIfInWalletBrowser() && (
+              <div className="mb-6 p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                <p className="text-center text-blue-300 text-sm mb-2">
+                  📱 <strong>Mobile Users:</strong>
                 </p>
-                <p className="text-center text-gray-400 text-xs">
-                  Approve the connection in your wallet app, then return here
+                <p className="text-center text-gray-300 text-xs">
+                  Open this page in your wallet's browser to connect
                 </p>
               </div>
             )}
@@ -197,7 +217,7 @@ function Login() {
               </div>
             )}
 
-            {isLoading && !isMobileConnecting && (
+            {isLoading && (
               <div className="mt-4 text-center text-[#C19A4A] text-sm">
                 Connecting...
               </div>
@@ -274,6 +294,52 @@ function Login() {
         <h4 className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">Continue without connecting (limited access)</h4>
         <h4 className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">By connecting you agree to our <a href="/terms" className="text-[#C19A4A] no-underline cursor-pointer transition-colors duration-200 ease-in-out hover:text-[#C19A4A]">Terms of Service</a> and <a href="/policy" className="text-[#C19A4A] no-underline cursor-pointer transition-colors duration-200 ease-in-out hover:text-[#C19A4A]">Privacy Policy</a></h4>
       </div>
+
+      {/* Mobile Instructions Modal */}
+      {showMobileInstructions && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-5" onClick={() => setShowMobileInstructions(false)}>
+          <div className="bg-[#0B0F1B] border border-[#C19A4A] rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-white mb-4">📱 Connect on Mobile</h3>
+            <p className="text-gray-300 text-sm mb-4">
+              To connect your {selectedWallet} wallet on mobile, you need to open this page in {selectedWallet}'s built-in browser:
+            </p>
+
+            <div className="bg-white/5 p-4 rounded-lg mb-4 border border-white/10">
+              <p className="text-white text-sm font-semibold mb-2">Option 1: Auto-Open (Recommended)</p>
+              <button
+                onClick={handleOpenInWallet}
+                className="w-full py-3 bg-[#C19A4A] text-[#0B0F1B] font-semibold rounded-lg hover:bg-[#d9b563] transition-colors mb-3"
+              >
+                🚀 Open in {selectedWallet}
+              </button>
+              <p className="text-gray-400 text-xs">This will open the {selectedWallet} app with this page loaded in its browser</p>
+            </div>
+
+            <div className="bg-white/5 p-4 rounded-lg mb-4 border border-white/10">
+              <p className="text-white text-sm font-semibold mb-2">Option 2: Manual Steps</p>
+              <ol className="text-left text-gray-300 text-xs space-y-2 list-decimal list-inside">
+                <li>Open the <span className="text-[#C19A4A] font-semibold">{selectedWallet} app</span></li>
+                <li>Tap the <span className="text-[#C19A4A] font-semibold">Browser</span> icon (🌐)</li>
+                <li>Paste this URL or search for "Ghonsi Proof"</li>
+                <li>Click <span className="text-[#C19A4A] font-semibold">Connect Wallet</span> again</li>
+              </ol>
+              <button
+                onClick={handleCopyUrl}
+                className="w-full mt-3 py-2 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors text-sm"
+              >
+                📋 Copy URL
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowMobileInstructions(false)}
+              className="w-full py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

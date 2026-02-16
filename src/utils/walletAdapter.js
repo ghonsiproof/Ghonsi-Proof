@@ -1,10 +1,19 @@
 /**
  * Solana Wallet Connection - Mobile & Desktop
- * Uses native deeplinks for proper mobile wallet connections
+ * Mobile: Instructs users to use wallet's dApp browser
+ * Desktop: Direct provider connection
  */
 
-// Detect mobile
-const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+// Detect mobile - more accurate detection
+const isMobile = () => {
+  // Check for touch support AND small screen
+  const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const smallScreen = window.innerWidth <= 768;
+  const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  // Must have mobile UA AND (touch or small screen)
+  return mobileUA && (hasTouch || smallScreen);
+};
 
 // Check if in wallet's dApp browser
 const isInWalletBrowser = () => {
@@ -12,7 +21,7 @@ const isInWalletBrowser = () => {
   return ua.includes('phantom') || ua.includes('solflare') || ua.includes('backpack') || ua.includes('glow');
 };
 
-// Get wallet provider (desktop/dApp browser)
+// Get wallet provider
 const getWalletProvider = (walletName) => {
   const name = walletName.toLowerCase();
   switch (name) {
@@ -22,29 +31,6 @@ const getWalletProvider = (walletName) => {
     case 'glow': return window.glow;
     default: return null;
   }
-};
-
-// Build mobile deeplink with proper params
-const buildMobileDeeplink = (walletName) => {
-  const currentUrl = encodeURIComponent(window.location.origin + window.location.pathname);
-  const appName = encodeURIComponent('Ghonsi Proof');
-
-  // Generate connection ID
-  const connectionId = `connect_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-  // Store connection attempt
-  sessionStorage.setItem('wallet_connection_id', connectionId);
-  sessionStorage.setItem('wallet_connection_wallet', walletName);
-  sessionStorage.setItem('wallet_connection_time', Date.now().toString());
-
-  const links = {
-    phantom: `phantom://v1/connect?app_url=${currentUrl}&dapp_name=${appName}&cluster=mainnet-beta&redirect=${currentUrl}`,
-    solflare: `solflare://v1/connect?app_url=${currentUrl}&dapp_name=${appName}&redirect=${currentUrl}`,
-    backpack: `backpack://connect?app_url=${currentUrl}&redirect=${currentUrl}`,
-    glow: `glow://connect?app_url=${currentUrl}&redirect=${currentUrl}`
-  };
-
-  return links[walletName.toLowerCase()];
 };
 
 // Desktop wallet connection
@@ -93,131 +79,27 @@ const connectDesktop = async (walletName) => {
   }
 };
 
-// Mobile wallet connection
+// Mobile wallet connection (in dApp browser)
 const connectMobile = async (walletName) => {
-  // If already in wallet's browser, connect normally
+  // If in wallet's dApp browser, connect normally
   if (isInWalletBrowser()) {
     return await connectDesktop(walletName);
   }
 
-  // Build deeplink and redirect
-  const deeplink = buildMobileDeeplink(walletName);
-  if (!deeplink) throw new Error('Wallet not supported on mobile');
-
-  return new Promise((resolve, reject) => {
-    let hasReturned = false;
-    let checkTimer = null;
-
-    const cleanup = () => {
-      if (checkTimer) clearInterval(checkTimer);
-      document.removeEventListener('visibilitychange', handleReturn);
-      window.removeEventListener('focus', handleReturn);
-    };
-
-    const handleReturn = () => {
-      if (hasReturned) return;
-      hasReturned = true;
-
-      // Wait for provider to initialize
-      setTimeout(async () => {
-        try {
-          const provider = getWalletProvider(walletName);
-
-          if (provider?.publicKey) {
-            const address = provider.publicKey.toString();
-            saveWalletConnection(walletName, address);
-            cleanup();
-            resolve(address);
-            return;
-          }
-
-          // Check if wallet returned address via URL
-          const urlAddress = checkUrlForAddress();
-          if (urlAddress) {
-            saveWalletConnection(walletName, urlAddress);
-            cleanup();
-            resolve(urlAddress);
-            return;
-          }
-
-          // No address found
-          cleanup();
-          sessionStorage.removeItem('wallet_connection_id');
-          sessionStorage.removeItem('wallet_connection_wallet');
-          sessionStorage.removeItem('wallet_connection_time');
-          reject(new Error('Could not retrieve wallet address'));
-
-        } catch (err) {
-          cleanup();
-          reject(err);
-        }
-      }, 1500);
-    };
-
-    // Listen for user returning from wallet app
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') handleReturn();
-    });
-
-    window.addEventListener('focus', handleReturn);
-
-    // Poll for connection (backup method)
-    checkTimer = setInterval(() => {
-      const provider = getWalletProvider(walletName);
-      if (provider?.publicKey) {
-        hasReturned = true;
-        const address = provider.publicKey.toString();
-        saveWalletConnection(walletName, address);
-        cleanup();
-        resolve(address);
-      }
-    }, 1000);
-
-    // Timeout after 3 minutes
-    setTimeout(() => {
-      if (!hasReturned) {
-        cleanup();
-        sessionStorage.removeItem('wallet_connection_id');
-        sessionStorage.removeItem('wallet_connection_wallet');
-        sessionStorage.removeItem('wallet_connection_time');
-        reject(new Error('Connection timeout - wallet app did not respond'));
-      }
-    }, 180000);
-
-    // Open wallet app
-    window.location.href = deeplink;
-  });
-};
-
-// Check URL for wallet address (some wallets return it this way)
-const checkUrlForAddress = () => {
-  const params = new URLSearchParams(window.location.search);
-  const keys = ['phantom_encryption_public_key', 'public_key', 'publicKey', 'address', 'walletAddress'];
-
-  for (const key of keys) {
-    const value = params.get(key);
-    if (value && value.length >= 32) {
-      // Clean URL
-      window.history.replaceState({}, '', window.location.pathname);
-      return value;
-    }
-  }
-  return null;
+  // Not in dApp browser - throw error with instructions
+  throw new Error(`MOBILE_INSTRUCTION:${walletName}`);
 };
 
 // Save wallet connection
 const saveWalletConnection = (walletName, address) => {
   localStorage.setItem('wallet_address', address);
   localStorage.setItem('connected_wallet', walletName);
-  sessionStorage.removeItem('wallet_connection_id');
-  sessionStorage.removeItem('wallet_connection_wallet');
-  sessionStorage.removeItem('wallet_connection_time');
 };
 
 // Main connect function
 export const connectWallet = async (walletName) => {
   try {
-    if (isMobile() && !isInWalletBrowser()) {
+    if (isMobile()) {
       return await connectMobile(walletName);
     } else {
       return await connectDesktop(walletName);
@@ -244,45 +126,23 @@ export const disconnectWallet = async () => {
 
   localStorage.removeItem('wallet_address');
   localStorage.removeItem('connected_wallet');
-  sessionStorage.removeItem('wallet_connection_id');
-  sessionStorage.removeItem('wallet_connection_wallet');
-  sessionStorage.removeItem('wallet_connection_time');
 };
 
 // Check for pending connection on page load
 export const checkPendingConnection = async () => {
-  // Check URL first
-  const urlAddress = checkUrlForAddress();
-  if (urlAddress) {
-    const wallet = sessionStorage.getItem('wallet_connection_wallet');
-    if (wallet) {
-      saveWalletConnection(wallet, urlAddress);
-      return { success: true, wallet, address: urlAddress };
+  // Check if we're in a wallet browser that just loaded the page
+  if (isMobile() && isInWalletBrowser()) {
+    // Try to auto-connect if in wallet browser
+    const wallets = ['Phantom', 'Solflare', 'Backpack', 'Glow'];
+
+    for (const wallet of wallets) {
+      const provider = getWalletProvider(wallet);
+      if (provider?.publicKey) {
+        const address = provider.publicKey.toString();
+        saveWalletConnection(wallet, address);
+        return { success: true, wallet, address };
+      }
     }
-  }
-
-  // Check session storage
-  const walletName = sessionStorage.getItem('wallet_connection_wallet');
-  const connectionTime = sessionStorage.getItem('wallet_connection_time');
-
-  if (!walletName || !connectionTime) {
-    return { success: false };
-  }
-
-  const elapsed = Date.now() - parseInt(connectionTime);
-  if (elapsed > 180000) { // 3 minutes
-    sessionStorage.removeItem('wallet_connection_id');
-    sessionStorage.removeItem('wallet_connection_wallet');
-    sessionStorage.removeItem('wallet_connection_time');
-    return { success: false };
-  }
-
-  // Check provider
-  const provider = getWalletProvider(walletName);
-  if (provider?.publicKey) {
-    const address = provider.publicKey.toString();
-    saveWalletConnection(walletName, address);
-    return { success: true, wallet: walletName, address };
   }
 
   return { success: false };
@@ -294,3 +154,4 @@ export const getConnectedWalletName = () => localStorage.getItem('connected_wall
 export const isWalletConnected = () => !!getConnectedWalletAddress();
 export const isWalletInstalled = (walletName) => !!getWalletProvider(walletName);
 export const checkIfMobile = () => isMobile();
+export const checkIfInWalletBrowser = () => isInWalletBrowser();
