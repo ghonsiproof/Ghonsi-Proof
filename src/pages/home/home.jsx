@@ -283,7 +283,7 @@ function Home() {
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-bold text-white truncate">Hackathon Winner</span>
-                          <span className="text-[10px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verified</span>
+                          <span className="text-[10px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
                         </div>
                       </div>
                     </div>
@@ -336,7 +336,7 @@ function Home() {
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-bold text-white truncate">Hackathon Winner</span>
-                          <span className="text-[10px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verified</span>
+                          <span className="text-[10px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
                         </div>
                       </div>
                     </div>

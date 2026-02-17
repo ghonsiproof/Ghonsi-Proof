@@ -100,7 +100,7 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
           onProfileUpdate(); 
         }
       } else {
-        alert("Please install MetaMask or another wallet extension.");
+        alert("Please install Phantom or any Solana powered wallet extension.");
       }
     } catch (error) {
       console.error("Wallet connection failed:", error);

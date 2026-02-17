@@ -147,6 +147,10 @@ function Request() {
           from { transform: scale(0.95); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
         }
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(193, 154, 74, 0.7); }
+          50% { box-shadow: 0 0 0 10px rgba(193, 154, 74, 0); }
+        }
       `}</style>
       
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0B0F1B]/95 backdrop-blur-sm">
@@ -201,7 +205,7 @@ function Request() {
             </div>
 
             <div className="pt-2">
-              <button onClick={() => setShowRequestModal(true)} className="bg-[#C19A4A] text-[#0B0F1B] px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#d4a852] transition-colors w-full sm:w-auto">
+              <button onClick={() => setShowRequestModal(true)} className={`bg-[#C19A4A] text-[#0B0F1B] px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#d4a852] transition-colors w-full sm:w-auto ${showMore ? 'animate-[pulse_1.5s_ease-in-out_infinite]' : ''}`}>
                 Request Portfolio
               </button>
             </div>
@@ -235,7 +239,7 @@ function Request() {
             <h3 className="font-semibold">Verified Proofs</h3>
             <div className="flex items-center gap-1.5 text-[10px] text-gray-300">
               <ShieldCheck className="w-3 h-3" />
-              <span>All proofs are verified on-chain</span>
+              <span>All proofs are verifiable</span>
             </div>
           </div>
 
@@ -305,7 +309,7 @@ function Request() {
           <div className="shrink-0">
             <button 
               onClick={() => setShowRequestModal(true)} 
-              className="px-4 py-2 rounded-lg bg-[#C19A4A] text-black text-xs font-semibold hover:bg-[#a8853b] transition-colors whitespace-nowrap"
+              className={`px-4 py-2 rounded-lg bg-[#C19A4A] text-black text-xs font-semibold hover:bg-[#a8853b] transition-colors whitespace-nowrap ${showMore ? 'animate-[pulse_1.5s_ease-in-out_infinite]' : ''}`}
             >
               Request Portfolio
             </button>
