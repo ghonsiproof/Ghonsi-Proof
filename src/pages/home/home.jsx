@@ -35,7 +35,7 @@ function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Global listener to close popups when clicking blank areas
+  // Global listener to close popups when clicking/tapping blank areas
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.bubble-item') && !event.target.closest('.profile-popup-card')) {
@@ -43,8 +43,13 @@ function Home() {
         setIsPinned(false);
       }
     };
+    // mousedown for desktop, touchstart for mobile (iOS Safari doesn't reliably fire mousedown on non-interactive elements)
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -108,6 +113,10 @@ function Home() {
   }, []);
 
   const handleBubbleInteraction = (bubble, event, type = 'hover') => {
+    // Stop propagation so the global handleClickOutside doesn't fire
+    // and immediately close the popup we're about to open
+    event.stopPropagation();
+
     if (isMobile) {
       setSelectedBubble(bubble);
       return;
@@ -606,12 +615,12 @@ function Home() {
                         key={bubble.id}
                         className="absolute cursor-pointer group bubble-item"
                         style={{ top: bubble.initialPos.top, left: bubble.initialPos.left }}
-                        animate={{ y: [0, -15, 0], x: [0, 10, 0] }}
+                        animate={{ y: [0, -15, 0] }}
                         transition={{ duration: 5 + Math.random() * 5, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
                         onClick={(e) => handleBubbleInteraction(bubble, e, 'click')}
                         onMouseEnter={(e) => !isMobile && !isPinned && handleBubbleInteraction(bubble, e, 'hover')}
                         onMouseLeave={() => !isMobile && !isPinned && setSelectedBubble(null)}
-                        whileHover={{ scale: 1.1 }}
+                        whileHover={!isMobile ? { scale: 1.1 } : {}}
                       >
                         <div className={`relative p-[2px] rounded-full bg-gradient-to-br ${selectedBubble?.id === bubble.id ? 'from-[#C19A4A] to-[#d9b563]' : 'from-white/20 to-white/5'} transition-all duration-300`}>
                           <div className="relative p-1 rounded-full bg-[#0B0F1B]">
@@ -648,6 +657,8 @@ function Home() {
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className={`z-[1002] profile-popup-card ${isMobile ? 'fixed bottom-0 left-0 right-0 max-w-full' : 'absolute w-[280px] sm:w-[320px]'}`}
                         style={!isMobile ? { top: cardPos.top, left: cardPos.left } : {}}
+                        onClick={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
                       >
                         <div className="relative p-[2px] rounded-t-3xl sm:rounded-3xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500">
                           <div className="relative rounded-t-[22px] sm:rounded-[22px] bg-[#0B0F1B] backdrop-blur-2xl p-5 sm:p-6 shadow-2xl">
