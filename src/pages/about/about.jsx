@@ -232,7 +232,7 @@ function About() {
                 Join Our Mission
               </button>
               <div className="mt-4 mb-3 p-3 min-h-[5.5rem] rounded-xl bg-gradient-to-br from-[#C19A4A]/5 to-[#d9b563]/5 border border-[#C19A4A]/20 flex justify-center items-center">
-                <img src={missionDiagram} alt="Ghonsi proof mission infrastructure diagram" width="140" className="max-w-full h-auto" />
+                <img src={missionDiagram} alt="Ghonsi proof mission infrastructure diagram" width="280px" className="max-w-full h-auto" />
               </div>
             </div>
           </div>
