@@ -15,3 +15,10 @@ root.render(
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+
+// Suppress benign ResizeObserver warning in dev
+const resizeObserverErr = window.onerror;
+window.onerror = (msg, ...args) => {
+  if (msg.includes('ResizeObserver')) return true;
+  return resizeObserverErr?.(...args);
+};
