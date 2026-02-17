@@ -25,7 +25,7 @@ function Header() {
   // Check authentication status on mount
   useEffect(() => {
     checkAuthStatus();
-  }, [connected, publicKey]);
+  }, [connected, publicKey, checkAuthStatus]);
 
   // Handle clicks outside the menu to close it
   useEffect(() => {

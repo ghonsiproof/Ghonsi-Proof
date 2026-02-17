@@ -19,7 +19,7 @@ function Login() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { publicKey, connected, select, wallets, disconnect } = useWallet();
+  const { publicKey, connected, select, wallets } = useWallet();
 
   // Handle wallet connection
   useEffect(() => {
