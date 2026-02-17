@@ -5,8 +5,8 @@ import { faXTwitter, faLinkedinIn, faDiscord } from '@fortawesome/free-brands-sv
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
 import Header from '../../components/header/header.jsx';
-import missionDiagram from '../../assets/ghonsi-proof-logos/transparent-png-logo/ghonsi-proof2.png';
-import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/ghonsi-proof1.png';
+import missionDiagram from '../../assets/ghonsi-proof-logos/transparent-png-logo/Get-noticed.PNG';
+import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 import prosperImg from '../../assets/team/Prosper.png';
 import godwinImg from '../../assets/team/godwin.jpg';
 import progressImg from '../../assets/team/progress.png';
@@ -247,7 +247,7 @@ function About() {
           className="py-16 px-5 text-center rounded-lg m-4 relative max-w-5xl mx-auto"
         >
           <div>
-            <h2 className="text-white text-[1.875rem] mb-10 font-[Inter] font-bold">Our Values</h2>
+            <h2 className="text-white text-[1.875rem] mb-4 font-[Inter] font-bold">Our Values</h2>
           </div>
           <div 
             className="relative max-w-[25rem] mx-auto h-72 cursor-pointer" 
