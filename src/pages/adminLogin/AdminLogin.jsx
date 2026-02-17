@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../config/supabaseClient';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
-const ADMIN_EMAIL = 'support@ghonsiproof.com'; // The admin mail
+const ADMIN_EMAIL = 'system@ghonsiproof.com'; // The admin mail
 
 function AdminLogin() {
   const [email, setEmail] = useState('');
