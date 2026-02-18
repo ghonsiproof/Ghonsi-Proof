@@ -17,43 +17,39 @@ function FAQ() {
   const faqs = [
     {
       question: "What is Ghonsi Proof?",
-      answer: "Ghonsi Proof is the on-chain trust engine for the Web3 workforce. We transform scattered contributions (work histories, career milestones, certificates, career breaks, etc) into a single verifiable professional identity."
+      answer: "Ghonsi proof is the on-chain trust engine for the Web3 workforce. We transform scattered contributions (work histories, career milestones, certificates, career breaks, etc) into a single verifiable professional identity."
     },
     {
-      question: "How do I get my proofs verified?",
-      answer: "Verification is a multi-step process. You upload supporting documents. Our engine then reviews and validates these claims through integrated project data and social attestations."
+      question: "How do I get my proofs verified onchain?",
+      answer: "You upload your proof (screenshots, links, or documents), and our engine validates them through project data and social attestations."
     },
     {
       question: "What kind of proof can I upload?",
-      answer: "You can upload any proof that validates your contributions. This includes documents, screenshots of acceptance emails, links to published articles, certificates of contribution, records of career milestones or project roles."
+      answer: "Anything that validates your work: screenshots of acceptance emails, links to articles, contribution certificates, or records of specific project roles."
     },
     {
-      question: "Is my data secure and private?",
-      answer: "Yes. Your core identity is tied to your wallet, which you control. We only temporarily store verifiable proofs and credentials, and you decide what information is public on your profile"
+      question: "Is my data safe and private?",
+      answer: "Yes. Your identity is tied to your wallet, which you control. You decide who sees your portfolio, and your profile. Only privacy optimized data are stored onchain. "
     },
     {
-      question: "How much does Ghonsi proof cost?",
-      answer: "Creating your profile and verifying your core credentials is free."
+      question: "Can I share my profile?",
+      answer: "Yes. Every Ghonsi proof profile has a shareable link you can use on social media or in job applications."
     },
     {
-      question: "Can I share my Ghonsi proof profile on social media?",
-      answer: "Absolutely. Every Ghonsi proof profile has a shareable link. You can easily share your verified track record on X, LinkedIn, Telegram, and other platforms to showcase your credibility."
+      question: "Which wallets are supported?",
+      answer: "We are built on Solana and support all major Solana-compatible wallets. Including Phantom and Solflare."
     },
     {
-      question: "What wallets are supported?",
-      answer: "Ghonsi proof is currently built on the Solana blockchain. We support all major Solana-compatible wallets, including Phantom and Solflare."
+      question: "Can companies use this for hiring?",
+      answer: "Yes. Founders, DAOs and Hirers use Ghonsi proof to find and verify talent based on proven work and contributions."
     },
     {
-      question: "Can organisations use Ghonsi proof for hiring?",
-      answer: "Yes. Organizations, founders, and DAOs can use Ghonsi proof to find and verify talent based on proven contribution. This reduces the risk of hiring unverified contributors."
+      question: "What if I lose access to my wallet?",
+      answer: "We recommend using our email backup feature during sign-up to ensure you can always recover your verified portfolio."
     },
     {
-      question: "What happens if I lose access to my wallet?",
-      answer: "We strongly recommend using our optional email backup feature during sign-up. This provides a secure recovery path for your profile, ensuring you never lose access to your verified on-chain portfolio."
-    },
-    {
-      question: "Do you offer API access for developers?",
-      answer: "Yes. We offer API access for developers and organizations who want to integrate Ghonsi proof's verification and reputation scoring into their own platforms or hiring tools. Contact us for more details."
+      question: "Can I delete my account?",
+      answer: "Yes, you can delete your account at anytime but data recorded on the blockchain is permanent and immutable."
     }
   ];
 
@@ -64,7 +60,7 @@ function FAQ() {
         <section className="mt-[115px] bg-[#0B0F1B] py-10 px-5 pb-20">
           <div className="text-center mb-10">
             <h1 className="text-[32px] font-bold mb-[15px] text-white">Frequently Asked Questions</h1>
-            <p className="text-sm text-white leading-[1.6]">Find answers to common questions about Ghonsi Proof, verification process, and building your on-chain professional identity.</p>
+            <p className="text-sm text-white leading-[1.6]">Find answers to common questions about Ghonsi Proof and building your on-chain professional identity.</p>
           </div>
 
           <div className="max-w-[500px] mx-auto">
@@ -119,7 +115,7 @@ function FAQ() {
       Documentation
     </h3>
     <span className="text-xs text-[#CCC] leading-[1.5] mb-[15px] text-center">
-      Comprehensive guides and tutorials to get you started.
+      Learn more about Ghonsi proof here by reading our whitepaper.
     </span>
     <a href="https://docs.google.com/document/d/11i4kNIQrShArWAIAWOppRJKZ7Go_rkkgDu2b98cQqT8/edit" target="_blank" rel="noopener noreferrer" className="text-[#C19A4A] text-[13px] font-semibold flex items-center gap-2 hover:text-[#d9b563]">
       View Docs <ArrowRight size={15} />
