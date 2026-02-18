@@ -54,6 +54,7 @@ function Login() {
         setMessage('Failed to sign message. Please try again.');
       }
     } catch (err) {
+      console.error('[v0] Wallet auth error:', err);
       setMessage('Error: ' + (err.message || 'Unknown error during wallet authentication'));
     } finally {
       setIsLoading(false);
