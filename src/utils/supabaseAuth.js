@@ -103,8 +103,6 @@ export const signInWithWallet = async (walletAddress) => {
 // Sign out
 export const logout = async () => {
   try {
-    await disconnectWallet();
-
     try {
       const session = await getSession();
       if (session) {
