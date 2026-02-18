@@ -11,7 +11,7 @@ export const signUp = async (email, password, metadata = {}) => {
     email,
     password,
     options: {
-      data: metadata // Additional user metadata
+      data: metadata
     }
   });
 
@@ -48,8 +48,8 @@ export const sendOTPToEmail = async (email) => {
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      shouldCreateUser: true, // Creates user if doesn't exist
-      emailRedirectTo: undefined, // Explicitly no redirect = OTP code instead of link
+      shouldCreateUser: true,
+      emailRedirectTo: undefined,
     }
   });
 
@@ -59,7 +59,6 @@ export const sendOTPToEmail = async (email) => {
 
 // Verify OTP code
 export const verifyOTP = async (email, token) => {
-  // First check if user exists
   const { data: existingSession } = await supabase.auth.getSession();
   const wasNewUser = !existingSession?.session;
 
@@ -77,27 +76,24 @@ export const verifyOTP = async (email, token) => {
   };
 };
 
-// Sign in with wallet (Solana) - Simplified version without database operations
+// Sign in with wallet (Solana)
 export const signInWithWallet = async (walletAddress) => {
   try {
-    // Just store wallet info locally - no database operations
     localStorage.setItem('wallet_address', walletAddress);
     localStorage.setItem('connected_wallet', localStorage.getItem('connected_wallet') || 'Phantom');
 
-    // Create a mock user object for compatibility with existing code
     const mockUser = {
-      id: walletAddress, // Use wallet address as user ID
+      id: walletAddress,
       wallet_address: walletAddress,
       email: null,
       created_at: new Date().toISOString()
     };
 
-    // Return mock data that matches expected structure
     return {
       user: mockUser,
       session: null,
       walletAddress,
-      isNewUser: true // Always treat as new for now
+      isNewUser: true
     };
   } catch (error) {
     console.error('Wallet sign-in error:', error);
@@ -108,10 +104,8 @@ export const signInWithWallet = async (walletAddress) => {
 // Sign out
 export const logout = async () => {
   try {
-    // Disconnect wallet if connected
     await disconnectWallet();
 
-    // Only sign out from Supabase if there's an actual Supabase session
     try {
       const session = await getSession();
       if (session) {
@@ -119,17 +113,14 @@ export const logout = async () => {
         if (error) console.error('Supabase signout error:', error);
       }
     } catch (error) {
-      // Ignore Supabase errors for wallet-only users
       console.log('No Supabase session to sign out from');
     }
 
-    // Clean up localStorage
     localStorage.removeItem('wallet_address');
     localStorage.removeItem('connected_wallet');
     localStorage.removeItem('user_id');
   } catch (error) {
     console.error('Logout error:', error);
-    // Still clean up localStorage even if disconnect fails
     localStorage.removeItem('wallet_address');
     localStorage.removeItem('connected_wallet');
     localStorage.removeItem('user_id');
@@ -145,12 +136,10 @@ export const getSession = async () => {
 
 // Get current user
 export const getCurrentUser = async () => {
-  // Check for wallet-based auth first
   const walletAddress = localStorage.getItem('wallet_address');
   const connectedWallet = localStorage.getItem('connected_wallet');
 
   if (walletAddress) {
-    // Return wallet user (no database lookup)
     return {
       id: walletAddress,
       wallet_address: walletAddress,
@@ -159,7 +148,6 @@ export const getCurrentUser = async () => {
     };
   }
 
-  // Fall back to Supabase auth for email users
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error) throw error;
@@ -170,7 +158,6 @@ export const getCurrentUser = async () => {
       connected_wallet: connectedWallet
     };
   } catch (error) {
-    // If no Supabase user and no wallet, return null
     return null;
   }
 };
@@ -218,20 +205,17 @@ export const updateUserMetadata = async (metadata) => {
   return data;
 };
 
-// Legacy compatibility functions (for existing code)
+// Legacy compatibility functions
 export const login = async (email, walletAddress) => {
   if (walletAddress) {
-    // Wallet-based login
     return signInWithWallet(walletAddress);
   } else if (email) {
-    // Email-based login (use magic link for now)
     return signInWithMagicLink(email);
   }
   throw new Error('Either email or wallet address is required');
 };
 
 export const updateUserEmail = async (email) => {
-  // We assume 'supabase' is defined in this file (since you have login/logout working)
   const { data, error } = await supabase.auth.updateUser({ email });
   return { data, error };
 };
