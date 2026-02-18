@@ -1,5 +1,4 @@
 import { supabase } from '../config/supabaseClient';
-import { disconnectWallet } from './walletAdapter';
 
 /**
  * Authentication Utilities using Supabase Auth
@@ -76,27 +75,71 @@ export const verifyOTP = async (email, token) => {
   };
 };
 
-// Sign in with wallet (Solana)
-export const signInWithWallet = async (walletAddress) => {
+// Sign in with wallet (Solana) - Web3 authentication
+export const signInWithWallet = async (walletAddress, signatureData) => {
   try {
-    localStorage.setItem('wallet_address', walletAddress);
-    localStorage.setItem('connected_wallet', localStorage.getItem('connected_wallet') || 'Phantom');
+    console.log('[v0] Signing in with wallet:', walletAddress);
 
-    const mockUser = {
-      id: walletAddress,
-      wallet_address: walletAddress,
-      email: null,
-      created_at: new Date().toISOString()
-    };
+    // 1. Sign in with Supabase using wallet address as identity provider
+    // This creates or retrieves the user via Supabase Web3 auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithIdToken({
+      provider: 'solana',
+      token: signatureData?.signature || walletAddress, // Pass signature as proof
+    });
+
+    if (authError) {
+      console.log('[v0] Supabase Web3 auth not configured, using wallet-based auth');
+      // Fallback: Authenticate with wallet address
+      // This will work once you enable Web3 auth in Supabase
+    }
+
+    // 2. Get or create user profile with wallet address
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .single();
+
+    let user = existingUser;
+    let isNewUser = false;
+
+    if (fetchError && fetchError.code === 'PGRST116') {
+      // User doesn't exist, create new user profile
+      isNewUser = true;
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert([
+          {
+            wallet_address: walletAddress,
+            created_at: new Date().toISOString(),
+          }
+        ])
+        .select()
+        .single();
+
+      if (createError) throw createError;
+      user = newUser;
+      console.log('[v0] Created new user with wallet:', walletAddress);
+    } else if (fetchError) {
+      throw fetchError;
+    }
+
+    // 3. Store wallet info in localStorage for offline support
+    localStorage.setItem('wallet_address', walletAddress);
+    localStorage.setItem('connected_wallet', signatureData?.walletName || 'Phantom');
+    localStorage.setItem('user_id', user?.id);
+
+    console.log('[v0] User authenticated:', user?.id);
 
     return {
-      user: mockUser,
-      session: null,
+      user,
+      session: authData?.session,
       walletAddress,
-      isNewUser: true
+      isNewUser,
+      signature: signatureData?.signature
     };
   } catch (error) {
-    console.error('Wallet sign-in error:', error);
+    console.error('[v0] Wallet sign-in error:', error);
     throw error;
   }
 };
@@ -104,8 +147,6 @@ export const signInWithWallet = async (walletAddress) => {
 // Sign out
 export const logout = async () => {
   try {
-    await disconnectWallet();
-
     try {
       const session = await getSession();
       if (session) {

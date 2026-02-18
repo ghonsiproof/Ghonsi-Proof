@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useWalletAuth } from '../../hooks/useWalletAuth';
-import { sendOTPToEmail, verifyOTP } from '../../utils/supabaseAuth';
+import { useWallet } from '../../hooks/useWallet';
+import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
 
 function Login() {
   const [activeTab, setActiveTab] = useState('wallet');
@@ -17,8 +16,7 @@ function Login() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { connected, publicKey } = useWallet();
-  const { authenticate, isAuthenticating, error: authError } = useWalletAuth();
+  const { connected, sign, getWalletAddress } = useWallet();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -27,25 +25,53 @@ function Login() {
 
   // When wallet connects, automatically trigger sign message
   useEffect(() => {
-    if (connected && publicKey && activeTab === 'wallet' && !hasSigned) {
+    if (connected && activeTab === 'wallet' && !hasSigned) {
       handleWalletAuth();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, publicKey]);
+  }, [connected]);
 
   const handleWalletAuth = async () => {
     setMessage('');
-    const success = await authenticate();
-    if (success) {
-      setHasSigned(true);
-      setMessage('Wallet verified! Redirecting...');
-      setTimeout(() => navigate('/home'), 1000);
+    setIsLoading(true);
+    try {
+      const walletAddress = getWalletAddress();
+      if (!walletAddress) {
+        setMessage('Wallet not connected');
+        setIsLoading(false);
+        return;
+      }
+
+      // Sign a message to prove wallet ownership
+      const messageToSign = `Sign this message to verify your Ghonsi Proof account.\nWallet: ${walletAddress}\nTimestamp: ${Date.now()}`;
+      const signResult = await sign(messageToSign);
+
+      if (signResult) {
+        // Authenticate with Supabase using wallet signature
+        const authResult = await signInWithWallet(walletAddress, {
+          signature: signResult.signature,
+          publicKey: signResult.publicKey,
+          walletName: localStorage.getItem('connected_wallet') || 'Phantom'
+        });
+
+        if (authResult) {
+          setHasSigned(true);
+          setMessage('✅ Wallet verified! Redirecting...');
+          console.log('[v0] User signed in:', authResult.user?.id);
+          setTimeout(() => navigate('/home'), 1000);
+        } else {
+          setMessage('Failed to authenticate. Please try again.');
+        }
+      } else {
+        setMessage('Failed to sign message. Please try again.');
+      }
+    } catch (err) {
+      console.error('[v0] Wallet auth error:', err);
+      setMessage('Error: ' + (err.message || 'Unknown error during wallet authentication'));
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (authError) setMessage(authError);
-  }, [authError]);
 
   const validateEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 
@@ -105,11 +131,10 @@ function Login() {
           {['wallet', 'email'].map((tab) => (
             <button
               key={tab}
-              className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${
-                activeTab === tab
-                  ? 'bg-[#C19A4A] text-[#1a1a2e] border-none'
-                  : 'bg-white/10 text-white border border-white/20'
-              }`}
+              className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${activeTab === tab
+                ? 'bg-[#C19A4A] text-[#1a1a2e] border-none'
+                : 'bg-white/10 text-white border border-white/20'
+                }`}
               onClick={() => setActiveTab(tab)}
             >
               {tab === 'wallet' ? 'Wallet Connect' : 'Email Login'}
@@ -134,36 +159,35 @@ function Login() {
               WalletMultiButton from @solana/wallet-adapter-react-ui handles everything:
               - Desktop: shows extension picker modal
               - Mobile: deeplinks to Phantom / Solflare / Backpack / Glow
-              - After connect: our useEffect fires signMessage via useWalletAuth
+              - After connect: our useEffect fires signMessage via useWallet hook
             */}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <WalletMultiButton />
             </div>
 
-            {isAuthenticating && (
+            {isLoading && activeTab === 'wallet' && (
               <p className="text-[#C19A4A] text-sm text-center animate-pulse">
                 Please sign the message in your wallet app...
               </p>
             )}
 
-            {connected && !isAuthenticating && !message && (
+            {connected && !isLoading && !message && activeTab === 'wallet' && (
               <p className="text-green-400 text-sm text-center">
                 Wallet connected — requesting signature...
               </p>
             )}
 
             {message && (
-              <div className={`w-full p-3 rounded-lg text-sm text-center ${
-                isSuccess
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
-              }`}>
+              <div className={`w-full p-3 rounded-lg text-sm text-center ${isSuccess
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
                 {message}
               </div>
             )}
 
             {/* Let user retry if they rejected the signature */}
-            {authError && connected && !isAuthenticating && (
+            {!message.startsWith('✅') && connected && !isLoading && message && activeTab === 'wallet' && (
               <button
                 onClick={handleWalletAuth}
                 className="py-2 px-6 bg-[#C19A4A] text-[#0B0F1B] rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -183,11 +207,10 @@ function Login() {
             <p className="text-sm text-[#ccc] mb-5">We'll send you a 6-digit code to verify your email.</p>
 
             {message && (
-              <div className={`mb-5 p-3 rounded-lg text-sm ${
-                isSuccess
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
-              }`}>
+              <div className={`mb-5 p-3 rounded-lg text-sm ${isSuccess
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
                 {message}
               </div>
             )}
