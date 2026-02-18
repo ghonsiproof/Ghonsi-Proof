@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Wallet } from 'lucide-react';
 import { getCurrentUser, logout } from '../../utils/supabaseAuth';
@@ -19,9 +19,22 @@ function Header() {
   const walletAddress = getWalletAddress();
   const walletName = wallet?.adapter?.name || null;
 
+  const checkAuthStatus = useCallback(async () => {
+    try {
+      if (connected && walletAddress) {
+        setIsLoggedIn(true);
+      } else {
+        const currentUser = await getCurrentUser();
+        setIsLoggedIn(!!currentUser);
+      }
+    } catch (error) {
+      setIsLoggedIn(false);
+    }
+  }, [connected, walletAddress]);
+
   useEffect(() => {
     checkAuthStatus();
-  }, [connected]);
+  }, [checkAuthStatus]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -45,19 +58,6 @@ function Header() {
 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMenuOpen, isWalletMenuOpen]);
-
-  const checkAuthStatus = async () => {
-    try {
-      if (connected && walletAddress) {
-        setIsLoggedIn(true);
-      } else {
-        const currentUser = await getCurrentUser();
-        setIsLoggedIn(!!currentUser);
-      }
-    } catch (error) {
-      setIsLoggedIn(false);
-    }
-  };
 
   const handleSignOut = async () => {
     try {
