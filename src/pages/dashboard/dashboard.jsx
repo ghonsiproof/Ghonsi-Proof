@@ -259,7 +259,7 @@ const StatsRow = ({ stats }) => (
     </Card>
     <Card className="flex flex-col items-center justify-center py-5 !bg-[#151925] !border-white/5">
       <span className="text-3xl font-bold text-white mb-1 tracking-tight">{stats?.verified || 0}</span>
-      <span className="text-xs text-gray-400 font-medium">Verified</span>
+      <span className="text-xs text-gray-400 font-medium">Verifiable</span>
     </Card>
   </div>
 );

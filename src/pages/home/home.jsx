@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Wallet, Upload, X, ArrowRight, Sparkles, Trophy, Share } from 'lucide-react';
+import { Wallet, Upload, X, ArrowRight, Sparkles, Trophy, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
@@ -386,7 +386,7 @@ function Home() {
                         gradient: "from-[#d9b563] to-pink-500"
                       },
                       {
-                        icon: Share,
+                        icon: Share2,
                         title: "Share",
                         desc: "Instantly share your verified portfolio with employers or collaborators.",
                         gradient: "from-[#C19A4A] to-[#d9b563]"
