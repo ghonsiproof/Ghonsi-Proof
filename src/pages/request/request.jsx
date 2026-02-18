@@ -55,7 +55,7 @@ function Request() {
           proofs: proofs.map(proof => ({
             id: `GH-${proof.proof_type?.charAt(0).toUpperCase()}-${String(proof.id).padStart(3, '0')}`,
             title: proof.proof_name,
-            status: proof.status === 'verified' ? 'Verified' : 'Pending',
+            status: proof.status === 'verified' ? 'Verifiable' : 'Pending',
             type: proof.proof_type,
             date: new Date(proof.created_at).toLocaleDateString(),
             desc: proof.summary,
@@ -236,7 +236,7 @@ function Request() {
 
         <div className="bg-[#131825] border border-gray-800 rounded-2xl p-1 overflow-hidden">
           <div className="flex items-center justify-between p-4 pb-2">
-            <h3 className="font-semibold">Verified Proofs</h3>
+            <h3 className="font-semibold">Verifiable Proofs</h3>
             <div className="flex items-center gap-1.5 text-[10px] text-gray-300">
               <ShieldCheck className="w-3 h-3" />
               <span>All proofs are verifiable</span>
@@ -249,7 +249,7 @@ function Request() {
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold text-sm text-gray-200 group-hover:text-[#C19A4A] transition-colors">{proof.title}</h4>
                   <div className="flex items-center gap-2">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${proof.status === 'Verified' ? 'text-green-500 bg-green-500/10' : 'text-yellow-500 bg-yellow-500/10'}`}>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${proof.status === 'Verifiable' ? 'text-green-500 bg-green-500/10' : 'text-yellow-500 bg-yellow-500/10'}`}>
                       {proof.status}
                     </span>
                     <Share2 className="w-3.5 h-3.5 text-gray-500 cursor-pointer hover:text-white" />
