@@ -124,7 +124,7 @@ function Header() {
       <div className="flex justify-between items-center">
         {/* Replace with your logo */}
         <div className="h-[90px] flex items-center">
-          <span className="text-[#C19A4A] font-bold text-xl">MyApp</span>
+          <span className="text-[#C19A4A] font-bold text-xl">Ghonsi Proof</span>
         </div>
 
         <div className="flex items-center gap-3">
