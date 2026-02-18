@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.jsx';
-import { WalletContextProvider } from './context/WalletContext.jsx';
+import WalletProvider from './context/WalletProvider.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Home from './pages/home/home.jsx';
 import FAQ from './pages/faq/faq.jsx';
@@ -33,8 +33,8 @@ function ScrollToTop() {
 function App() {
   return (
     <ThemeProvider>
-      {/* WalletContextProvider must wrap everything that uses useWallet() */}
-      <WalletContextProvider>
+      {/* WalletProvider must wrap everything that uses useWallet() */}
+      <WalletProvider>
         <Router>
           <ScrollToTop />
           <Routes>
@@ -62,7 +62,7 @@ function App() {
             <Route path="/message" element={<ProtectedRoute><Message /></ProtectedRoute>} />
           </Routes>
         </Router>
-      </WalletContextProvider>
+      </WalletProvider>
     </ThemeProvider>
   );
 }

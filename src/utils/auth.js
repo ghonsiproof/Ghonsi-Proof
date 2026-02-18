@@ -1,8 +1,6 @@
 // Authentication utility functions
 // Updated to support Solana wallet authentication
 
-import { disconnectWallet } from './walletAdapter';
-
 export const login = (email, walletAddress) => {
   localStorage.setItem('userLoggedIn', 'true');
   if (email) localStorage.setItem('userEmail', email);

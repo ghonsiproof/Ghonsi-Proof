@@ -1,5 +1,4 @@
 import { supabase } from '../config/supabaseClient';
-import { disconnectWallet } from './walletAdapter';
 
 /**
  * Authentication Utilities using Supabase Auth
