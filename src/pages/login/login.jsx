@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '../../hooks/useWallet';
-import { sendOTPToEmail, verifyOTP } from '../../utils/supabaseAuth';
+import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
 
 function Login() {
   const [activeTab, setActiveTab] = useState('wallet');
@@ -47,9 +47,21 @@ function Login() {
       const signResult = await sign(messageToSign);
 
       if (signResult) {
-        setHasSigned(true);
-        setMessage('✅ Wallet verified! Redirecting...');
-        setTimeout(() => navigate('/home'), 1000);
+        // Authenticate with Supabase using wallet signature
+        const authResult = await signInWithWallet(walletAddress, {
+          signature: signResult.signature,
+          publicKey: signResult.publicKey,
+          walletName: localStorage.getItem('connected_wallet') || 'Phantom'
+        });
+
+        if (authResult) {
+          setHasSigned(true);
+          setMessage('✅ Wallet verified! Redirecting...');
+          console.log('[v0] User signed in:', authResult.user?.id);
+          setTimeout(() => navigate('/home'), 1000);
+        } else {
+          setMessage('Failed to authenticate. Please try again.');
+        }
       } else {
         setMessage('Failed to sign message. Please try again.');
       }
