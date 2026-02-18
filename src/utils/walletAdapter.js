@@ -27,12 +27,10 @@ const getWalletProvider = (walletName) => {
 // Build mobile deeplink with proper params
 const buildMobileDeeplink = (walletName) => {
   const currentUrl = encodeURIComponent(window.location.origin + window.location.pathname);
-  const appName = encodeURIComponent('Ghonsi Proof');
+  const appName = encodeURIComponent('My App');
 
-  // Generate connection ID
   const connectionId = `connect_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  // Store connection attempt
   sessionStorage.setItem('wallet_connection_id', connectionId);
   sessionStorage.setItem('wallet_connection_wallet', walletName);
   sessionStorage.setItem('wallet_connection_time', Date.now().toString());
@@ -56,7 +54,6 @@ const connectDesktop = async (walletName) => {
   }
 
   try {
-    // Try eager connect first (if already trusted)
     if (walletName.toLowerCase() === 'phantom' && provider.connect) {
       try {
         const resp = await provider.connect({ onlyIfTrusted: true });
@@ -70,7 +67,6 @@ const connectDesktop = async (walletName) => {
       }
     }
 
-    // Regular connect
     if (provider.isConnected) {
       await provider.disconnect();
       await new Promise(r => setTimeout(r, 100));
@@ -95,12 +91,10 @@ const connectDesktop = async (walletName) => {
 
 // Mobile wallet connection
 const connectMobile = async (walletName) => {
-  // If already in wallet's browser, connect normally
   if (isInWalletBrowser()) {
     return await connectDesktop(walletName);
   }
 
-  // Build deeplink and redirect
   const deeplink = buildMobileDeeplink(walletName);
   if (!deeplink) throw new Error('Wallet not supported on mobile');
 
@@ -118,7 +112,6 @@ const connectMobile = async (walletName) => {
       if (hasReturned) return;
       hasReturned = true;
 
-      // Wait for provider to initialize
       setTimeout(async () => {
         try {
           const provider = getWalletProvider(walletName);
@@ -131,7 +124,6 @@ const connectMobile = async (walletName) => {
             return;
           }
 
-          // Check if wallet returned address via URL
           const urlAddress = checkUrlForAddress();
           if (urlAddress) {
             saveWalletConnection(walletName, urlAddress);
@@ -140,7 +132,6 @@ const connectMobile = async (walletName) => {
             return;
           }
 
-          // No address found
           cleanup();
           sessionStorage.removeItem('wallet_connection_id');
           sessionStorage.removeItem('wallet_connection_wallet');
@@ -154,14 +145,12 @@ const connectMobile = async (walletName) => {
       }, 1500);
     };
 
-    // Listen for user returning from wallet app
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') handleReturn();
     });
 
     window.addEventListener('focus', handleReturn);
 
-    // Poll for connection (backup method)
     checkTimer = setInterval(() => {
       const provider = getWalletProvider(walletName);
       if (provider?.publicKey) {
@@ -173,7 +162,6 @@ const connectMobile = async (walletName) => {
       }
     }, 1000);
 
-    // Timeout after 3 minutes
     setTimeout(() => {
       if (!hasReturned) {
         cleanup();
@@ -184,7 +172,6 @@ const connectMobile = async (walletName) => {
       }
     }, 180000);
 
-    // Open wallet app
     window.location.href = deeplink;
   });
 };
@@ -197,7 +184,6 @@ const checkUrlForAddress = () => {
   for (const key of keys) {
     const value = params.get(key);
     if (value && value.length >= 32) {
-      // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
       return value;
     }
@@ -251,7 +237,6 @@ export const disconnectWallet = async () => {
 
 // Check for pending connection on page load
 export const checkPendingConnection = async () => {
-  // Check URL first
   const urlAddress = checkUrlForAddress();
   if (urlAddress) {
     const wallet = sessionStorage.getItem('wallet_connection_wallet');
@@ -261,7 +246,6 @@ export const checkPendingConnection = async () => {
     }
   }
 
-  // Check session storage
   const walletName = sessionStorage.getItem('wallet_connection_wallet');
   const connectionTime = sessionStorage.getItem('wallet_connection_time');
 
@@ -270,14 +254,13 @@ export const checkPendingConnection = async () => {
   }
 
   const elapsed = Date.now() - parseInt(connectionTime);
-  if (elapsed > 180000) { // 3 minutes
+  if (elapsed > 180000) {
     sessionStorage.removeItem('wallet_connection_id');
     sessionStorage.removeItem('wallet_connection_wallet');
     sessionStorage.removeItem('wallet_connection_time');
     return { success: false };
   }
 
-  // Check provider
   const provider = getWalletProvider(walletName);
   if (provider?.publicKey) {
     const address = provider.publicKey.toString();
