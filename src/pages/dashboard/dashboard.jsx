@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentUser, updateUserEmail } from '../../utils/supabaseAuth'; 
 import { getUserProofs, getProofStats } from '../../utils/proofsApi';
 import { getProfile, updateProfile } from '../../utils/profileApi';
+import { useWallet } from '../../hooks/useWallet';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import { 
@@ -38,6 +39,7 @@ const Badge = ({ status }) => {
 // --- Updated Profile Section ---
 const ProfileSection = ({ user, profile, onProfileUpdate }) => {
   const navigate = useNavigate();
+  const { connectWallet: connectSolanaWallet, getWalletAddress } = useWallet();
   const [copied, setCopied] = useState(false);
   const [uidCopied, setUidCopied] = useState(false);
   
@@ -47,7 +49,7 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
   const [isSavingEmail, setIsSavingEmail] = useState(false);
   const [isConnectingWallet, setIsConnectingWallet] = useState(false);
 
-  const walletAddress = profile?.wallet_address;
+  const walletAddress = profile?.wallet_address || getWalletAddress();
   const hasWallet = walletAddress && walletAddress !== "Not connected";
   
   const truncatedAddress = hasWallet
@@ -86,10 +88,11 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
   const connectWallet = async () => {
     setIsConnectingWallet(true);
     try {
-      if (typeof window.ethereum !== 'undefined') {
-        // Request account access
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const address = accounts[0];
+      // Use Solana wallet adapter to connect
+      const success = await connectSolanaWallet();
+      
+      if (success) {
+        const address = getWalletAddress();
         
         // Save to profile
         if (user && address) {
@@ -99,8 +102,6 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
           // Trigger refresh in parent
           onProfileUpdate(); 
         }
-      } else {
-        alert("Please install MetaMask or another wallet extension.");
       }
     } catch (error) {
       console.error("Wallet connection failed:", error);

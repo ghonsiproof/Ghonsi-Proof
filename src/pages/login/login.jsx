@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useWalletAuth } from '../../hooks/useWalletAuth';
+import { useWallet } from '../../hooks/useWallet';
 import { sendOTPToEmail, verifyOTP } from '../../utils/supabaseAuth';
 
 function Login() {
@@ -17,8 +16,7 @@ function Login() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { connected, publicKey } = useWallet();
-  const { authenticate, isAuthenticating, error: authError } = useWalletAuth();
+  const { connected, sign, getWalletAddress } = useWallet();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -27,25 +25,40 @@ function Login() {
 
   // When wallet connects, automatically trigger sign message
   useEffect(() => {
-    if (connected && publicKey && activeTab === 'wallet' && !hasSigned) {
+    if (connected && activeTab === 'wallet' && !hasSigned) {
       handleWalletAuth();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, publicKey]);
+  }, [connected]);
 
   const handleWalletAuth = async () => {
     setMessage('');
-    const success = await authenticate();
-    if (success) {
-      setHasSigned(true);
-      setMessage('Wallet verified! Redirecting...');
-      setTimeout(() => navigate('/home'), 1000);
+    setIsLoading(true);
+    try {
+      const walletAddress = getWalletAddress();
+      if (!walletAddress) {
+        setMessage('Wallet not connected');
+        setIsLoading(false);
+        return;
+      }
+
+      // Sign a message to prove wallet ownership
+      const messageToSign = `Sign this message to verify your Ghonsi Proof account.\nWallet: ${walletAddress}\nTimestamp: ${Date.now()}`;
+      const signResult = await sign(messageToSign);
+
+      if (signResult) {
+        setHasSigned(true);
+        setMessage('✅ Wallet verified! Redirecting...');
+        setTimeout(() => navigate('/home'), 1000);
+      } else {
+        setMessage('Failed to sign message. Please try again.');
+      }
+    } catch (err) {
+      setMessage('Error: ' + (err.message || 'Unknown error during wallet authentication'));
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (authError) setMessage(authError);
-  }, [authError]);
 
   const validateEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 
@@ -134,19 +147,19 @@ function Login() {
               WalletMultiButton from @solana/wallet-adapter-react-ui handles everything:
               - Desktop: shows extension picker modal
               - Mobile: deeplinks to Phantom / Solflare / Backpack / Glow
-              - After connect: our useEffect fires signMessage via useWalletAuth
+              - After connect: our useEffect fires signMessage via useWallet hook
             */}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <WalletMultiButton />
             </div>
 
-            {isAuthenticating && (
+            {isLoading && activeTab === 'wallet' && (
               <p className="text-[#C19A4A] text-sm text-center animate-pulse">
                 Please sign the message in your wallet app...
               </p>
             )}
 
-            {connected && !isAuthenticating && !message && (
+            {connected && !isLoading && !message && activeTab === 'wallet' && (
               <p className="text-green-400 text-sm text-center">
                 Wallet connected — requesting signature...
               </p>
@@ -163,7 +176,7 @@ function Login() {
             )}
 
             {/* Let user retry if they rejected the signature */}
-            {authError && connected && !isAuthenticating && (
+            {!message.startsWith('✅') && connected && !isLoading && message && activeTab === 'wallet' && (
               <button
                 onClick={handleWalletAuth}
                 className="py-2 px-6 bg-[#C19A4A] text-[#0B0F1B] rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"

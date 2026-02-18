@@ -2,24 +2,26 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Wallet } from 'lucide-react';
 import { getCurrentUser, logout } from '../../utils/supabaseAuth';
-import { getConnectedWalletAddress, getConnectedWalletName } from '../../utils/walletAdapter';
+import { useWallet } from '../../hooks/useWallet';
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [walletAddress, setWalletAddress] = useState(null);
-  const [walletName, setWalletName] = useState(null);
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { connected, getWalletAddress, wallet, disconnectWallet } = useWallet();
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
   const walletMenuRef = useRef(null);
   const walletButtonRef = useRef(null);
 
+  const walletAddress = getWalletAddress();
+  const walletName = wallet?.adapter?.name || null;
+
   useEffect(() => {
     checkAuthStatus();
-  }, []);
+  }, [connected]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -46,12 +48,7 @@ function Header() {
 
   const checkAuthStatus = async () => {
     try {
-      const address = getConnectedWalletAddress();
-      const name = getConnectedWalletName();
-
-      if (address) {
-        setWalletAddress(address);
-        setWalletName(name);
+      if (connected && walletAddress) {
         setIsLoggedIn(true);
       } else {
         const currentUser = await getCurrentUser();
@@ -65,9 +62,10 @@ function Header() {
   const handleSignOut = async () => {
     try {
       await logout();
+      if (connected) {
+        await disconnectWallet();
+      }
       setIsLoggedIn(false);
-      setWalletAddress(null);
-      setWalletName(null);
       setIsMenuOpen(false);
       setIsWalletMenuOpen(false);
       navigate('/home');
@@ -126,7 +124,7 @@ function Header() {
       <div className="flex justify-between items-center">
         {/* Replace with your logo */}
         <div className="h-[90px] flex items-center">
-          <span className="text-[#C19A4A] font-bold text-xl">MyApp</span>
+          <span className="text-[#C19A4A] font-bold text-xl">Ghonsi Proof</span>
         </div>
 
         <div className="flex items-center gap-3">
