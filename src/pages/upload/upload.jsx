@@ -87,15 +87,14 @@ function Upload() {
       notAllowed: "Proprietary materials, private client work, snapshots of codebases belonging to employers, or any IP you don't own."
     },
     milestones: {
-      summaryPlaceholder: "Enter: Milestone Type (Promotion/Award), Issuer Name, Month & Year, Milestone Summary...",
+      summaryPlaceholder: "Enter: Milestone Type (Promotion/Award/Recognition/Key Result), Issuer Name(company or platform), Month & Year, Internal Milestone ID...",
       validEvidences: [
-        "Screenshot of award announcement",
+        "Snapshot of award announcement",
         "Email confirming promotion",
         "Public recognition posts",
         "Certificate of achievement",
-        "Screenshot of internal dashboard badge (non-sensitive)"
       ],
-      notAllowed: "Performance reviews, salary information, internal feedback, or data regarding other employees."
+      notAllowed: "Performance reviews, salary information, internal feedback or one-on-one reports, data regarding other employees."
     },
     community: {
       summaryPlaceholder: "Enter: Contribution Type (Talk, Article, Open Source), Platform Name, Date...",
