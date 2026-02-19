@@ -1,3 +1,4 @@
+
 /**
  * Upload Component
  * 
@@ -56,12 +57,11 @@ function Upload() {
       summaryPlaceholder: "Enter: Certificate Title, Issuer Name, Completion Date, Credential Type (Course/Bootcamp), and Instructor Names...",
       validEvidences: [
         "Full certificate file (PDF, PNG, screenshot)",
-        "Email confirmation screenshot",
-        "LMS dashboard showing 'Completed'",
-        "Screenshot of 'Congratulations, you passed'",
-        "Official issuer message confirming completion"
+        "Certificate link",
+        "Official issuer message confirming completion of training",
+        "Link to public graduate announcement (if issuer posts those)",
       ],
-      notAllowed: "NDA-covered materials, proprietary internal tools, certificate PDFs with watermarks forbidding redistribution."
+      notAllowed: "NDA-covered materials, proprietary internal tools, certificate PDFs with watermarks forbidding redistribution, documents showing sensitive internal company data."
     },
     job_history: {
       summaryPlaceholder: "Enter: Job Title, Employer Name, Employment Type, Start/End Dates, Job Category...",
