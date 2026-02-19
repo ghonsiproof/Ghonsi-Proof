@@ -501,8 +501,8 @@ function Home() {
             transition={{ duration: 0.8 }}
             className="relative"
           >
-            <div className="absolute -top-10 sm:-top-20 -left-10 sm:-left-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#C19A4A] rounded-full opacity-20 blur-[80px] sm:blur-[100px]" />
-            <div className="absolute -bottom-10 sm:-bottom-20 -right-10 sm:-right-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#d9b563] rounded-full opacity-20 blur-[80px] sm:blur-[100px]" />
+            <div className="absolute -top-10 sm:-top-20 -left-10 sm:-left-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#C19A4A] rounded-full opacity-20 blur-[80px] sm:blur-[100px] pointer-events-none" />
+            <div className="absolute -bottom-10 sm:-bottom-20 -right-10 sm:-right-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#d9b563] rounded-full opacity-20 blur-[80px] sm:blur-[100px] pointer-events-none" />
             
             <div className="relative text-left">
               <motion.h2
