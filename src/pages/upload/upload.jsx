@@ -64,13 +64,14 @@ function Upload() {
       notAllowed: "NDA-covered materials, proprietary internal tools, certificate PDFs with watermarks forbidding redistribution, documents showing sensitive internal company data."
     },
     job_history: {
-      summaryPlaceholder: "Enter: Job Title, Employer Name, Employment Type, Start/End Dates, Job Category...",
+      summaryPlaceholder: "Enter: Job Title, Employer Name, Employment Type, Start/End Dates, Job Category,  Internal Work Experience ID...",
       validEvidences: [
-        "Screenshot of offer letter (redacted salary)",
-        "Proof of workspace (company welcome message)",
-        "LinkedIn announcement from company",
-        "Work dashboard screenshot (non-sensitive)",
-        "HR email confirming employment"
+        "Snapshot of offer letter (redacted salary)",
+        "HR email confirming employment",
+        "Work badge snapshot",
+        "Public team page snapshot where user’s name appears (if applicable)",
+        "GitHub contribution logs linked to the company repo",
+        "Public posts (LinkedIn) from the employer announcing new hires"        
       ],
       notAllowed: "Confidential HR portals, salary details, internal documentation, private client data, or anything uniquely traceable to a person."
     },
