@@ -76,15 +76,15 @@ function Upload() {
       notAllowed: "Confidential HR portals, salary details, internal documentation, private client data, or anything uniquely traceable to a person."
     },
     skills: {
-      summaryPlaceholder: "Enter: Skill Name (e.g., Solidity), Proficiency Level, Skill Category...",
+      summaryPlaceholder: "Enter: Skill Name (e.g., Solidity), Proficiency Level (e.g., Beginner/Intermediate/Advanced) , Skill Category, Internal Skill ID...",
       validEvidences: [
         "GitHub activity screenshots",
         "Snippets of work (non-sensitive)",
         "Public portfolio links",
         "Dribbble/Behance links",
-        "Screenshots of skill tests (without sensitive user info)"
+        "Snapshots of skill tests (without sensitive user info)"
       ],
-      notAllowed: "Proprietary materials, private client work, codebases belonging to employers, or any IP you don't own."
+      notAllowed: "Proprietary materials, private client work, snapshots of codebases belonging to employers, or any IP you don't own."
     },
     milestones: {
       summaryPlaceholder: "Enter: Milestone Type (Promotion/Award), Issuer Name, Month & Year, Milestone Summary...",
