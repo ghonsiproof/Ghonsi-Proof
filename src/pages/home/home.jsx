@@ -503,17 +503,19 @@ function Home() {
           >
             <div className="absolute -top-10 sm:-top-20 -left-10 sm:-left-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#C19A4A] rounded-full opacity-20 blur-[80px] sm:blur-[100px] pointer-events-none" />
             <div className="absolute -bottom-10 sm:-bottom-20 -right-10 sm:-right-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#d9b563] rounded-full opacity-20 blur-[80px] sm:blur-[100px] pointer-events-none" />
-            
-            <div className="relative text-left">
+
+            <div className="relative flex flex-col items-center gap-4 sm:gap-6">
+              {/* Heading */}
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="text-2xl sm:text-3xl lg:text-4xl mb-4 sm:mb-6 text-white leading-tight"
+                transition={{ duration: 0.6 }}
+                className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white leading-tight max-w-4xl text-center lg:whitespace-nowrap"
               >
                 Building the trust layer for the global workforce.
               </motion.h2>
-              
+
               {/* Subtext */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -525,38 +527,36 @@ function Home() {
                 <p className="text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed">
                   Your reputation should be easy to prove and accessible anytime.
                 </p>
-                <p className="text-gray-400 text-sm sm:text-base lg:text-lg xl:text-xl leading-relaxed">
+                <p className="text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed">
                   Ghonsi Proof bridges the gap between doing the work and getting the credit you deserve.
                 </p>
-              </div>
+              </motion.div>
 
-              {/* Buttons */}
+              {/* CTAs — */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center"
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-2"
               >
                 <NavLink 
                   to="/dashboard" 
-                  className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(193,154,74,0.4)] flex items-center gap-2 text-sm sm:text-base justify-center whitespace-nowrap"
+                  className="px-5 py-2.5 rounded-lg border border-[#C19A4A] bg-gradient-to-r from-[#C19A4A] to-[#d9b563] hover:from-[#d9b563] hover:to-[#C19A4A] text-[#030712] text-sm sm:text-base font-medium transition-all duration-200 flex items-center gap-2"
                 >
-                  <span className="relative z-10">Create my portfolio</span>
-                  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  Create my portfolio
                 </NavLink>
-                
+
                 <button
-                  onClick={scrollToBubbleSection}
-                  className="group relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold overflow-hidden transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm sm:text-base justify-center whitespace-nowrap"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-xl" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/0 via-[#C19A4A]/10 to-[#C19A4A]/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
-                  <div className="absolute inset-[1px] bg-[#0B0F1B]/80 backdrop-blur-xl rounded-[11px]" />
-                  <span className="relative z-10">Verify talent now</span>
-                  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
-                </button>
+  onClick={scrollToBubbleSection}
+  className="group relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold overflow-hidden transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm sm:text-base justify-center whitespace-nowrap"
+>
+  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-xl" />
+  <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/0 via-[#C19A4A]/10 to-[#C19A4A]/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+  <div className="absolute inset-[1px] bg-[#0B0F1B]/80 backdrop-blur-xl rounded-[11px]" />
+  <span className="relative z-10">Verify talent now</span>
+  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+</button>
               </motion.div>
             </div>
           </motion.div>
