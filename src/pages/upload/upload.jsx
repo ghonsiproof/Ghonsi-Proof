@@ -97,12 +97,12 @@ function Upload() {
       notAllowed: "Performance reviews, salary information, internal feedback or one-on-one reports, data regarding other employees."
     },
     community: {
-      summaryPlaceholder: "Enter: Contribution Type (Talk, Article, Open Source), Platform Name, Date...",
+      summaryPlaceholder: "Enter: Contribution Type (Talk, Article, Open Source, Community Role), Platform Name, Date, Internal Contribution ID...",
       validEvidences: [
         "Link to article, talk, or recording",
-        "Screenshot of Speaking Engagement Flyer",
-        "Screenshot of GitHub PR",
-        "Screenshot of community role announcement"
+        "Snapshot of Speaking Engagement Flyer",
+        "Image of GitHub PR",
+        "Snapshot of community role announcement"
       ],
       notAllowed: "Sensitive community data or private correspondence."
     }
