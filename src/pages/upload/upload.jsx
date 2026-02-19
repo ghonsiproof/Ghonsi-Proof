@@ -96,7 +96,7 @@ function Upload() {
       ],
       notAllowed: "Performance reviews, salary information, internal feedback or one-on-one reports, data regarding other employees."
     },
-    community: {
+    community_contributions: {
       summaryPlaceholder: "Enter: Contribution Type (Talk, Article, Open Source, Community Role), Platform Name, Date, Internal Contribution ID...",
       validEvidences: [
         "Link to article, talk, or recording",
@@ -473,7 +473,7 @@ function Upload() {
                 disabled={isUploading}
                 className="bg-brand-gold text-[#0B0F1B] px-5 py-3 rounded font-semibold text-sm hover:bg-yellow-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUploading ? 'Uploading...' : 'Submit for Verification'}
+                {isUploading ? 'Uploading...' : 'Upload'}
               </button>
             </div>
           </form>
