@@ -393,7 +393,7 @@ function Home() {
                       }
                     ].map((item, i) => (
                       <motion.div
-                        key={i}
+                        key={item.title}
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
@@ -514,8 +514,15 @@ function Home() {
                 Building the trust layer for the global workforce.
               </motion.h2>
               
-              <div className="max-w-3xl space-y-3 sm:space-y-4 mb-6 sm:mb-10 lg:mb-12 text-left">
-                <p className="text-gray-300 text-sm sm:text-base lg:text-lg xl:text-xl leading-relaxed">
+              {/* Subtext */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="w-full max-w-2xl lg:-ml-8"
+              >
+                <p className="text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed">
                   Your reputation should be easy to prove and accessible anytime.
                 </p>
                 <p className="text-gray-400 text-sm sm:text-base lg:text-lg xl:text-xl leading-relaxed">
