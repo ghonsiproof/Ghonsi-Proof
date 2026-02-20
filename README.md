@@ -68,9 +68,10 @@ Ghonsi Proof is a decentralized platform built on Solana that transforms scatter
 - **Vercel** - Frontend hosting and CI/CD
 - **Supabase Cloud** - Backend as a Service (BaaS)
 
-### Blockchain (Integration Ready)
+### Blockchain
 - **Solana** - Blockchain platform
-- **Wallet Adapters** - For wallet connections (to be integrated)
+- **Wallet Adapter** - @solana/wallet-adapter-react for wallet connections
+- **Phantom, Solflare, Torus, Backpack** - Supported wallet providers
 
 ---
 
@@ -329,7 +330,7 @@ Each page has its own CSS file for component-specific styles:
 
 ### Supabase Authentication
 
-The app now uses **Supabase Auth** for secure authentication:
+The app uses **Supabase Auth** for secure authentication with both email and wallet methods.
 
 ### Email Authentication
 1. User enters email address on `/login`
@@ -338,12 +339,21 @@ The app now uses **Supabase Auth** for secure authentication:
 4. Session stored securely by Supabase
 5. Redirect to dashboard
 
-### Wallet Authentication (Hybrid Approach)
-1. User clicks wallet (Phantom, Solflare, Backpack, Glow)
-2. Wallet signature is verified
-3. User record created/retrieved with wallet address
-4. Custom session management for wallet users
-5. Redirect to home/dashboard
+### Wallet Authentication (Solana)
+
+**Desktop & Mobile Support:**
+- **Desktop**: Click "Connect Wallet" → Extension picker modal → Select Phantom/Solflare → Sign message → Connected
+- **Mobile**: Click "Connect Wallet" → Wallet selector → Deep link to wallet app → Sign in app → Auto-redirect → Connected
+
+**Flow:**
+1. User clicks "Connect Wallet" button
+2. Wallet selector modal appears (handles desktop extensions & mobile deep links)
+3. User selects their wallet (Phantom, Solflare, Torus, Backpack)
+4. Wallet app opens and asks user to sign a message (proves ownership, no transaction fees)
+5. Signature is verified and user is authenticated
+6. User record created/retrieved with `wallet_address` in Supabase
+7. Session stored in localStorage for persistence
+8. User redirected to dashboard
 
 ### Session Management
 ```javascript
@@ -580,6 +590,80 @@ const subscription = supabase
 // Unsubscribe when done
 subscription.unsubscribe();
 ```
+
+---
+
+## 💳 Solana Wallet Adapter Integration
+
+### Overview
+
+The app uses **@solana/wallet-adapter-react** to handle wallet connections seamlessly across desktop and mobile.
+
+### How It Works
+
+The `WalletMultiButton` component automatically:
+- ✅ Shows extension picker on desktop (Phantom, Solflare, Torus, Backpack)
+- ✅ Deep links to wallet apps on mobile
+- ✅ Handles connection lifecycle
+- ✅ Manages user signatures
+- ✅ Returns to app after signing
+
+### Files Structure
+
+- **`src/context/WalletProvider.jsx`** - Sets up Solana RPC connection and wallet adapters
+- **`src/hooks/useWallet.js`** - Custom hook for wallet operations
+- **`src/pages/login/login.jsx`** - Wallet authentication implementation
+- **`src/utils/supabaseAuth.js`** - Wallet session management
+
+### Using the Wallet Hook
+
+```javascript
+import { useWallet } from './hooks/useWallet';
+
+function MyComponent() {
+  const { 
+    connected,           // Boolean: is wallet connected?
+    connecting,          // Boolean: connection in progress?
+    wallet,              // Current wallet adapter
+    sign,                // Function: sign a message
+    connectWallet,       // Function: open wallet selector
+    disconnectWallet,    // Function: disconnect wallet
+    getWalletAddress     // Function: get wallet address
+  } = useWallet();
+
+  return (
+    <div>
+      {connected ? (
+        <p>Connected: {getWalletAddress()}</p>
+      ) : (
+        <button onClick={connectWallet}>Connect Wallet</button>
+      )}
+    </div>
+  );
+}
+```
+
+### Session Persistence
+
+When user connects wallet:
+1. Wallet address stored in `localStorage`
+2. User profile fetched from Supabase `users` table
+3. Session persists across page refreshes
+4. Protected routes check both Supabase session and wallet auth
+
+### Protected Routes
+
+```javascript
+import { ProtectedRoute } from './components/ProtectedRoute';
+import Dashboard from './pages/dashboard';
+
+// In App.js
+<Routes>
+  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+</Routes>
+```
+
+Routes automatically redirect to login if user not authenticated.
 
 ---
 
