@@ -178,17 +178,45 @@ export const getSession = async () => {
 // Get current user
 export const getCurrentUser = async () => {
   const walletAddress = localStorage.getItem('wallet_address');
+  const userId = localStorage.getItem('user_id');
   const connectedWallet = localStorage.getItem('connected_wallet');
 
-  if (walletAddress) {
-    return {
-      id: walletAddress,
-      wallet_address: walletAddress,
-      connected_wallet: connectedWallet,
-      email: null
-    };
+  // If wallet is connected, fetch full user profile from database
+  if (walletAddress && userId) {
+    try {
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.log('[v0] User profile not found, returning basic wallet info');
+        return {
+          id: userId,
+          wallet_address: walletAddress,
+          connected_wallet: connectedWallet,
+          email: null
+        };
+      }
+
+      return {
+        ...user,
+        wallet_address: walletAddress,
+        connected_wallet: connectedWallet
+      };
+    } catch (err) {
+      console.log('[v0] Error fetching user profile:', err);
+      return {
+        id: userId,
+        wallet_address: walletAddress,
+        connected_wallet: connectedWallet,
+        email: null
+      };
+    }
   }
 
+  // Fallback: Check Supabase session for email auth
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error) throw error;
@@ -199,6 +227,7 @@ export const getCurrentUser = async () => {
       connected_wallet: connectedWallet
     };
   } catch (error) {
+    console.log('[v0] No authenticated user found');
     return null;
   }
 };
