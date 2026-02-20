@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Users, Lightbulb, Accessibility, ChevronLeft, ChevronRight } from 'lucide-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXTwitter, faLinkedinIn, faDiscord } from '@fortawesome/free-brands-svg-icons';
-import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
-import { motion } from 'framer-motion';
+import { Eye, Users, Lightbulb, Accessibility, ChevronLeft, ChevronRight, Twitter, Linkedin, Mail, MessageCircle } from 'lucide-react';
 import Header from '../../components/header/header.jsx';
 import missionDiagram from '../../assets/ghonsi-proof-logos/transparent-png-logo/ghonsi-proof2.png';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/ghonsi-proof1.png';
@@ -451,16 +447,16 @@ function About() {
               <p className="max-w-[360px] text-sm leading-[1.6] opacity-90 m-0">Building the trust layer for the Web3 workforce. Prove your skills, authenticate your work, and showcase verified credentials on-chain.</p>
               <div className="flex gap-[5px] justify-start mb-5 mt-5 pt-5">
                 <a href="https://x.com/Ghonsiproof" className="w-9 h-9 no-underline flex items-center justify-center text-base cursor-pointer transition-[0.3s]" aria-label="Follow us on Twitter">
-                  <FontAwesomeIcon icon={faXTwitter} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" />
+                  <Twitter size={20} className="text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" />
                 </a>
                 <a href="https://linkedin.com" className="w-9 h-9 no-underline flex items-center justify-center text-base cursor-pointer transition-[0.3s]" aria-label="Connect on LinkedIn">
-                  <FontAwesomeIcon icon={faLinkedinIn} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" />
+                  <Linkedin size={20} className="text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" />
                 </a>
                 <a href="mailto:support@ghonsiproof.com" className="w-9 h-9 no-underline flex items-center justify-center text-base cursor-pointer transition-[0.3s]" aria-label="Email us">
-                  <FontAwesomeIcon icon={faEnvelope} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" />
+                  <Mail size={20} className="text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" />
                 </a>
                 <a href="https://discord.com/" className="w-9 h-9 no-underline flex items-center justify-center text-base cursor-pointer transition-[0.3s]" aria-label="Join our Discord">
-                  <FontAwesomeIcon icon={faDiscord} className="text-xl text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" />
+                  <MessageCircle size={20} className="text-[#C19A4A] cursor-pointer transition-transform duration-200 hover:scale-110" />
                 </a>
               </div>
             </div>

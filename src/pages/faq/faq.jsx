@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTelegram } from '@fortawesome/free-brands-svg-icons';
-import { faBook } from '@fortawesome/free-solid-svg-icons';
+import { ChevronDown, ChevronUp, ArrowRight, Send, BookOpen } from 'lucide-react';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import './faq.css';
@@ -98,7 +95,7 @@ function FAQ() {
   transition-all duration-300 ease-in-out flex flex-col items-center
   hover:bg-[rgba(193,154,74,0.15)] hover:border-[#C19A4A]">
 
-    <FontAwesomeIcon icon={faTelegram} className="text-[36px] text-[#C19A4A]" />
+    <Send size={36} className="text-[#C19A4A]" />
     <h3 className="mt-[17px] text-base font-bold text-white mb-2.5 text-center">
       Telegram community
     </h3>
@@ -114,7 +111,7 @@ function FAQ() {
   transition-all duration-300 ease-in-out flex flex-col items-center
   hover:bg-[rgba(193,154,74,0.15)] hover:border-[#C19A4A]">
 
-    <FontAwesomeIcon icon={faBook} className="text-[50px] text-[#C19A4A]" />
+    <BookOpen size={50} className="text-[#C19A4A]" />
     <h3 className="mt-[17px] text-base font-bold text-white mb-2.5 text-center">
       Documentation
     </h3>
