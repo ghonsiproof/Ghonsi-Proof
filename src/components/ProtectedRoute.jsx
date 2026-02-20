@@ -11,8 +11,8 @@ function ProtectedRoute({ children }) {
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      setLoading(false);
+      console.log('[v0] Auth state changed:', event, !!session);
+      checkAuth();
     });
 
     return () => {
@@ -22,10 +22,20 @@ function ProtectedRoute({ children }) {
 
   const checkAuth = async () => {
     try {
+      // Check Supabase session (email auth)
       const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+      
+      // Check wallet session (localStorage)
+      const walletAddress = localStorage.getItem('wallet_address');
+      const userId = localStorage.getItem('user_id');
+      
+      console.log('[v0] Auth check - Session:', !!session, 'Wallet:', !!walletAddress);
+      
+      // User is authenticated if they have either Supabase session or wallet + user_id
+      const hasSession = !!session || (!!walletAddress && !!userId);
+      setIsAuthenticated(hasSession);
     } catch (error) {
-      console.error('Error checking auth:', error);
+      console.error('[v0] Error checking auth:', error);
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
