@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Bell, Wallet } from 'lucide-react';
 import { getCurrentUser, logout } from '../../utils/supabaseAuth';
 import { getUnreadCount } from '../../utils/messagesApi';
-import { getConnectedWalletAddress, getConnectedWalletName } from '../../utils/walletAdapter';
+import { useWallet } from '../../hooks/useWallet';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 import './header.css';
 
@@ -12,18 +12,37 @@ function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [walletAddress, setWalletAddress] = useState(null);
-  const [walletName, setWalletName] = useState(null);
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { connected, getWalletAddress, wallet, disconnectWallet } = useWallet();
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
   const walletMenuRef = useRef(null);
   const walletButtonRef = useRef(null);
 
+  const walletAddress = getWalletAddress();
+  const walletName = wallet?.adapter?.name || null;
+
+  const checkAuthStatus = useCallback(async () => {
+    try {
+      if (connected && walletAddress) {
+        setIsLoggedIn(true);
+      } else {
+        const currentUser = await getCurrentUser();
+        setIsLoggedIn(!!currentUser);
+        if (currentUser) {
+          const count = await getUnreadCount(currentUser.id);
+          setUnreadCount(count);
+        }
+      }
+    } catch (error) {
+      setIsLoggedIn(false);
+    }
+  }, [connected, walletAddress]);
+
   useEffect(() => {
     checkAuthStatus();
-  }, []);
+  }, [checkAuthStatus]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -47,27 +66,7 @@ function Header() {
     };
   }, [isMenuOpen, isWalletMenuOpen]);
 
-  const checkAuthStatus = async () => {
-    try {
-      const address = getConnectedWalletAddress();
-      const name = getConnectedWalletName();
 
-      if (address) {
-        setWalletAddress(address);
-        setWalletName(name);
-        setIsLoggedIn(true);
-      } else {
-        const currentUser = await getCurrentUser();
-        setIsLoggedIn(!!currentUser);
-        if (currentUser) {
-          const count = await getUnreadCount(currentUser.id);
-          setUnreadCount(count);
-        }
-      }
-    } catch (error) {
-      setIsLoggedIn(false);
-    }
-  };
 
   const handleMenuToggle = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -84,15 +83,15 @@ function Header() {
   const handleSignOut = async () => {
     try {
       await logout();
+      if (connected) {
+        await disconnectWallet();
+      }
       setIsLoggedIn(false);
-      setWalletAddress(null);
-      setWalletName(null);
       setIsMenuOpen(false);
       setIsWalletMenuOpen(false);
       navigate('/home');
     } catch (error) {
       console.error('Logout error:', error);
-      alert('Failed to sign out. Please try again.');
     }
   };
 

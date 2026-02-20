@@ -486,7 +486,7 @@ function About() {
             <a href="/contact" className="text-white cursor-pointer transition-colors duration-200 hover:text-[#C19A4A] no-underline">
               Contact
             </a>
-            <p className="m-0 text-[13px] text-white">&copy; 2026 Ghonsi proof. All rights reserved. | Website Builder</p>
+            <p className="m-0 text-[13px] text-white">&copy; 2026 Ghonsi proof. All rights reserved.</p>
           </div>
         </footer>
       </div>
