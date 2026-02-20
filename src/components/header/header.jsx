@@ -123,18 +123,7 @@ function Header() {
     <header className="p-[0px_20px] fixed top-0 w-full z-[100] bg-black/30 backdrop-blur-[10px] box-border">
       <div className="flex justify-between items-center">
         {/* Logo */}
-        <Link to="/home" className="h-[90px] flex items-center gap-3 no-underline hover:opacity-80 transition-opacity">
-          <img 
-            src="/logo.png" 
-            alt="Ghonsi Proof Logo" 
-            className="h-12 w-12 object-contain"
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
-          />
-          <span className="text-[#C19A4A] font-bold text-xl">Ghonsi Proof</span>
-        </Link>
-
+        <img src={logo} alt="Ghonsi proof Logo" className="h-[90px] w-auto object-contain" />
         <div className="flex items-center gap-3">
           {/* Wallet button (desktop) */}
           {walletAddress && (
