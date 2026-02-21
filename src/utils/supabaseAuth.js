@@ -68,7 +68,7 @@ export const verifyOTP = async (email, token) => {
 
   // Check if user exists in users table, create if not
   if (data.user) {
-    const { data: existingUser, error: fetchError } = await supabase
+    const { error: fetchError } = await supabase
       .from('users')
       .select('*')
       .eq('id', data.user.id)
