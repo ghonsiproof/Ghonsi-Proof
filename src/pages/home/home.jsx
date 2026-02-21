@@ -409,7 +409,7 @@ function Home() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </section>
 
         {/* QUEEN SMITH PROFILE CARD - MOBILE/TABLET ONLY */}
@@ -458,9 +458,9 @@ function Home() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </section>
 
         {/* TRUST LAYER SECTION */}
@@ -480,7 +480,7 @@ function Home() {
                 className="text-2xl sm:text-3xl lg:text-4xl mb-4 sm:mb-6 text-white leading-tight"
               >
                 Building the trust layer for the global workforce.
-              </motion.h2>
+              </h2>
               
               <div className="max-w-3xl space-y-3 sm:space-y-4 mb-6 sm:mb-10 lg:mb-12 text-left">
                 <p className="text-gray-300 text-sm sm:text-base lg:text-lg xl:text-xl leading-relaxed">
@@ -518,9 +518,9 @@ function Home() {
                   <span className="relative z-10">Verify talent now</span>
                   <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </button>
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </section>
 
         {/* DISCOVER VERIFIED TALENT */}
@@ -533,7 +533,7 @@ function Home() {
               Discover Verified Talent
             </h2>
             <p className="text-gray-300 text-sm sm:text-base lg:text-lg px-2">Browse on-chain portfolios of proven Web3 builders.</p>
-          </motion.div>
+          </div>
         </section>
 
         {/* BUBBLE EXPLORER */}
@@ -593,7 +593,7 @@ function Home() {
                           </div>
                           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#C19A4A] to-[#d9b563] opacity-0 group-hover:opacity-50 blur-xl transition-opacity" />
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -660,13 +660,13 @@ function Home() {
                             </NavLink>
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     </>
                   )}
                 </>
               </div>
             </div>
-          </motion.div>
+          </div>
         </section>
       </main>
       
