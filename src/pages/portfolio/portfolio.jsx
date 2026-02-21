@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { getProofStats, getUserProofs } from '../../utils/proofsApi';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { getProfile } from '../../utils/profileApi';
@@ -164,10 +163,8 @@ export default function Portfolio() {
       <main className="max-w-full mx-auto px-4 md:px-8 relative z-10" style={{paddingTop: windowWidth < 640 ? '12px' : windowWidth < 1024 ? '60px' : '30px'}}>
         
         {/* Top Section - Profile & Stats */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+        <div 
+
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8"
         >
           
@@ -223,10 +220,8 @@ export default function Portfolio() {
           </div>
 
           {/* Right Column: Stats & Skills */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+          <div 
+
             className="flex flex-col gap-4"
           >
             {/* Stats Row */}
@@ -265,10 +260,8 @@ export default function Portfolio() {
         </motion.div>
 
         {/* Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+        <div
+
         >
           <div 
             ref={tabsRef}
@@ -297,11 +290,9 @@ export default function Portfolio() {
         {/* Proof Feed */}
         <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-5">
           {filteredProofs.map((proof, idx) => (
-            <motion.div
+            <div
               key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: idx * 0.05 }}
+
               className="group"
             >
               <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-white/10 to-transparent h-full">
@@ -379,10 +370,8 @@ export default function Portfolio() {
       </main>
 
       {/* Floating Bottom Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
+      <div
+
         className="fixed bottom-2 left-3 right-3 z-40"
       >
         <div className="w-full max-w-7xl mx-auto relative p-[2px] rounded-xl bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-blue-500">

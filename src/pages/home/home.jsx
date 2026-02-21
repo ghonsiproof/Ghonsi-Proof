@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Wallet, Upload, X, ArrowRight, Sparkles, Trophy, Share } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import NotificationWidget from '../../components/NotificationWidget.jsx';
@@ -164,10 +163,7 @@ function Home() {
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 items-center">
             
             {/* Left Column: Text Content */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+            <div
               className="flex flex-col items-start text-left w-full order-1 lg:order-1"
             >
               {/* Heading - CENTER on mobile, LEFT on desktop */}
@@ -231,9 +227,8 @@ function Home() {
                 <div className="relative w-full h-full" style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}>
 
                   {/* Background Ghost Layer */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.15 }}
+                  <div
+                    className="opacity-15"
                     className="absolute inset-0 p-6 lg:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20"
                     style={{
                       top: '16px',
@@ -281,15 +276,8 @@ function Home() {
                   </motion.div>
 
                   {/* Main Card (Front Layer) */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ 
-                      rotateY: -2,
-                      rotateX: 1,
-                      translateZ: 30,
-                      transition: { duration: 0.4 }
-                    }}
+                  <div
+              className="hover:scale-105 hover:shadow-lg transition-transform"
                     className="absolute inset-0 p-6 lg:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20 flex flex-col gap-6"
                     style={{
                       transform: 'perspective(1200px) rotateY(-6deg) rotateX(3deg) translateZ(20px)',
@@ -341,11 +329,8 @@ function Home() {
 
         {/* HOW IT WORKS SECTION */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+                <div
+
             className="relative p-[1px] rounded-3xl lg:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
           >
             <div className="relative rounded-[23px] lg:rounded-[2.3rem] bg-[#0B0F1B]/90 backdrop-blur-2xl bg-gradient-to-br from-white/10 to-white/5 p-6 sm:p-8 lg:p-10 xl:p-12 overflow-hidden border border-white/10">
@@ -383,12 +368,9 @@ function Home() {
                         gradient: "from-[#C19A4A] to-[#d9b563]"
                       }
                     ].map((item, i) => (
-                      <motion.div
+                      <div
                         key={i}
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: i * 0.2 }}
+
                         className="group relative"
                       >
                         <div className="relative p-[1px] rounded-xl lg:rounded-2xl bg-gradient-to-r from-white/10 to-white/5 hover:from-[#C19A4A]/30 hover:to-[#d9b563]/30 transition-all duration-500">
@@ -432,14 +414,12 @@ function Home() {
 
         {/* QUEEN SMITH PROFILE CARD - MOBILE/TABLET ONLY */}
         <section className="lg:hidden max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <div
+
             className="flex justify-center"
           >
             <div className="relative w-full max-w-[340px] sm:max-w-[380px]">
-              <motion.div
+              <div
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
                 className="p-6 sm:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20 flex flex-col gap-6 shadow-[0_20px_60px_rgba(193,154,74,0.15)]"
@@ -485,18 +465,15 @@ function Home() {
 
         {/* TRUST LAYER SECTION */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+                <div
+
             className="relative"
           >
             <div className="absolute -top-10 sm:-top-20 -left-10 sm:-left-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#C19A4A] rounded-full opacity-20 blur-[80px] sm:blur-[100px]" />
             <div className="absolute -bottom-10 sm:-bottom-20 -right-10 sm:-right-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#d9b563] rounded-full opacity-20 blur-[80px] sm:blur-[100px]" />
             
             <div className="relative text-left">
-              <motion.h2
+              <h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -515,7 +492,7 @@ function Home() {
               </div>
 
               {/* Buttons */}
-              <motion.div
+              <div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -548,10 +525,8 @@ function Home() {
 
         {/* DISCOVER VERIFIED TALENT */}
         <section id="bubble-section" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-14 pb-0">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <div
+
             className="text-center mb-6 sm:mb-10 lg:mb-12"
           >
             <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
@@ -563,11 +538,9 @@ function Home() {
 
         {/* BUBBLE EXPLORER */}
         <section className="mx-4 sm:mx-6 lg:mx-8 mb-12 sm:mb-16 lg:mb-20">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+          <div
+
+
             className="relative p-[2px] rounded-3xl lg:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
           >
             <div className="relative p-[1px] rounded-[22px] lg:rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
@@ -602,16 +575,13 @@ function Home() {
                 ) : (
                   <div className="relative w-full h-full p-4 sm:p-8 lg:p-10">
                     {bubbles.map((bubble) => (
-                      <motion.div
+                      <div
                         key={bubble.id}
                         className="absolute cursor-pointer group bubble-item"
                         style={{ top: bubble.initialPos.top, left: bubble.initialPos.left }}
-                        animate={{ y: [0, -15, 0], x: [0, 10, 0] }}
-                        transition={{ duration: 5 + Math.random() * 5, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
                         onClick={(e) => handleBubbleInteraction(bubble, e, 'click')}
                         onMouseEnter={(e) => !isMobile && !isPinned && handleBubbleInteraction(bubble, e, 'hover')}
                         onMouseLeave={() => !isMobile && !isPinned && setSelectedBubble(null)}
-                        whileHover={{ scale: 1.1 }}
                       >
                         <div className={`relative p-[2px] rounded-full bg-gradient-to-br ${selectedBubble?.id === bubble.id ? 'from-[#C19A4A] to-[#d9b563]' : 'from-white/20 to-white/5'} transition-all duration-300`}>
                           <div className="relative p-1 rounded-full bg-[#0B0F1B]">
@@ -629,23 +599,18 @@ function Home() {
                 )}
 
                 {/* PROFILE POPUP */}
-                <AnimatePresence>
+                <>
                   {selectedBubble && (
                     <>
                       {isMobile && (
-                        <motion.div 
-                          initial={{ opacity: 0 }} 
-                          animate={{ opacity: 1 }} 
-                          exit={{ opacity: 0 }} 
+                        <div 
+
                           onClick={() => setSelectedBubble(null)} 
                           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1001]" 
                         />
                       )}
-                      <motion.div
-                        initial={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
-                        animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1 }}
-                        exit={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                      <div
+
                         className={`z-[1002] profile-popup-card ${isMobile ? 'fixed bottom-0 left-0 right-0 max-w-full' : 'absolute w-[280px] sm:w-[320px]'}`}
                         style={!isMobile ? { top: cardPos.top, left: cardPos.left } : {}}
                       >
@@ -698,7 +663,7 @@ function Home() {
                       </motion.div>
                     </>
                   )}
-                </AnimatePresence>
+                </>
               </div>
             </div>
           </motion.div>
