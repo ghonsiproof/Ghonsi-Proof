@@ -256,8 +256,8 @@ export default function Portfolio() {
                 </div>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
         {/* Tabs */}
         <div
