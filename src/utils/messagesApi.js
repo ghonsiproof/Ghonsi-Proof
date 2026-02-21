@@ -1,68 +1,76 @@
-import { supabase } from '../config/supabaseClient';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export const getMessages = async (userId) => {
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  const response = await fetch(`${API_URL}/api/messages/${userId}`);
+  const result = await response.json();
   
-  if (error) throw error;
-  return data;
+  if (!response.ok) throw new Error(result.error);
+  return result.data;
 };
 
 export const getUnreadCount = async (userId) => {
-  const { count, error } = await supabase
-    .from('messages')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('is_read', false);
-  
-  if (error) throw error;
-  return count || 0;
+  const messages = await getMessages(userId);
+  return messages.filter(m => !m.read).length;
 };
 
 export const markAsRead = async (messageId) => {
-  const { error } = await supabase
-    .from('messages')
-    .update({ is_read: true })
-    .eq('id', messageId);
+  const response = await fetch(`${API_URL}/api/messages/${messageId}/read`, {
+    method: 'PATCH'
+  });
+  const result = await response.json();
   
-  if (error) throw error;
+  if (!response.ok) throw new Error(result.error);
+  return result.data;
 };
 
 export const createWelcomeMessage = async (userId, firstName) => {
-  const message = {
-    user_id: userId,
-    title: 'Welcome to Ghonsi Proof',
-    content: `Welcome, ${firstName}, to Ghonsi Proof. You've taken the first step toward giving your work the visibility it deserves. Begin by uploading your past work records on the Upload Proof page, securely, transparently, and permanently. Remember the world is your stage, make your work impossible to ignore`,
-    is_read: false,
-    created_at: new Date().toISOString()
-  };
-
-  const { data, error } = await supabase
-    .from('messages')
-    .insert([message])
-    .select();
+  const response = await fetch(`${API_URL}/api/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sender_id: 'system',
+      receiver_id: userId,
+      portfolio_id: null,
+      message: `Welcome, ${firstName}, to Ghonsi Proof. You've taken the first step toward giving your work the visibility it deserves. Begin by uploading your past work records on the Upload Proof page, securely, transparently, and permanently. Remember the world is your stage, make your work impossible to ignore`,
+      sender_name: 'Ghonsi Proof'
+    })
+  });
+  const result = await response.json();
   
-  if (error) throw error;
-  return data[0];
+  if (!response.ok) throw new Error(result.error);
+  return result.data;
 };
 
-export const createPortfolioRequestMessage = async (profileOwnerId, requesterName) => {
-  const message = {
-    user_id: profileOwnerId,
-    title: 'Portfolio Request',
-    content: `${requesterName} has requested for your profile`,
-    is_read: false,
-    created_at: new Date().toISOString()
-  };
-
-  const { data, error } = await supabase
-    .from('messages')
-    .insert([message])
-    .select();
+export const createPortfolioRequestMessage = async (profileOwnerId, requesterName, requesterId, profileOwnerName) => {
+  console.log('Creating messages with:', { profileOwnerId, requesterName, requesterId, profileOwnerName });
   
-  if (error) throw error;
-  return data[0];
+  const messages = [
+    {
+      sender_id: requesterId,
+      receiver_id: profileOwnerId,
+      portfolio_id: profileOwnerId,
+      message: `${requesterName} has requested for your profile`,
+      sender_name: requesterName
+    },
+    {
+      sender_id: 'system',
+      receiver_id: requesterId,
+      portfolio_id: profileOwnerId,
+      message: `${requesterName}, you sent a request for ${profileOwnerName} profile`,
+      sender_name: 'Ghonsi Proof'
+    }
+  ];
+
+  const results = await Promise.all(
+    messages.map(msg => 
+      fetch(`${API_URL}/api/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(msg)
+      }).then(res => res.json())
+    )
+  );
+  
+  console.log('Messages created successfully:', results);
+  return results.map(r => r.data);
 };
