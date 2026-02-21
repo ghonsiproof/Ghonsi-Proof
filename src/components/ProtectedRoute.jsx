@@ -29,9 +29,11 @@ function ProtectedRoute({ children }) {
       const walletAddress = localStorage.getItem('wallet_address');
       const userId = localStorage.getItem('user_id');
       
-      console.log('[v0] Auth check - Session:', !!session, 'Wallet:', !!walletAddress);
+      console.log('[v0] Auth check - Session:', !!session, 'Wallet:', !!walletAddress, 'UserId:', !!userId);
       
-      // User is authenticated if they have either Supabase session or wallet + user_id
+      // User is authenticated if:
+      // 1. They have a Supabase session (email auth), OR
+      // 2. They have both wallet address AND user_id (wallet auth)
       const hasSession = !!session || (!!walletAddress && !!userId);
       setIsAuthenticated(hasSession);
     } catch (error) {

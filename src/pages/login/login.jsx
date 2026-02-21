@@ -104,10 +104,12 @@ function Login() {
     setIsLoading(true);
     setMessage('');
     try {
-      await verifyOTP(trimmed, otpCode);
+      const result = await verifyOTP(trimmed, otpCode);
+      console.log('[v0] OTP verified, user:', result.user?.id);
       setMessage('Successfully signed in!');
       setTimeout(() => navigate('/home'), 1000);
-    } catch {
+    } catch (error) {
+      console.error('[v0] OTP verification error:', error);
       setMessage('Invalid or expired code. Please try again.');
     } finally {
       setIsLoading(false);
