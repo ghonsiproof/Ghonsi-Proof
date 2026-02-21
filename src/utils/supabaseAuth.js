@@ -58,9 +58,6 @@ export const sendOTPToEmail = async (email) => {
 
 // Verify OTP code
 export const verifyOTP = async (email, token) => {
-  const { data: existingSession } = await supabase.auth.getSession();
-  const wasNewUser = !existingSession?.session;
-
   const { data, error } = await supabase.auth.verifyOtp({
     email,
     token,
@@ -69,10 +66,37 @@ export const verifyOTP = async (email, token) => {
 
   if (error) throw error;
 
-  return {
-    ...data,
-    isNewUser: wasNewUser
-  };
+  // Check if user exists in users table, create if not
+  if (data.user) {
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    let isNewUser = false;
+
+    if (fetchError && fetchError.code === 'PGRST116') {
+      // User doesn't exist, create new user profile
+      isNewUser = true;
+      const { error: createError } = await supabase
+        .from('users')
+        .insert([{
+          id: data.user.id,
+          email: data.user.email,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (createError) console.error('Error creating user profile:', createError);
+    }
+
+    return {
+      ...data,
+      isNewUser
+    };
+  }
+
+  return data;
 };
 
 // Sign in with wallet (Solana) - Web3 authentication
