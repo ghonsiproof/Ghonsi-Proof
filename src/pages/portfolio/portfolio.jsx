@@ -394,7 +394,7 @@ export default function Portfolio() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       <style jsx>{`
         @keyframes blob {
