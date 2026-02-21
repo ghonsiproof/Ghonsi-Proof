@@ -32,13 +32,14 @@ function Message() {
 
   const handleMessageClick = async (message) => {
     setSelectedMessage(message);
-    if (!message.is_read) {
+    if (!message.read) {
       await markAsRead(message.id);
-      setMessages(messages.map(m => m.id === message.id ? { ...m, is_read: true } : m));
+      setMessages(messages.map(m => m.id === message.id ? { ...m, read: true } : m));
     }
   };
 
   const truncateText = (text, lines = 2) => {
+    if (!text) return '';
     const words = text.split(' ');
     const maxWords = lines * 15;
     return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text;
@@ -73,12 +74,12 @@ function Message() {
               <button onClick={() => setSelectedMessage(null)} className="text-[#C19A4A] text-sm mb-4 hover:underline">
                 ← Back to messages
               </button>
-              <h2 className="text-xl font-semibold mb-2">{selectedMessage.title}</h2>
+              <h2 className="text-xl font-semibold mb-2">{selectedMessage.sender_name || 'Message'}</h2>
               <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
                 <Clock size={12} />
                 {new Date(selectedMessage.created_at).toLocaleDateString()}
               </div>
-              <p className="text-gray-300 leading-relaxed">{selectedMessage.content}</p>
+              <p className="text-gray-300 leading-relaxed">{selectedMessage.message}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -93,16 +94,16 @@ function Message() {
                     key={message.id}
                     onClick={() => handleMessageClick(message)}
                     className={`bg-[#151925] rounded-xl p-4 border cursor-pointer transition-all hover:border-[#C19A4A]/50 ${
-                      message.is_read ? 'border-white/5' : 'border-[#C19A4A]/30 bg-[#C19A4A]/5'
+                      message.read ? 'border-white/5' : 'border-[#C19A4A]/30 bg-[#C19A4A]/5'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-sm">{message.title}</h3>
-                      {!message.is_read && (
+                      <h3 className="font-semibold text-sm">{message.sender_name || 'Message'}</h3>
+                      {!message.read && (
                         <span className="w-2 h-2 bg-[#C19A4A] rounded-full"></span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 line-clamp-2">{truncateText(message.content)}</p>
+                    <p className="text-xs text-gray-400 line-clamp-2">{truncateText(message.message)}</p>
                     <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
                       <Clock size={10} />
                       {new Date(message.created_at).toLocaleDateString()}

@@ -4,6 +4,7 @@ import { getCurrentUser } from '../../utils/supabaseAuth';
 import { createPortfolioRequestMessage } from '../../utils/messagesApi';
 import { getProfileById } from '../../utils/profileApi';
 import { getUserProofs, getProofStats } from '../../utils/proofsApi';
+import { supabase } from '../../config/supabaseClient';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
 
@@ -16,6 +17,7 @@ function Request() {
   const [formData, setFormData] = useState({ name: '', email: '' });
   const [showMore, setShowMore] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -73,11 +75,28 @@ function Request() {
     const loadUserEmail = async () => {
       try {
         const user = await getCurrentUser();
-        if (user?.email) {
-          setFormData(prev => ({ ...prev, email: user.email }));
+        console.log('Current user from auth:', user);
+        
+        if (user) {
+          if (user.email) {
+            setFormData(prev => ({ ...prev, email: user.email }));
+          }
+          // Get the actual user_id from the users table
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('id')
+            .or(`id.eq.${user.id},wallet_address.eq.${user.wallet_address || user.id}`)
+            .single();
+          
+          console.log('User data from database:', userData, 'Error:', error);
+          
+          if (userData) {
+            setCurrentUserId(userData.id);
+            console.log('Set currentUserId to:', userData.id);
+          }
         }
       } catch (error) {
-        // User not logged in, ignore error
+        console.error('Error loading user:', error);
       }
     };
 
@@ -103,15 +122,30 @@ function Request() {
         return;
       }
 
-      await createPortfolioRequestMessage(profileOwnerUserId, formData.name);
+      if (!currentUserId) {
+        alert('Please log in to send a request.');
+        return;
+      }
+
+      console.log('DEBUG - Profile Owner ID:', profileOwnerUserId);
+      console.log('DEBUG - Requester ID:', currentUserId);
+      console.log('DEBUG - Requester Name:', formData.name);
+      console.log('DEBUG - Profile Owner Name:', profileData.name);
+
+      await createPortfolioRequestMessage(
+        profileOwnerUserId, 
+        formData.name, 
+        currentUserId, 
+        profileData.name
+      );
       
       setShowRequestModal(false);
       setShowSuccessModal(true);
       setFormData({ name: '', email: '' });
     } catch (error) {
       console.error('Error sending request:', error);
+      alert('Error: ' + error.message);
       setShowRequestModal(false);
-      setShowSuccessModal(true);
     }
   };
 
