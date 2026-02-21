@@ -358,7 +358,7 @@ export default function Portfolio() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
           
           {filteredProofs.length === 0 && (

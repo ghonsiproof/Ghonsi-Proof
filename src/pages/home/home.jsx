@@ -319,7 +319,7 @@ function Home() {
                         </div>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 </div>
               </div>
             </div>
