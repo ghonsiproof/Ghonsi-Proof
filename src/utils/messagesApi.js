@@ -49,14 +49,15 @@ export const createPortfolioRequestMessage = async (profileOwnerId, requesterNam
       sender_id: requesterId,
       receiver_id: profileOwnerId,
       portfolio_id: profileOwnerId,
-      message: `${requesterName} has requested for your profile`,
-      sender_name: requesterName
+      message: `${requesterName} has requested for your portfolio`,
+      sender_name: requesterName,
+      type: 'profile_request'
     },
     {
       sender_id: 'system',
       receiver_id: requesterId,
       portfolio_id: profileOwnerId,
-      message: `${requesterName}, you sent a request for ${profileOwnerName} profile`,
+      message: `${requesterName}, you sent a request for ${profileOwnerName} portfolio`,
       sender_name: 'Ghonsi Proof'
     }
   ];
@@ -73,4 +74,16 @@ export const createPortfolioRequestMessage = async (profileOwnerId, requesterNam
   
   console.log('Messages created successfully:', results);
   return results.map(r => r.data);
+};
+
+export const respondToRequest = async (messageId, status) => {
+  const response = await fetch(`${API_URL}/api/messages/${messageId}/respond`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+  const result = await response.json();
+  
+  if (!response.ok) throw new Error(result.error);
+  return result.data;
 };

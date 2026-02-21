@@ -24,7 +24,7 @@ app.get('/health', (req, res) => {
 // Send message
 app.post('/api/messages', async (req, res) => {
   try {
-    const { sender_id, receiver_id, portfolio_id, message, sender_name, sender_email } = req.body;
+    const { sender_id, receiver_id, portfolio_id, message, sender_name, sender_email, type } = req.body;
 
     if (!sender_id || !receiver_id || !portfolio_id || !message) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -39,6 +39,7 @@ app.post('/api/messages', async (req, res) => {
         message,
         sender_name,
         sender_email,
+        type,
         created_at: new Date().toISOString()
       }])
       .select()
@@ -109,6 +110,28 @@ app.delete('/api/messages/:messageId', async (req, res) => {
     res.json({ success: true, message: 'Message deleted' });
   } catch (error) {
     console.error('Error deleting message:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Respond to profile request
+app.patch('/api/messages/:messageId/respond', async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { status } = req.body;
+
+    const { data, error } = await supabase
+      .from('messages')
+      .update({ status, read: true })
+      .eq('id', messageId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error responding to request:', error);
     res.status(500).json({ error: error.message });
   }
 });

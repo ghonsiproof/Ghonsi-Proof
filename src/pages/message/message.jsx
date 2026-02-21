@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Clock } from 'lucide-react';
 import { getCurrentUser } from '../../utils/supabaseAuth';
-import { getMessages, markAsRead } from '../../utils/messagesApi';
+import { getMessages, markAsRead, respondToRequest } from '../../utils/messagesApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 
@@ -35,6 +35,16 @@ function Message() {
     if (!message.read) {
       await markAsRead(message.id);
       setMessages(messages.map(m => m.id === message.id ? { ...m, read: true } : m));
+    }
+  };
+
+  const handleResponse = async (messageId, status) => {
+    try {
+      await respondToRequest(messageId, status);
+      setMessages(messages.map(m => m.id === messageId ? { ...m, status } : m));
+      setSelectedMessage(prev => prev?.id === messageId ? { ...prev, status } : prev);
+    } catch (error) {
+      console.error('Error responding to request:', error);
     }
   };
 
@@ -80,6 +90,29 @@ function Message() {
                 {new Date(selectedMessage.created_at).toLocaleDateString()}
               </div>
               <p className="text-gray-300 leading-relaxed">{selectedMessage.message}</p>
+              
+              {selectedMessage.type === 'profile_request' && !selectedMessage.status && (
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => handleResponse(selectedMessage.id, 'accepted')}
+                    className="flex-1 bg-[#C19A4A] text-white py-2 px-4 rounded-lg font-semibold hover:bg-[#A88539] transition-colors"
+                  >
+                    ACCEPT
+                  </button>
+                  <button
+                    onClick={() => handleResponse(selectedMessage.id, 'rejected')}
+                    className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                  >
+                    REJECT
+                  </button>
+                </div>
+              )}
+              
+              {selectedMessage.status && (
+                <div className={`mt-4 text-sm font-semibold ${selectedMessage.status === 'accepted' ? 'text-green-500' : 'text-red-500'}`}>
+                  {selectedMessage.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
