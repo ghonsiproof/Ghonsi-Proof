@@ -187,10 +187,8 @@ function About() {
       <div className="max-w-full mx-auto mt-[70px] min-h-screen relative z-10">
         
         {/* About Section */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+        <section
+
           id="about" 
           className="p-4 text-center max-w-[80%] my-0 mx-auto mt-[110px] relative z-10"
         >
@@ -201,13 +199,13 @@ function About() {
           <h1 className="text-base text-center leading-[1.4] mb-3 font-normal text-gray-300">
             We are building the essential infrastructure that makes your work and project contributions verifiable.
           </h1>
-        </motion.section>
+        </section>
 
         {/* Mission Section - SHRUNKEN */}
-        <motion.section
+        <section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+
           id="mission" 
           className="m-4 p-3 max-w-5xl mx-auto relative"
           aria-labelledby="missionTitle"
@@ -232,10 +230,10 @@ function About() {
               </div>
             </div>
           </div>
-        </motion.section>
+        </section>
 
         {/* Values Section */}
-        <motion.section
+        <section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -287,10 +285,10 @@ function About() {
               />
             ))}
           </div>
-        </motion.section>
+        </section>
 
         {/* Team Section */}
-        <motion.section
+        <section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
@@ -366,10 +364,10 @@ function About() {
               </div>
             </div>
           </div>
-        </motion.section>
+        </section>
 
         {/* Journey Section */}
-        <motion.section
+        <section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
@@ -435,7 +433,7 @@ function About() {
                 </div>
               </div>
             </div>
-        </motion.section>
+        </section>
 
         {/* Footer */}
         <footer className="py-[60px] px-5 bg-[#0B0F1B] text-white font-[Inter] relative z-10">

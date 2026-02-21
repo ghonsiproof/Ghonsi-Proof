@@ -219,7 +219,7 @@ function Home() {
                   <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </button>
               </div>
-            </motion.div>
+            </div>
 
             {/* Right Column: 3D Card - DESKTOP ONLY */}
             <div className="hidden lg:flex items-center justify-center lg:justify-end order-2 lg:order-2">
