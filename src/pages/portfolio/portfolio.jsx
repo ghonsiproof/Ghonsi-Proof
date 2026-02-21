@@ -285,7 +285,7 @@ export default function Portfolio() {
               </button>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Proof Feed */}
         <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-5">

@@ -273,7 +273,7 @@ function Home() {
                         </div>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
 
                   {/* Main Card (Front Layer) */}
                   <div
