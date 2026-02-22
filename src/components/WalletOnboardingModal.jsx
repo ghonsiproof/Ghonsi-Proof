@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, User, ArrowRight, Check } from 'lucide-react';
+import { X, Mail, User } from 'lucide-react';
 import { createWalletOnboardingUser, linkEmailToWallet } from '../utils/walletEmailLinking';
 import { sendOTPToEmail, verifyOTP } from '../utils/supabaseAuth';
 
@@ -38,7 +38,7 @@ function WalletOnboardingModal({ walletAddress, walletType, onComplete, onClose 
         setUserId(result.user.id);
         localStorage.setItem('user_id', result.user.id);
         localStorage.setItem('wallet_address', walletAddress);
-        
+
         setMessage('Profile created successfully!');
         // Move to email step or complete
         setTimeout(() => {
