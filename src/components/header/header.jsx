@@ -191,7 +191,7 @@ function Header() {
               {isWalletMenuOpen && (
                 <div
                   ref={walletMenuRef}
-                  className="absolute right-0 mt-2 w-64 bg-[#0B0F1B] border border-[#C19A4A]/30 rounded-lg shadow-xl overflow-hidden z-50"
+                  className="absolute right-0 mt-2 w-64 bg-[#0B0F1B] border border-[#C19A4A]/30 rounded-lg shadow-xl overflow-hidden z-50 dropdown-enter"
                 >
                   <div className="p-3 border-b border-[#C19A4A]/20">
                     <div className="flex items-center gap-2 mb-2">
@@ -252,7 +252,7 @@ function Header() {
         </div>
       </div>
 
-      <div ref={menuRef} className={`${isMenuOpen ? 'flex' : 'hidden'} absolute top-[70px] right-0 w-full bg-[#0B0F1B] backdrop-blur-[10px] flex-col gap-0 p-5 box-border`}>
+      <div ref={menuRef} className={`absolute top-[70px] right-0 w-full bg-[#0B0F1B] backdrop-blur-[10px] flex-col gap-0 p-5 box-border ${isMenuOpen ? 'flex menu-enter' : 'hidden menu-exit'}`}>
         {walletAddress && (
           <div className="sm:hidden mb-4">
             <div className="p-3 bg-[#151925] rounded-lg border border-[#C19A4A]/30">

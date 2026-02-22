@@ -1,3 +1,64 @@
+/* Menu and Dropdown Animations */
+@keyframes slideInMenu {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutMenu {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes slideInDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutDropdown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.menu-enter {
+  animation: slideInMenu 0.3s ease-out forwards;
+}
+
+.menu-exit {
+  animation: slideOutMenu 0.3s ease-in forwards;
+}
+
+.dropdown-enter {
+  animation: slideInDropdown 0.25s ease-out forwards;
+}
+
+.dropdown-exit {
+  animation: slideOutDropdown 0.25s ease-in forwards;
+}
+
 /* Desktop responsive */
 /* @media(min-width: 768px) {
     .header-btn {
