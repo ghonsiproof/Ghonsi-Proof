@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { ArrowLeft } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
+import { getUserByWalletAddress } from '../../utils/walletEmailLinking';
+import WalletOnboardingModal from '../../components/WalletOnboardingModal';
 
 function Login() {
   const [activeTab, setActiveTab] = useState('wallet');
@@ -13,6 +16,8 @@ function Login() {
   const [message, setMessage] = useState('');
   const [isGetStarted, setIsGetStarted] = useState(false);
   const [hasSigned, setHasSigned] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isNewWalletUser, setIsNewWalletUser] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,6 +43,18 @@ function Login() {
       const walletAddress = getWalletAddress();
       if (!walletAddress) {
         setMessage('Wallet not connected');
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if user exists
+      const existingUser = await getUserByWalletAddress(walletAddress);
+      
+      if (!existingUser) {
+        // New wallet user - show onboarding modal
+        console.log('[v0] New wallet user, showing onboarding');
+        setIsNewWalletUser(true);
+        setShowOnboarding(true);
         setIsLoading(false);
         return;
       }
@@ -116,9 +133,38 @@ function Login() {
 
   const isSuccess = message.startsWith('✅') || message.startsWith('Wallet verified') || message.startsWith('Successfully') || message.startsWith('OTP sent');
 
+  if (showOnboarding && isNewWalletUser) {
+    return (
+      <WalletOnboardingModal
+        walletAddress={getWalletAddress()}
+        walletType={localStorage.getItem('connected_wallet') || 'solana'}
+        onComplete={() => {
+          setShowOnboarding(false);
+          setMessage('✅ Profile created! Redirecting...');
+          setTimeout(() => navigate('/home'), 1000);
+        }}
+        onClose={() => {
+          setShowOnboarding(false);
+          setIsNewWalletUser(false);
+        }}
+      />
+    );
+  }
+
   return (
     <main>
-      <div className="mt-[115px] mx-auto py-10 px-5 text-center flex flex-col">
+      {/* Back Button */}
+      <div className="flex items-center justify-start px-5 py-4 mt-[90px]">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-[#C19A4A] hover:opacity-80 transition-opacity"
+        >
+          <ArrowLeft size={20} />
+          <span className="text-sm font-semibold">Back</span>
+        </button>
+      </div>
+
+      <div className="mx-auto py-10 px-5 text-center flex flex-col">
         <h2 className="text-2xl font-bold text-white mb-2.5">
           {isGetStarted ? 'Get Started' : 'Welcome Back'}
         </h2>
