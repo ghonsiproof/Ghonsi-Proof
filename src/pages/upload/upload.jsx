@@ -1,4 +1,3 @@
-
 /**
  * Upload Component
  * 
@@ -12,6 +11,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { uploadProof } from '../../utils/proofsApi';
+import { extractDocumentData, supportsExtraction } from '../../utils/extractionApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import './upload.css';
@@ -33,7 +33,7 @@ function Upload() {
   const [uploadError, setUploadError] = useState('');
   const [supportingError, setSupportingError] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
-  
+
   // Refs for DOM manipulation and click-outside detection
   const dropdownRef = useRef(null);
   const referenceFileInputRef = useRef(null);
@@ -69,7 +69,7 @@ function Upload() {
         "Snapshot of offer letter (redacted salary)",
         "HR email confirming employment",
         "Work badge snapshot",
-        "Public team page snapshot where user’s name appears (if applicable)",
+        "Public team page snapshot where user's name appears (if applicable)",
         "GitHub contribution logs linked to the company repo",
         "Public posts (LinkedIn) from the employer announcing new hires"        
       ],
@@ -114,8 +114,44 @@ function Upload() {
     { value: 'job_history', label: 'Job History (Work Experience)' },
     { value: 'skills', label: 'Skills / Competencies' },
     { value: 'milestones', label: 'Career Milestones (Promotions / Awards)' },
-    { value: 'community', label: 'Community Contributions / Public Work' }
+    { value: 'community_contributions', label: 'Community Contributions / Public Work' }
   ];
+
+  /**
+   * Extracts proof data from uploaded document using the extraction API
+   * Automatically fills in summary and proof name if not already set
+   * @param {File} file - The file to extract data from
+   * @param {string} selectedProofType - The proof type for extraction
+   * @returns {Promise<Object|null>} - Extracted data or null if extraction fails
+   */
+  const extractProofData = async (file, selectedProofType) => {
+    if (!supportsExtraction(selectedProofType)) {
+      console.log(`Extraction not supported for proof type: ${selectedProofType}`);
+      return null;
+    }
+
+    try {
+      setIsExtracting(true);
+      const data = await extractDocumentData(file, selectedProofType);
+
+      if (!data) {
+        throw new Error("No response from extraction API");
+      }
+
+      console.log("===== EXTRACTION RESULT =====");
+      console.log(data);
+      console.log("Title:", data.title);
+      console.log("Summary:", data.summary);
+      console.log("=============================");
+
+      return data;
+    } catch (error) {
+      console.error("Extraction error:", error);
+      return null;
+    } finally {
+      setIsExtracting(false);
+    }
+  };
   
   /**
    * Setup click-outside listener for dropdown
@@ -133,12 +169,26 @@ function Upload() {
   
   /**
    * Handles proof type selection from dropdown
+   * Triggers extraction if a file has already been uploaded
    * @param {string} value - Selected proof type value
    */
-  const handleProofTypeSelect = (value) => {
+  const handleProofTypeSelect = async (value) => {
     setProofType(value);
     setIsDropdownOpen(false);
     setShowInstructions(true);
+
+    if (referenceFiles.length > 0) {
+      const extracted = await extractProofData(referenceFiles[0], value);
+
+      if (extracted) {
+        if (!summary.trim() && extracted.summary) {
+          setSummary(extracted.summary);
+        }
+        if (!proofName.trim() && extracted.title) {
+          setProofName(extracted.title);
+        }
+      }
+    }
   };
   
   /**
@@ -147,11 +197,9 @@ function Upload() {
    * @returns {string|null} Error message if validation fails, null if valid
    */
   const validateFile = (file) => {
-    // Check file type
     if (!ACCEPTED_TYPES.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|pdf|doc|docx)$/i)) {
       return `"${file.name}" is not a supported format.`;
     }
-    // Check file size
     if (file.size > MAX_SIZE) {
       return `"${file.name}" exceeds the 2MB size limit.`;
     }
@@ -161,9 +209,10 @@ function Upload() {
   /**
    * Handles reference file selection and validation
    * Only allows a single file to be uploaded at a time
+   * Triggers extraction API when file is selected and proof type is chosen
    * @param {File[]} files - Array of files from input or drop event
    */
-  const handleReferenceFiles = (files) => {
+  const handleReferenceFiles = async (files) => {
     setSupportingError('');
     if (files.length === 0) return;
     
@@ -172,11 +221,24 @@ function Upload() {
     
     if (error) {
       setSupportingError(error);
-      setTimeout(() => setSupportingError(''), 5000); // Auto-clear error after 5s
+      setTimeout(() => setSupportingError(''), 5000);
       return;
     }
     
     setReferenceFiles([file]);
+
+    if (proofType) {
+      const extracted = await extractProofData(file, proofType);
+
+      if (extracted) {
+        if (!summary.trim() && extracted.summary) {
+          setSummary(extracted.summary);
+        }
+        if (!proofName.trim() && extracted.title) {
+          setProofName(extracted.title);
+        }
+      }
+    }
   };
   
   /**
@@ -199,13 +261,11 @@ function Upload() {
     
     let hasError = false;
     
-    // Validate required fields
     if (!proofName.trim() || !summary.trim() || !proofType) {
       setUploadError('Please fill in all required fields.');
       hasError = true;
     }
     
-    // Reference document is mandatory
     if (referenceFiles.length === 0) {
       setSupportingError('A Reference Document is required.');
       hasError = true;
@@ -217,13 +277,11 @@ function Upload() {
     setShowPendingModal(true);
     
     try {
-      // Authenticate user before upload
       const user = await getCurrentUser();
       if (!user) {
         throw new Error('You must be logged in to upload proofs');
       }
       
-      // Prepare proof data payload
       const proofData = {
         proofType: proofType,
         proofName: proofName,
@@ -231,10 +289,8 @@ function Upload() {
         referenceLink: referenceLink || null
       };
       
-      // Submit proof with reference document
       await uploadProof(proofData, [], [referenceFiles[0]]);
       
-      // Show success modal after upload completes
       setTimeout(() => {
         setShowPendingModal(false);
         setTimeout(() => setShowSubmittedModal(true), 300);
@@ -454,12 +510,12 @@ function Upload() {
             
             {/* Upload Requirements Info Box */}
             <div className="border border-brand-gold rounded-xl p-4 bg-brand-gold/5">
-              <h4 class="text-brand-gold text-sm font-medium mb-2 flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i> Upload Requirements</h4>
-              <ul class="text-[11px] text-white space-y-1 list-none pl-1">
-                <li class="flex gap-2 items-start"><span class="text-white text-[6px] mt-1.5">●</span> Reference document is required</li>
-                <li class="flex gap-2 items-start"><span class="text-white text-[6px] mt-1.5">●</span> Maximum file size: 2MB per document</li>
-                <li class="flex gap-2 items-start"><span class="text-white text-[6px] mt-1.5">●</span> Accepted formats: PDF, JPG, PNG, DOC, DOCX</li>
-                <li class="flex gap-2 items-start"><span class="text-white text-[6px] mt-1.5">●</span> Documents should clearly show your achievement or work</li>
+              <h4 className="text-brand-gold text-sm font-medium mb-2 flex items-center gap-2"><i className="fa-solid fa-circle-exclamation"></i> Upload Requirements</h4>
+              <ul className="text-[11px] text-white space-y-1 list-none pl-1">
+                <li className="flex gap-2 items-start"><span className="text-white text-[6px] mt-1.5">●</span> Reference document is required</li>
+                <li className="flex gap-2 items-start"><span className="text-white text-[6px] mt-1.5">●</span> Maximum file size: 2MB per document</li>
+                <li className="flex gap-2 items-start"><span className="text-white text-[6px] mt-1.5">●</span> Accepted formats: PDF, JPG, PNG, DOC, DOCX</li>
+                <li className="flex gap-2 items-start"><span className="text-white text-[6px] mt-1.5">●</span> Documents should clearly show your achievement or work</li>
               </ul>
             </div>
             
