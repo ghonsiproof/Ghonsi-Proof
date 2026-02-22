@@ -228,8 +228,7 @@ function Home() {
 
                   {/* Background Ghost Layer */}
                   <div
-                    className="opacity-15"
-                    className="absolute inset-0 p-6 lg:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20"
+                    className="opacity-15 absolute inset-0 p-6 lg:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20"
                     style={{
                       top: '16px',
                       left: '-24px',
@@ -277,8 +276,7 @@ function Home() {
 
                   {/* Main Card (Front Layer) */}
                   <div
-              className="hover:scale-105 hover:shadow-lg transition-transform"
-                    className="absolute inset-0 p-6 lg:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20 flex flex-col gap-6"
+                    className="hover:scale-105 hover:shadow-lg transition-transform absolute inset-0 p-6 lg:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20 flex flex-col gap-6"
                     style={{
                       transform: 'perspective(1200px) rotateY(-6deg) rotateX(3deg) translateZ(20px)',
                       transformStyle: 'preserve-3d',

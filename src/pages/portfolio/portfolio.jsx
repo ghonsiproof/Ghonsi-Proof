@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, Settings } from 'lucide-react';
+import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy } from 'lucide-react';
 import { getProofStats, getUserProofs } from '../../utils/proofsApi';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { getProfile } from '../../utils/profileApi';
-import AccountSettings from '../../components/AccountSettings';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
 export default function Portfolio() {
@@ -19,7 +18,6 @@ export default function Portfolio() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [proofs, setProofs] = useState([]);
-  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   const tabsRef = useRef(null);
 

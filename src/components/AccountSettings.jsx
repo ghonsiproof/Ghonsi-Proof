@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, Mail, Copy, Check, X } from 'lucide-react';
+import { Wallet, Mail, Copy, Check } from 'lucide-react';
 import { linkWalletToEmail, linkEmailToWallet } from '../utils/walletEmailLinking';
 import { sendOTPToEmail, verifyOTP } from '../utils/supabaseAuth';
 
