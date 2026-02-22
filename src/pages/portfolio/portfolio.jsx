@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, Settings } from 'lucide-react';
 import { getProofStats, getUserProofs } from '../../utils/proofsApi';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { getProfile } from '../../utils/profileApi';
+import AccountSettings from '../../components/AccountSettings';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
 export default function Portfolio() {
@@ -19,6 +19,7 @@ export default function Portfolio() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [proofs, setProofs] = useState([]);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   const tabsRef = useRef(null);
 
@@ -165,6 +166,9 @@ export default function Portfolio() {
           <button onClick={() => navigate(`/request?id=${user?.id}`)} className={`${navItemClass} inline text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>
             Public Profile
           </button>
+          <button onClick={() => setShowAccountSettings(true)} className={`${navItemClass} inline text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none flex items-center gap-1`}>
+            <Settings size={14} /> <span>Account</span>
+          </button>
           <button className="ml-2 bg-[#C19A4A] text-black text-[9px] px-3 py-1.5 rounded-md font-semibold flex items-center gap-2 hover:bg-[#a8853b] transition-colors">
             <Share2 size={14} /> <span>Share</span>
           </button>
@@ -175,10 +179,7 @@ export default function Portfolio() {
       <main className="max-w-full mx-auto px-4 md:px-8 relative z-10" style={{ paddingTop: windowWidth < 640 ? '12px' : windowWidth < 1024 ? '60px' : '30px' }}>
 
         {/* Top Section - Profile & Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+        <div 
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8"
         >
 
@@ -240,10 +241,7 @@ export default function Portfolio() {
           </div>
 
           {/* Right Column: Stats & Skills */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+          <div 
             className="flex flex-col gap-4"
           >
             <div className="grid grid-cols-2 gap-4">
@@ -276,15 +274,11 @@ export default function Portfolio() {
                 </div>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
         {/* Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
+        <div>
           <div
             ref={tabsRef}
             className={`flex items-center gap-2 overflow-x-auto no-scrollbar mb-6 pb-2 select-none cursor-grab ${isDragging ? 'cursor-grabbing' : ''}`}
@@ -306,16 +300,14 @@ export default function Portfolio() {
               </button>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Proof Feed */}
         <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-5">
           {filteredProofs.map((proof, idx) => (
-            <motion.div
+            <div
               key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: idx * 0.05 }}
+
               className="group"
             >
               <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-white/10 to-transparent h-full">
@@ -381,7 +373,7 @@ export default function Portfolio() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
 
           {filteredProofs.length === 0 && (
@@ -393,10 +385,8 @@ export default function Portfolio() {
       </main>
 
       {/* Floating Bottom Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
+      <div
+
         className="fixed bottom-2 left-3 right-3 z-40"
       >
         <div className="w-full max-w-7xl mx-auto relative p-[2px] rounded-xl bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-blue-500">
@@ -419,7 +409,7 @@ export default function Portfolio() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       <style jsx>{`
         @keyframes blob {
