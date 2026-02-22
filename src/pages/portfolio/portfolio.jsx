@@ -307,7 +307,6 @@ export default function Portfolio() {
           {filteredProofs.map((proof, idx) => (
             <div
               key={idx}
-
               className="group"
             >
               <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-white/10 to-transparent h-full">
