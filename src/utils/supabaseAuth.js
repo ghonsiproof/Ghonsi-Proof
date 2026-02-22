@@ -15,6 +15,23 @@ export const signUp = async (email, password, metadata = {}) => {
   });
 
   if (error) throw error;
+
+  // Ensure users table row exists (synced with auth.uid())
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', data.user.id)
+    .single();
+
+  if (!existingUser) {
+    await supabase.from('users').insert({
+      id: data.user.id,
+      email: data.user.email,
+      created_at: new Date().toISOString()
+    });
+    console.log('[auth] Created users row for new signup:', data.user.id);
+  }
+
   return data;
 };
 
@@ -26,6 +43,23 @@ export const signInWithEmail = async (email, password) => {
   });
 
   if (error) throw error;
+
+  // Ensure users table row exists (synced with auth.uid())
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', data.user.id)
+    .single();
+
+  if (!existingUser) {
+    await supabase.from('users').insert({
+      id: data.user.id,
+      email: data.user.email,
+      created_at: new Date().toISOString()
+    });
+    console.log('[auth] Created users row for email sign-in:', data.user.id);
+  }
+
   return data;
 };
 
@@ -75,159 +109,147 @@ export const verifyOTP = async (email, token) => {
   };
 };
 
-// Sign in with wallet (Solana) - Web3 authentication
-export const signInWithWallet = async (walletAddress, signatureData) => {
+// Sign in with wallet (Solana) - supports binding to existing accounts
+export const signInWithWallet = async (walletAddress, signatureData = {}) => {
   try {
-    console.log('[v0] Signing in with wallet:', walletAddress);
-    
-    // 1. Sign in with Supabase using wallet address as identity provider
-    // This creates or retrieves the user via Supabase Web3 auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithIdToken({
-      provider: 'solana',
-      token: signatureData?.signature || walletAddress, // Pass signature as proof
-    });
+    console.log('[wallet v5] Connecting wallet:', walletAddress);
 
-    if (authError) {
-      console.log('[v0] Supabase Web3 auth not configured, using wallet-based auth');
-      // Fallback: Authenticate with wallet address
-      // This will work once you enable Web3 auth in Supabase
-    }
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUserId = session?.user?.id;
 
-    // 2. Get or create user profile with wallet address
-    const { data: existingUser, error: fetchError } = await supabase
+    // Check if this wallet is already used somewhere
+    const { data: existing } = await supabase
       .from('users')
-      .select('*')
+      .select('id, email')
       .eq('wallet_address', walletAddress)
       .single();
 
-    let user = existingUser;
-    let isNewUser = false;
+    let user;
 
-    if (fetchError && fetchError.code === 'PGRST116') {
-      // User doesn't exist, create new user profile
-      isNewUser = true;
-      const { data: newUser, error: createError } = await supabase
-        .from('users')
-        .insert([
-          {
-            wallet_address: walletAddress,
-            created_at: new Date().toISOString(),
-          }
-        ])
-        .select()
-        .single();
-
-      if (createError) throw createError;
-      user = newUser;
-      console.log('[v0] Created new user with wallet:', walletAddress);
-    } else if (fetchError) {
-      throw fetchError;
+    if (existing) {
+      if (session && existing.id === currentUserId) {
+        // Already linked to current logged-in user → good
+        console.log('[wallet v5] Wallet already linked to this account');
+        const { data: u } = await supabase.from('users').select('*').eq('id', currentUserId).single();
+        user = u;
+      } else if (!session) {
+        // Pure wallet login → use existing
+        console.log('[wallet v5] Pure wallet login – using existing user');
+        const { data: u } = await supabase.from('users').select('*').eq('id', existing.id).single();
+        user = u;
+      } else {
+        // Wallet belongs to someone else → allow override (you can make stricter later)
+        console.log('[wallet v5] Overwriting wallet link to current user');
+        const { data: updated } = await supabase
+          .from('users')
+          .update({ wallet_address: walletAddress })
+          .eq('id', currentUserId)
+          .select()
+          .single();
+        user = updated;
+      }
+    } else {
+      // New wallet
+      if (session && currentUserId) {
+        // Bind to current email user
+        console.log('[wallet v5] Binding new wallet to email account');
+        const { data: updated } = await supabase
+          .from('users')
+          .update({ wallet_address: walletAddress })
+          .eq('id', currentUserId)
+          .select()
+          .single();
+        user = updated || { id: currentUserId };
+      } else {
+        // Create new wallet-only user
+        console.log('[wallet v5] Creating new wallet user');
+        const { data: newUser } = await supabase
+          .from('users')
+          .insert({ wallet_address: walletAddress, created_at: new Date().toISOString() })
+          .select()
+          .single();
+        user = newUser;
+      }
     }
 
-    // 3. Store wallet info in localStorage for offline support
+    // Save to localStorage
     localStorage.setItem('wallet_address', walletAddress);
-    localStorage.setItem('connected_wallet', signatureData?.walletName || 'Phantom');
-    localStorage.setItem('user_id', user?.id);
+    localStorage.setItem('connected_wallet', signatureData?.walletName || 'Unknown');
+    localStorage.setItem('user_id', user.id);
 
-    console.log('[v0] User authenticated:', user?.id);
+    console.log('[wallet v5] Success – user:', user.id);
 
-    return {
-      user,
-      session: authData?.session,
-      walletAddress,
-      isNewUser,
-      signature: signatureData?.signature
-    };
-  } catch (error) {
-    console.error('[v0] Wallet sign-in error:', error);
-    throw error;
+    return { user, session: session || null, walletAddress };
+  } catch (err) {
+    console.error('[wallet v5] Failed:', err.message);
+    throw err;
   }
 };
 
 // Sign out
 export const logout = async () => {
   try {
-    try {
-      const session = await getSession();
-      if (session) {
-        const { error } = await supabase.auth.signOut();
-        if (error) console.error('Supabase signout error:', error);
-      }
-    } catch (error) {
-      console.log('No Supabase session to sign out from');
-    }
-
-    localStorage.removeItem('wallet_address');
-    localStorage.removeItem('connected_wallet');
-    localStorage.removeItem('user_id');
-  } catch (error) {
-    console.error('Logout error:', error);
-    localStorage.removeItem('wallet_address');
-    localStorage.removeItem('connected_wallet');
-    localStorage.removeItem('user_id');
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn('Supabase signout failed:', err);
   }
+  localStorage.removeItem('wallet_address');
+  localStorage.removeItem('connected_wallet');
+  localStorage.removeItem('user_id');
 };
 
 // Get current session
 export const getSession = async () => {
   const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) throw error;
+  if (error) console.error('getSession error:', error);
   return session;
 };
 
-// Get current user
+// Get current user – reliable source for both auth & wallet
 export const getCurrentUser = async () => {
-  const walletAddress = localStorage.getItem('wallet_address');
-  const userId = localStorage.getItem('user_id');
-  const connectedWallet = localStorage.getItem('connected_wallet');
+  try {
+    // Priority 1: Supabase auth session
+    const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  // If wallet is connected, fetch full user profile from database
-  if (walletAddress && userId) {
-    try {
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
+    if (authUser) {
+      let { data: row } = await supabase.from('users').select('*').eq('id', authUser.id).single();
 
-      if (error) {
-        console.log('[v0] User profile not found, returning basic wallet info');
-        return {
-          id: userId,
-          wallet_address: walletAddress,
-          connected_wallet: connectedWallet,
-          email: null
-        };
+      if (!row) {
+        await supabase.from('users').insert({
+          id: authUser.id,
+          email: authUser.email,
+          created_at: new Date().toISOString()
+        });
+        row = { id: authUser.id, email: authUser.email };
       }
 
       return {
-        ...user,
-        wallet_address: walletAddress,
-        connected_wallet: connectedWallet
+        ...authUser,
+        ...row,
+        wallet_address: row?.wallet_address || localStorage.getItem('wallet_address') || null,
+        connected_wallet: localStorage.getItem('connected_wallet') || null
       };
-    } catch (err) {
-      console.log('[v0] Error fetching user profile:', err);
+    }
+
+    // Priority 2: Wallet-only fallback
+    const walletAddress = localStorage.getItem('wallet_address');
+    const userId = localStorage.getItem('user_id');
+    const connectedWallet = localStorage.getItem('connected_wallet');
+
+    if (walletAddress && userId) {
+      const { data: row } = await supabase.from('users').select('*').eq('id', userId).single();
+
       return {
         id: userId,
         wallet_address: walletAddress,
         connected_wallet: connectedWallet,
-        email: null
+        email: row?.email || null
       };
     }
-  }
 
-  // Fallback: Check Supabase session for email auth
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-
-    return {
-      ...user,
-      wallet_address: walletAddress,
-      connected_wallet: connectedWallet
-    };
+    return null;
   } catch (error) {
-    console.log('[v0] No authenticated user found');
+    console.error('getCurrentUser failed:', error);
     return null;
   }
 };
@@ -236,11 +258,9 @@ export const getCurrentUser = async () => {
 export const isAuthenticated = async () => {
   try {
     const session = await getSession();
-    const walletAddress = localStorage.getItem('wallet_address');
-
-    return !!(session || walletAddress);
+    return !!(session || localStorage.getItem('wallet_address'));
   } catch (error) {
-    console.error('Error checking authentication:', error);
+    console.error('isAuthenticated check failed:', error);
     return false;
   }
 };
@@ -275,14 +295,11 @@ export const updateUserMetadata = async (metadata) => {
   return data;
 };
 
-// Legacy compatibility functions
+// Legacy compatibility
 export const login = async (email, walletAddress) => {
-  if (walletAddress) {
-    return signInWithWallet(walletAddress);
-  } else if (email) {
-    return signInWithMagicLink(email);
-  }
-  throw new Error('Either email or wallet address is required');
+  if (walletAddress) return signInWithWallet(walletAddress);
+  if (email) return signInWithMagicLink(email);
+  throw new Error('Email or wallet required');
 };
 
 export const updateUserEmail = async (email) => {

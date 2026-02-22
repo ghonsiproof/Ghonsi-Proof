@@ -32,12 +32,23 @@ export default function Portfolio() {
     const loadProfileData = async () => {
       try {
         const currentUser = await getCurrentUser();
+        console.log('[Portfolio] Loaded currentUser:', currentUser); // debug
+
         if (currentUser) {
           setUser(currentUser);
+
           const profileData = await getProfile(currentUser.id);
-          setProfile(profileData);
+          console.log('[Portfolio] Loaded profileData:', profileData); // debug
+
+          // Merge wallet info reliably
+          setProfile({
+            ...profileData,
+            wallet_address: currentUser.wallet_address || profileData?.wallet_address
+          });
+
           const userProofs = await getUserProofs(currentUser.id);
           setProofs(userProofs);
+
           const liveStats = await getProofStats(currentUser.id);
           setStats({ total: liveStats.total, verified: liveStats.verified });
         }
@@ -121,9 +132,9 @@ export default function Portfolio() {
   const navItemClass = windowWidth < 700 ? "text-[9px]" : "text-[11px]";
 
   return (
-    <div className="min-h-screen pb-20 w-full bg-[#0B0F1B] text-white selection:bg-[#C19A4A]/30 relative overflow-hidden" style={{fontFamily: 'Inter, sans-serif'}}>
-      
-      {/* Background elements - matching home page */}
+    <div className="min-h-screen pb-20 w-full bg-[#0B0F1B] text-white selection:bg-[#C19A4A]/30 relative overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
+
+      {/* Background elements */}
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <div className="absolute top-0 -left-40 w-96 h-96 bg-[#C19A4A] rounded-full mix-blend-multiply filter blur-[128px] animate-blob" />
         <div className="absolute top-0 -right-40 w-96 h-96 bg-[#d9b563] rounded-full mix-blend-multiply filter blur-[128px] animate-blob animation-delay-2000" />
@@ -144,7 +155,7 @@ export default function Portfolio() {
       <div className="flex items-center justify-between px-4 md:px-8 py-3 sticky top-0 z-50 bg-[#0B0F1B]/95 backdrop-blur-sm border-b border-white/5">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/')} className="logo bg-transparent border-none p-0 cursor-pointer">
-            <img src={logo} alt="Logo" style={{width: 'auto', height: '75px'}} />
+            <img src={logo} alt="Logo" style={{ width: 'auto', height: '75px' }} />
           </button>
         </div>
         <div className="flex items-center gap-3">
@@ -161,22 +172,22 @@ export default function Portfolio() {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-full mx-auto px-4 md:px-8 relative z-10" style={{paddingTop: windowWidth < 640 ? '12px' : windowWidth < 1024 ? '60px' : '30px'}}>
-        
+      <main className="max-w-full mx-auto px-4 md:px-8 relative z-10" style={{ paddingTop: windowWidth < 640 ? '12px' : windowWidth < 1024 ? '60px' : '30px' }}>
+
         {/* Top Section - Profile & Stats */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8"
         >
-          
+
           {/* Left Column: Profile Card */}
           <div className="lg:col-span-2">
             <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500">
               <div className="relative bg-[#111625] rounded-2xl p-6 border border-white/5">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/5 via-transparent to-[#d9b563]/5 rounded-2xl" />
-                
+
                 <div className="flex items-start gap-6 relative z-10">
                   <div className="relative flex-shrink-0">
                     <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A] to-[#d9b563] rounded-2xl blur-xl opacity-40" />
@@ -194,7 +205,7 @@ export default function Portfolio() {
                       {profile?.display_name || 'Anonymous User'}
                     </h1>
                     <p className="text-sm text-gray-400 mb-4 line-clamp-2">{profile?.bio || 'No bio available'}</p>
-                    
+
                     <div className="flex items-center gap-3 mb-3 text-sm">
                       <button onClick={copyEmail} className="flex items-center gap-2 text-gray-400 hover:text-[#C19A4A] transition-colors group">
                         <Mail size={16} />
@@ -207,9 +218,15 @@ export default function Portfolio() {
                       <Wallet size={16} className="text-[#C19A4A] flex-shrink-0" />
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <code className="text-xs text-gray-400 truncate flex-1 font-mono">
-                          {profile?.users?.wallet_address || 'No wallet connected'}
+                          {user?.wallet_address || profile?.wallet_address || profile?.users?.wallet_address || 'No wallet connected'}
                         </code>
-                        <a href={`https://solscan.io/account/${profile?.users?.wallet_address || ''}`} target="_blank" rel="noopener noreferrer" aria-label="Open wallet address in explorer" className="text-white hover:text-[#C19A4A] transition-colors flex items-center">
+                        <a
+                          href={`https://solscan.io/account/${user?.wallet_address || profile?.wallet_address || profile?.users?.wallet_address || ''}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Open wallet address in explorer"
+                          className="text-white hover:text-[#C19A4A] transition-colors flex items-center"
+                        >
                           <ExternalLink size={16} />
                         </a>
                       </div>
@@ -223,29 +240,27 @@ export default function Portfolio() {
           </div>
 
           {/* Right Column: Stats & Skills */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col gap-4"
           >
-            {/* Stats Row */}
             <div className="grid grid-cols-2 gap-4">
               <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#C19A4A]/30 to-transparent">
                 <div className="bg-[#1A1F2E] rounded-xl p-4 text-center border border-white/5 h-full">
-                  <div className="text-2xl font-bold text-white mb-1">{stats.verified}</div>
+                  <div className="text-2xl font-bold text-white mb-1">{stats.total}</div>
                   <div className="text-xs text-gray-400">Total Proofs</div>
                 </div>
               </div>
               <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#C19A4A] to-[#d9b563]">
                 <div className="bg-[#1A1F2E] rounded-xl p-4 text-center h-full">
                   <div className="text-2xl font-bold text-[#C19A4A] mb-1">{stats.verified}</div>
-                  <div className="text-xs text-white">Achievements</div>
+                  <div className="text-xs text-white">Verified</div>
                 </div>
               </div>
             </div>
 
-            {/* Skills */}
             <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-white/10 to-transparent flex-1">
               <div className="bg-[#111625] rounded-xl p-5 border border-white/5 h-full">
                 <h2 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
@@ -270,7 +285,7 @@ export default function Portfolio() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <div 
+          <div
             ref={tabsRef}
             className={`flex items-center gap-2 overflow-x-auto no-scrollbar mb-6 pb-2 select-none cursor-grab ${isDragging ? 'cursor-grabbing' : ''}`}
             onMouseDown={handleMouseDown}
@@ -279,14 +294,13 @@ export default function Portfolio() {
             onMouseMove={handleMouseMove}
           >
             {tabs.map(tab => (
-              <button 
+              <button
                 key={tab.name}
                 onClick={() => !isDragging && setActiveTab(tab.name)}
-                className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-semibold transition-all shrink-0 ${
-                  activeTab === tab.name 
-                    ? 'bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-black shadow-[0_0_30px_rgba(193,154,74,0.3)]' 
-                    : 'bg-[#1A1F2E] text-white border border-white/5 hover:bg-[#252b3d] hover:text-gray-200 hover:border-[#C19A4A]/20'
-                }`}
+                className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-semibold transition-all shrink-0 ${activeTab === tab.name
+                  ? 'bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-black shadow-[0_0_30px_rgba(193,154,74,0.3)]'
+                  : 'bg-[#1A1F2E] text-white border border-white/5 hover:bg-[#252b3d] hover:text-gray-200 hover:border-[#C19A4A]/20'
+                  }`}
               >
                 {tab.name} <span className={`ml-1 text-[10px] ${activeTab === tab.name ? 'text-black/60' : 'text-gray-400'}`}>({tab.count})</span>
               </button>
@@ -307,14 +321,14 @@ export default function Portfolio() {
               <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-white/10 to-transparent h-full">
                 <div className="bg-[#111625] rounded-2xl border border-white/5 overflow-hidden hover:border-[#C19A4A]/30 transition-all duration-300 h-full flex flex-col group-hover:shadow-[0_0_30px_rgba(193,154,74,0.15)]">
                   <div className="relative h-32 overflow-hidden shrink-0">
-                    <img 
-                      src={proof.files?.[0]?.file_url || 'https://via.placeholder.com/400x200?text=No+Image'} 
-                      alt={proof.proof_name} 
-                      className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" 
+                    <img
+                      src={proof.files?.[0]?.file_url || 'https://via.placeholder.com/400x200?text=No+Image'}
+                      alt={proof.proof_name}
+                      className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#111625] to-transparent"></div>
                   </div>
-                  
+
                   <div className="p-4 -mt-6 relative z-10 flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2 max-w-[calc(100%-40px)]">
@@ -369,7 +383,7 @@ export default function Portfolio() {
               </div>
             </motion.div>
           ))}
-          
+
           {filteredProofs.length === 0 && (
             <div className="text-center py-10 text-gray-500 text-sm col-span-full">
               No proofs found for this category.
