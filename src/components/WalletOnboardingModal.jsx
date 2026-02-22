@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, User, Image as ImageIcon } from 'lucide-react';
+import { X, Mail, User, ArrowRight, Check } from 'lucide-react';
 import { createWalletOnboardingUser, linkEmailToWallet } from '../utils/walletEmailLinking';
 import { sendOTPToEmail, verifyOTP } from '../utils/supabaseAuth';
 
@@ -11,7 +11,6 @@ function WalletOnboardingModal({ walletAddress, walletType, onComplete, onClose 
 
   // Profile form state
   const [name, setName] = useState('');
-  const [avatar, setAvatar] = useState('');
   const [userId, setUserId] = useState(null);
 
   // Email verification state
@@ -33,7 +32,6 @@ function WalletOnboardingModal({ walletAddress, walletType, onComplete, onClose 
 
       const result = await createWalletOnboardingUser(walletAddress, walletType, {
         name: name.trim(),
-        avatar: avatar.trim() || null,
       });
 
       if (result.success) {
@@ -117,13 +115,13 @@ function WalletOnboardingModal({ walletAddress, walletType, onComplete, onClose 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#0B0F1B] border border-[#C19A4A]/30 rounded-lg p-6 max-w-md w-full max-h-96 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-[#0B0F1B]/80 backdrop-blur-lg border border-[#C19A4A]/40 rounded-2xl p-8 max-w-md w-full max-h-96 overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-[#C19A4A]">Welcome to Ghonsi Proof</h2>
+          <h2 className="text-2xl font-bold text-[#C19A4A]">Complete Your Profile</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-[#C19A4A]/10 rounded transition-colors"
+            className="p-1 hover:bg-[#C19A4A]/20 rounded-lg transition-colors"
           >
             <X size={20} className="text-[#C19A4A]" />
           </button>
@@ -150,23 +148,8 @@ function WalletOnboardingModal({ walletAddress, walletType, onComplete, onClose 
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Avatar URL (optional)</label>
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#1A1F2E] border border-[#C19A4A]/20 rounded-lg">
-                <ImageIcon size={18} className="text-[#C19A4A]" />
-                <input
-                  type="url"
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                  placeholder="https://..."
-                  className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-sm"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            {error && <p className="text-red-400 text-sm">{error}</p>}
-            {message && <p className="text-green-400 text-sm">{message}</p>}
+            {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
+            {message && <p className="text-green-400 text-sm mt-3">{message}</p>}
 
             <button
               type="submit"

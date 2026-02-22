@@ -54,7 +54,7 @@ export const createWalletOnboardingUser = async (walletAddress, walletType, onbo
   try {
     console.log('[v0] Creating new wallet user:', walletAddress);
     
-    const { name, avatar, email } = onboardingData;
+    const { name, email } = onboardingData;
     
     const { data: newUser, error: createError } = await supabase
       .from('users')
@@ -63,7 +63,6 @@ export const createWalletOnboardingUser = async (walletAddress, walletType, onbo
           wallet_address: walletAddress,
           wallet_type: walletType,
           name: name || null,
-          avatar: avatar || null,
           email: email || null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),

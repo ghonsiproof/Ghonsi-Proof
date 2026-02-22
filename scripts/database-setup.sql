@@ -4,7 +4,6 @@
 -- 1. Add missing columns to users table if they don't exist
 ALTER TABLE public.users 
 ADD COLUMN IF NOT EXISTS name TEXT,
-ADD COLUMN IF NOT EXISTS avatar TEXT,
 ADD COLUMN IF NOT EXISTS wallet_address TEXT UNIQUE,
 ADD COLUMN IF NOT EXISTS wallet_type TEXT DEFAULT 'solana',
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now();

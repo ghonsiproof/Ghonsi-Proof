@@ -47,7 +47,30 @@ function Login() {
         return;
       }
 
-      // Check if user exists
+      // 1. Sign message to prove wallet ownership
+      const messageToSign = `Sign this message to verify your Ghonsi Proof account.\nWallet: ${walletAddress}\nTimestamp: ${Date.now()}`;
+      const signResult = await sign(messageToSign);
+
+      if (!signResult) {
+        setMessage('Failed to sign message. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Authenticate with Supabase using wallet signature
+      const authResult = await signInWithWallet(walletAddress, {
+        signature: signResult.signature,
+        publicKey: signResult.publicKey,
+        walletName: localStorage.getItem('connected_wallet') || 'Phantom'
+      });
+
+      if (!authResult) {
+        setMessage('Failed to authenticate. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Check if this is a new user
       const existingUser = await getUserByWalletAddress(walletAddress);
       
       if (!existingUser) {
@@ -55,32 +78,12 @@ function Login() {
         console.log('[v0] New wallet user, showing onboarding');
         setIsNewWalletUser(true);
         setShowOnboarding(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // Sign a message to prove wallet ownership
-      const messageToSign = `Sign this message to verify your Ghonsi Proof account.\nWallet: ${walletAddress}\nTimestamp: ${Date.now()}`;
-      const signResult = await sign(messageToSign);
-
-      if (signResult) {
-        // Authenticate with Supabase using wallet signature
-        const authResult = await signInWithWallet(walletAddress, {
-          signature: signResult.signature,
-          publicKey: signResult.publicKey,
-          walletName: localStorage.getItem('connected_wallet') || 'Phantom'
-        });
-
-        if (authResult) {
-          setHasSigned(true);
-          setMessage('✅ Wallet verified! Redirecting...');
-          console.log('[v0] User signed in:', authResult.user?.id);
-          setTimeout(() => navigate('/home'), 1000);
-        } else {
-          setMessage('Failed to authenticate. Please try again.');
-        }
       } else {
-        setMessage('Failed to sign message. Please try again.');
+        // Existing user - redirect to home
+        setHasSigned(true);
+        setMessage('✅ Welcome back! Redirecting...');
+        console.log('[v0] User signed in:', authResult.user?.id);
+        setTimeout(() => navigate('/home'), 1000);
       }
     } catch (err) {
       console.error('[v0] Wallet auth error:', err);
