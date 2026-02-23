@@ -56,14 +56,14 @@ function Message() {
         await sendResponseMessage(
           currentUser.id,
           selectedMessage.sender_id,
-          `Here is my portfolio: ${portfolioUrl}`,
+          `Here is the portfolio: ${portfolioUrl}`,
           senderName
         );
       } else if (status === 'rejected') {
         await sendResponseMessage(
           currentUser.id,
           selectedMessage.sender_id,
-          `${senderName} rejected you to view his portfolio`,
+          `${senderName} rejected your request to view their portfolio`,
           senderName
         );
       }
