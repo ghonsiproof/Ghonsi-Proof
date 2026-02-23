@@ -66,6 +66,7 @@ export default function Portfolio() {
   const [user, setUser]               = useState(null);
   const [profile, setProfile]         = useState(null);
   const [proofs, setProofs]           = useState([]);
+  const [portfolioLinkCopied, setPortfolioLinkCopied] = useState(false);
   const tabsRef = useRef(null);
 
   useEffect(() => {
@@ -109,6 +110,14 @@ export default function Portfolio() {
         setTimeout(() => setEmailCopied(false), 2000);
       });
     }
+  };
+
+  const handleSharePortfolio = () => {
+    const portfolioUrl = `${window.location.origin}/request?id=${user?.id}`;
+    navigator.clipboard.writeText(portfolioUrl).then(() => {
+      setPortfolioLinkCopied(true);
+      setTimeout(() => setPortfolioLinkCopied(false), 2000);
+    });
   };
 
   const renderSocialLinks = () => {
@@ -197,8 +206,8 @@ export default function Portfolio() {
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/')} className={`${navItemClass} text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>Home</button>
           <button onClick={() => navigate(`/request?id=${user?.id}`)} className={`${navItemClass} text-white cursor-pointer hover:text-[#C19A4A] transition-colors bg-transparent border-none`}>Public Profile</button>
-          <button className="ml-2 bg-[#C19A4A] text-black text-[9px] px-3 py-1.5 rounded-md font-semibold flex items-center gap-2 hover:bg-[#a8853b] transition-colors">
-            <Share2 size={14} /> <span>Share</span>
+          <button onClick={handleSharePortfolio} className="ml-2 bg-[#C19A4A] text-black text-[9px] px-3 py-1.5 rounded-md font-semibold flex items-center gap-2 hover:bg-[#a8853b] transition-colors">
+            <Share2 size={14} /> <span>{portfolioLinkCopied ? 'Copied!' : 'Share'}</span>
           </button>
         </div>
       </div>

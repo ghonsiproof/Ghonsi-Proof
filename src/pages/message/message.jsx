@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Clock } from 'lucide-react';
 import { getCurrentUser } from '../../utils/supabaseAuth';
-import { getMessages, markAsRead, respondToRequest } from '../../utils/messagesApi';
+import { getMessages, markAsRead, respondToRequest, sendResponseMessage } from '../../utils/messagesApi';
+import { getProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 
@@ -43,6 +44,29 @@ function Message() {
       await respondToRequest(messageId, status);
       setMessages(messages.map(m => m.id === messageId ? { ...m, status } : m));
       setSelectedMessage(prev => prev?.id === messageId ? { ...prev, status } : prev);
+      
+      // Get current user and profile info
+      const currentUser = await getCurrentUser();
+      const currentProfile = await getProfile(currentUser.id);
+      const senderName = currentProfile?.display_name || 'User';
+      
+      // Send response message to the requester
+      if (status === 'accepted') {
+        const portfolioUrl = `${window.location.origin}/request?id=${currentUser.id}`;
+        await sendResponseMessage(
+          currentUser.id,
+          selectedMessage.sender_id,
+          `Here is my portfolio: ${portfolioUrl}`,
+          senderName
+        );
+      } else if (status === 'rejected') {
+        await sendResponseMessage(
+          currentUser.id,
+          selectedMessage.sender_id,
+          `${senderName} rejected you to view his portfolio`,
+          senderName
+        );
+      }
     } catch (error) {
       console.error('Error responding to request:', error);
     }

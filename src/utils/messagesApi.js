@@ -50,7 +50,7 @@ export const createPortfolioRequestMessage = async (profileOwnerId, requesterNam
       receiver_id: profileOwnerId,
       portfolio_id: profileOwnerId,
       message: `${requesterName} has requested for your portfolio`,
-      sender_name: requesterName,
+      sender_name: 'PORTFOLIO REQUEST',
       type: 'profile_request'
     },
     {
@@ -58,7 +58,7 @@ export const createPortfolioRequestMessage = async (profileOwnerId, requesterNam
       receiver_id: requesterId,
       portfolio_id: profileOwnerId,
       message: `${requesterName}, you sent a request for ${profileOwnerName} portfolio`,
-      sender_name: 'Ghonsi Proof'
+      sender_name: 'PORTFOLIO REQUEST'
     }
   ];
 
@@ -81,6 +81,24 @@ export const respondToRequest = async (messageId, status) => {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status })
+  });
+  const result = await response.json();
+  
+  if (!response.ok) throw new Error(result.error);
+  return result.data;
+};
+
+export const sendResponseMessage = async (senderId, receiverId, message, senderName) => {
+  const response = await fetch(`${API_URL}/api/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sender_id: senderId,
+      receiver_id: receiverId,
+      portfolio_id: senderId,
+      message,
+      sender_name: senderName
+    })
   });
   const result = await response.json();
   
