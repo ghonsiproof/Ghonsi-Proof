@@ -113,7 +113,13 @@ function Message() {
                 <Clock size={12} />
                 {new Date(selectedMessage.created_at).toLocaleDateString()}
               </div>
-              <p className="text-gray-300 leading-relaxed">{selectedMessage.message}</p>
+              <p className="text-gray-300 leading-relaxed">
+                {selectedMessage.message.split(' ').map((word, idx) => 
+                  word.startsWith('http') ? (
+                    <a key={idx} href={word} target="_blank" rel="noopener noreferrer" className="text-[#C19A4A] underline hover:text-[#d4a852]">{word}</a>
+                  ) : word + ' '
+                )}
+              </p>
               
               {selectedMessage.type === 'profile_request' && !selectedMessage.status && (
                 <div className="flex gap-3 mt-6">
