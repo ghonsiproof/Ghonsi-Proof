@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Wallet, Upload, X, ArrowRight, Sparkles, Trophy, Share2 } from 'lucide-react';
+import { Wallet, Upload, X, ArrowRight, Sparkles, Trophy, Share2, Award, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
@@ -243,7 +243,7 @@ function Home() {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.15 }}
-                    className="absolute inset-0 p-6 lg:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20"
+                    className="absolute inset-0 p-6 lg:p-7 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20"
                     style={{
                       top: '16px',
                       left: '-24px',
@@ -263,27 +263,53 @@ function Home() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center min-h-[80px]">
-                        <div className="text-3xl font-bold text-white mb-2">12</div>
+                    <div className="grid grid-cols-2 gap-2.5 mb-3">
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
                         <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
                           Total Proofs
                         </div>
                       </div>
-                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center min-h-[80px]">
-                        <div className="text-3xl font-bold text-white mb-2">9</div>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center">
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
                         <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
                           Verifiable
                         </div>
                       </div>
-                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 col-span-2">
+                    </div>
+
+                    {/* Three Achievement Cards */}
+                    <div className="space-y-2">
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
-                          <Trophy size={12} className="text-[#C19A4A] flex-shrink-0" /> 
+                          <Trophy size={11} className="text-[#C19A4A] flex-shrink-0" /> 
                           <span className="truncate">Recent Achievement</span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-bold text-white truncate">Hackathon Winner</span>
-                          <span className="text-[10px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Award size={11} className="text-blue-400 flex-shrink-0" /> 
+                          <span className="truncate">Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">DeFi Summit Speaker</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Star size={11} className="text-purple-400 flex-shrink-0" /> 
+                          <span className="truncate">Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">Top Contributor 2024</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
                         </div>
                       </div>
                     </div>
@@ -299,14 +325,15 @@ function Home() {
                       translateZ: 30,
                       transition: { duration: 0.4 }
                     }}
-                    className="absolute inset-0 p-6 lg:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20 flex flex-col gap-6"
+                    className="absolute inset-0 p-6 lg:p-7 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20 flex flex-col gap-4"
                     style={{
                       transform: 'perspective(1200px) rotateY(-6deg) rotateX(3deg) translateZ(20px)',
                       transformStyle: 'preserve-3d',
                       boxShadow: '-24px 24px 72px rgba(193,154,74,0.15), 0 24px 48px rgba(0,0,0,0.6)'
                     }}
                   >
-                    <div className="flex items-center gap-4">
+                    {/* Profile Header */}
+                    <div className="flex items-center gap-4 mb-3">
                       <div className="relative flex-shrink-0">
                         <img src={QUEEN_SMITH_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
                       </div>
@@ -316,27 +343,57 @@ function Home() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center min-h-[80px]">
-                        <div className="text-3xl font-bold text-white mb-2">12</div>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
                         <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
                           Total Proofs
                         </div>
                       </div>
-                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center min-h-[80px]">
-                        <div className="text-3xl font-bold text-white mb-2">9</div>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center">
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
                         <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
                           Verifiable
                         </div>
                       </div>
-                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 col-span-2">
+                    </div>
+
+                    {/* Three Achievement Cards */}
+                    <div className="space-y-2 flex-1">
+                      {/* Achievement 1 */}
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 hover:border-[#C19A4A]/30 transition-colors">
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
-                          <Trophy size={12} className="text-[#C19A4A] flex-shrink-0" /> 
+                          <Trophy size={11} className="text-[#C19A4A] flex-shrink-0" /> 
                           <span className="truncate">Recent Achievement</span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-bold text-white truncate">Hackathon Winner</span>
-                          <span className="text-[10px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+
+                      {/* Achievement 2 */}
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 hover:border-blue-400/30 transition-colors">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Award size={11} className="text-blue-400 flex-shrink-0" /> 
+                          <span className="truncate">Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">DeFi Summit Speaker</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+
+                      {/* Achievement 3 */}
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 hover:border-purple-400/30 transition-colors">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Star size={11} className="text-purple-400 flex-shrink-0" /> 
+                          <span className="truncate">Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">Top Contributor 2024</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
                         </div>
                       </div>
                     </div>
@@ -471,9 +528,9 @@ function Home() {
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center min-h-[80px]">
-                    <div className="text-3xl font-bold text-white mb-2">9</div>
+                    <div className="text-3xl font-bold text-white mb-2">12</div>
                     <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
-                      Achievements
+                      Verifiable
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-white/5 col-span-2">
@@ -532,7 +589,7 @@ function Home() {
                 </p>
               </motion.div>
 
-              {/* CTAs — */}
+              {/* CTAs */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -548,15 +605,15 @@ function Home() {
                 </NavLink>
 
                 <button
-  onClick={scrollToBubbleSection}
-  className="group relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold overflow-hidden transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm sm:text-base justify-center whitespace-nowrap"
->
-  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-xl" />
-  <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/0 via-[#C19A4A]/10 to-[#C19A4A]/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
-  <div className="absolute inset-[1px] bg-[#0B0F1B]/80 backdrop-blur-xl rounded-[11px]" />
-  <span className="relative z-10">Verify talent now</span>
-  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
-</button>
+                  onClick={scrollToBubbleSection}
+                  className="group relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold overflow-hidden transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm sm:text-base justify-center whitespace-nowrap"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/0 via-[#C19A4A]/10 to-[#C19A4A]/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                  <div className="absolute inset-[1px] bg-[#0B0F1B]/80 backdrop-blur-xl rounded-[11px]" />
+                  <span className="relative z-10">Verify talent now</span>
+                  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                </button>
               </motion.div>
             </div>
           </motion.div>
@@ -587,7 +644,7 @@ function Home() {
             className="relative p-[2px] rounded-3xl lg:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
           >
             <div className="relative p-[1px] rounded-[22px] lg:rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
-<div className="relative h-[600px] sm:h-[750px] lg:h-[850px] xl:h-[950px] rounded-[20px] lg:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-hidden">
+              <div className="relative h-[600px] sm:h-[750px] lg:h-[850px] xl:h-[950px] rounded-[20px] lg:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A15_0%,transparent_70%)] rounded-[20px] lg:rounded-[2.3rem]" />
                 
                 <div className="absolute inset-0 opacity-30 rounded-[20px] lg:rounded-[2.3rem]" style={{
