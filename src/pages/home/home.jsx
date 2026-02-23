@@ -273,7 +273,7 @@ function Home() {
                       <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center min-h-[80px]">
                         <div className="text-3xl font-bold text-white mb-2">9</div>
                         <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
-                          Achievements
+                          Verifiable
                         </div>
                       </div>
                       <div className="bg-white/5 rounded-2xl p-4 border border-white/5 col-span-2">
