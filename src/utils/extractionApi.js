@@ -3,7 +3,7 @@
  * Handles communication with the document extraction service
  */
 
-const API_URL = 'https://extraction-api-456o.onrender.com';
+const API_URL = 'https://extraction-api-e54a.onrender.com/api/extract/';
 
 /**
  * Map UI proof types to API proof types
