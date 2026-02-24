@@ -114,7 +114,7 @@ export default function Portfolio() {
   }, [proofs, profile]);
 
   const copyEmail = () => {
-    const emailToCopy = profile?.users?.email || '';
+    const emailToCopy = profile?.users?.email || profile?.email || '';
     if (emailToCopy) {
       navigator.clipboard.writeText(emailToCopy).then(() => {
         setEmailCopied(true);
@@ -294,9 +294,9 @@ export default function Portfolio() {
                       {/* Email section - always show email icon */}
                       <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                         <Mail size={11} className="text-[#C19A4A] shrink-0" />
-                        {profile?.users?.email ? (
+                        {(profile?.users?.email || profile?.email) ? (
                           <>
-                            <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">{profile.users.email}</span>
+                            <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">{profile?.users?.email || profile?.email}</span>
                             <button
                               onClick={copyEmail}
                               style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
