@@ -14,6 +14,7 @@ import { getCurrentUser } from '../../utils/supabaseAuth';
 import { uploadProof } from '../../utils/proofsApi';
 import { extractDocumentData, supportsExtraction } from '../../utils/extractionApi';
 import { uploadDocumentWithMetadata } from '../../utils/pinataUpload';
+import { submitProofToBlockchain, updateProofWithBlockchainData } from '../../utils/blockchainSubmission';
 import { useWallet } from '../../hooks/useWallet';
 import { useConnection } from '@solana/wallet-adapter-react';
 import Header from '../../components/header/header.jsx';
@@ -308,7 +309,7 @@ function Upload() {
 
   /**
    * Handles successful transaction
-   * Uploads document to Pinata IPFS and saves proof to database
+   * Uploads document to Pinata IPFS, saves proof to database, and submits to blockchain
    * @param {Object} txData - Transaction data from modal (txHash, amount, documentData)
    */
   const handleTransactionSuccess = async (txData) => {
@@ -339,9 +340,30 @@ function Upload() {
         transactionHash: txData.txHash,
       };
 
-      await uploadProof(proofDataWithIPFS, [], [referenceFiles[0]]);
+      const uploadedProof = await uploadProof(proofDataWithIPFS, [], [referenceFiles[0]]);
+      const proofId = uploadedProof.proof.id;
 
-      console.log('[v0] Proof submitted successfully with IPFS hash:', ipfsResult.hash);
+      console.log('[v0] Proof saved to database:', proofId);
+
+      // Now submit to blockchain
+      console.log('[v0] Submitting proof to blockchain...');
+      const blockchainResult = await submitProofToBlockchain(
+        {
+          proofId: proofId,
+          title: pendingProofData.proofName,
+          description: pendingProofData.summary,
+          proofType: pendingProofData.proofType,
+          ipfsUri: ipfsResult.url,
+        },
+        publicKey?.toString()
+      );
+
+      console.log('[v0] Blockchain submission successful:', blockchainResult);
+
+      // Update proof with blockchain data
+      await updateProofWithBlockchainData(proofId, blockchainResult);
+
+      console.log('[v0] Proof fully submitted: database + IPFS + blockchain');
 
       setTimeout(() => {
         setShowPendingModal(false);
@@ -349,7 +371,7 @@ function Upload() {
       }, 1500);
     } catch (error) {
       console.error('[v0] Error completing proof submission:', error);
-      setUploadError(error.message || 'Failed to upload proof to IPFS. Transaction was successful but proof storage failed.');
+      setUploadError(error.message || 'Failed to complete proof submission. IPFS upload may have succeeded but blockchain submission failed.');
       setShowPendingModal(false);
       setIsUploading(false);
     }
