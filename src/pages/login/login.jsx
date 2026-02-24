@@ -57,8 +57,13 @@ function Login() {
         if (authResult) {
           setHasSigned(true);
           setMessage('✅ Wallet verified! Redirecting...');
-          console.log('[v0] User signed in:', authResult.user?.id);
-          setTimeout(() => navigate('/home'), 1000);
+          console.log('[v0] User signed in:', authResult.user?.id, 'isNewUser:', authResult.isNewUser);
+          // Redirect new wallet users to create profile
+          if (authResult.isNewUser) {
+            setTimeout(() => navigate('/create-profile'), 1000);
+          } else {
+            setTimeout(() => navigate('/home'), 1000);
+          }
         } else {
           setMessage('Failed to authenticate. Please try again.');
         }
@@ -105,9 +110,14 @@ function Login() {
     setMessage('');
     try {
       const result = await verifyOTP(trimmed, otpCode);
-      console.log('[v0] OTP verified, user:', result.user?.id);
+      console.log('[v0] OTP verified, user:', result.user?.id, 'isNewUser:', result.isNewUser);
       setMessage('Successfully signed in!');
-      setTimeout(() => navigate('/home'), 1000);
+      // Redirect new email users to create profile
+      if (result.isNewUser) {
+        setTimeout(() => navigate('/create-profile'), 1000);
+      } else {
+        setTimeout(() => navigate('/home'), 1000);
+      }
     } catch (error) {
       console.error('[v0] OTP verification error:', error);
       setMessage('Invalid or expired code. Please try again.');

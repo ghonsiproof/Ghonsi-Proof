@@ -279,16 +279,18 @@ export default function Portfolio() {
                       <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                         <Wallet size={11} className="text-[#C19A4A] shrink-0" />
                         <code className="text-[10px] text-gray-400 font-mono truncate flex-1 min-w-0">
-                          {profile?.users?.wallet_address || 'No wallet con...'}
+                          {user?.wallet_address ? `${user.wallet_address.slice(0, 4)}...${user.wallet_address.slice(-4)}` : 'No wallet connected'}
                         </code>
-                        <a
-                          href={`https://solscan.io/account/${profile?.users?.wallet_address || ''}`}
-                          target="_blank" rel="noopener noreferrer"
-                          style={{ flexShrink: 0 }}
-                          className="text-gray-500 hover:text-[#C19A4A] transition-colors"
-                        >
-                          <ExternalLink size={11} />
-                        </a>
+                        {user?.wallet_address && (
+                          <a
+                            href={`https://solscan.io/account/${user.wallet_address}`}
+                            target="_blank" rel="noopener noreferrer"
+                            style={{ flexShrink: 0 }}
+                            className="text-gray-500 hover:text-[#C19A4A] transition-colors"
+                          >
+                            <ExternalLink size={11} />
+                          </a>
+                        )}
                       </div>
                     </div>
 
