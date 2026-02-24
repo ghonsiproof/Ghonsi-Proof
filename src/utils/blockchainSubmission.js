@@ -4,7 +4,6 @@
  */
 
 import { supabase } from '../config/supabaseClient';
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 /**
  * Submit proof to blockchain via backend

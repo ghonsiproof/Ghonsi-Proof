@@ -25,7 +25,6 @@ import './upload.css';
 function Upload() {
   // Wallet and connection hooks
   const { publicKey, connected } = useWallet();
-  const { connection } = useConnection();
 
   // Form state management
   const [proofType, setProofType] = useState('');
@@ -332,7 +331,6 @@ function Upload() {
       console.log('[v0] Pinata upload successful:', ipfsResult);
 
       // Upload proof to database with IPFS hash
-      const user = await getCurrentUser();
       const proofDataWithIPFS = {
         ...pendingProofData,
         ipfsHash: ipfsResult.hash,
