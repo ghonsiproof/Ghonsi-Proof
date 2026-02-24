@@ -68,6 +68,11 @@ const TransactionSignerModal = ({
       return;
     }
 
+    if (!solanaWallet?.signTransaction) {
+      setError('Wallet does not support transaction signing');
+      return;
+    }
+
     if (!treasuryAddress) {
       setError('Treasury address not configured');
       return;
@@ -87,8 +92,14 @@ const TransactionSignerModal = ({
         connection
       );
 
+      console.log('[v0] Transaction object:', transaction);
+
       // Sign the transaction with user's wallet
-      console.log('[v0] Requesting wallet signature');
+      console.log('[v0] Requesting wallet signature from:', publicKey.toString());
+      if (!solanaWallet.signTransaction) {
+        throw new Error('Wallet signTransaction method not available');
+      }
+
       const signedTx = await solanaWallet.signTransaction(transaction);
 
       if (!signedTx) {

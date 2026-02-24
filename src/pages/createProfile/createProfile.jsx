@@ -144,11 +144,13 @@ function CreateProfile() {
         if (!user) {
           // Try to get session directly from Supabase auth
           const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
+          if (!session || !session.user) {
             throw new Error('You must be logged in to create a profile');
           }
           user = session.user;
         }
+
+        console.log('[v0] Creating profile for user:', user.id);
 
         let avatarUrl = null;
 
