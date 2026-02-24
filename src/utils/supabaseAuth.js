@@ -453,38 +453,66 @@ export const getSession = async () => {
   return session;
 };
 
-// Get current user - ONLY uses Supabase session as single source of truth
+// Get current user - Supports both Supabase session and wallet session
 export const getCurrentUser = async () => {
   try {
+    // First check Supabase session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
       console.log('[v0] Error getting session:', sessionError);
+    }
+
+    if (session?.user) {
+      // Get user profile from users table
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.log('[v0] Error fetching user profile:', error);
+      }
+
+      // Return the user data with session info
+      return {
+        ...user,
+        id: session.user.id,
+        email: session.user.email || user?.email || null,
+        wallet_address: user?.wallet_address || null,
+      };
+    }
+
+    // Fall back to wallet session if no Supabase session
+    console.log('[v0] No Supabase session, checking wallet session');
+    const walletAddress = localStorage.getItem('wallet_address');
+    const userId = localStorage.getItem('user_id');
+
+    if (!walletAddress || !userId) {
+      console.log('[v0] No wallet session found either');
       return null;
     }
 
-    if (!session?.user) {
-      console.log('[v0] No active session found');
-      return null;
-    }
-
-    // Get user profile from users table
+    // Get user profile from users table using wallet address
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', userId)
+      .eq('wallet_address', walletAddress)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
-      console.log('[v0] Error fetching user profile:', error);
+    if (error) {
+      console.log('[v0] Error fetching wallet user profile:', error);
+      return null;
     }
 
-    // Return the user data with session info
+    console.log('[v0] Wallet user found:', userId);
     return {
       ...user,
-      id: session.user.id,
-      email: session.user.email || user?.email || null,
-      wallet_address: user?.wallet_address || null,
+      id: userId,
+      email: user?.email || null,
+      wallet_address: walletAddress,
     };
   } catch (error) {
     console.log('[v0] No authenticated user found:', error);

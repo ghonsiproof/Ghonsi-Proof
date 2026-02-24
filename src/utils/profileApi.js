@@ -38,10 +38,16 @@ export const getProfile = async (userId) => {
       data.uid = updates.uid;
     }
     if (!data.email) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        updates.email = user.email;
-        data.email = updates.email;
+      // First try to get from Supabase Auth
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          updates.email = user.email;
+          data.email = updates.email;
+        }
+      } catch (error) {
+        // If no Supabase auth session, email may be null for wallet-only users
+        console.log('[v0] No Supabase auth session, email may be null for wallet user');
       }
     }
     if (Object.keys(updates).length > 0) {
@@ -89,19 +95,40 @@ export const getProfileById = async (userId) => {
  * Required for createProfile.jsx
  */
 export const createProfile = async (profileData) => {
-  const user = await supabase.auth.getUser();
+  // Try to get Supabase auth user first
+  let userId = null;
+  let email = null;
 
-  if (!user.data.user) {
-    throw new Error("User not authenticated");
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      userId = user.id;
+      email = user.email;
+    }
+  } catch (error) {
+    console.log('[v0] No Supabase auth session');
   }
 
-  const uid = generateUID(user.data.user.id);
-  const email = user.data.user.email;
+  // If no Supabase session, use wallet session data from profileData
+  if (!userId) {
+    userId = profileData.user_id;
+    if (!userId) {
+      throw new Error("User not authenticated - no user ID found");
+    }
+    email = profileData.email || null;
+  }
+
+  // Use email from profileData if provided, otherwise use auth email
+  if (profileData.email) {
+    email = profileData.email;
+  }
+
+  const uid = generateUID(userId);
 
   const { data, error } = await supabase
     .from("profiles")
     .insert([{
-      user_id: user.data.user.id,
+      user_id: userId,
       uid,
       email,
       ...profileData,
