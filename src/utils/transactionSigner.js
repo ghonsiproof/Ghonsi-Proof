@@ -3,7 +3,6 @@ import {
   SystemProgram,
   Transaction,
   LAMPORTS_PER_SOL,
-  Keypair,
 } from '@solana/web3.js';
 
 /**
@@ -88,7 +87,6 @@ export const getTransactionSize = (transaction) => {
 export const estimateTransactionFee = async (connection, transaction) => {
   try {
     const feeCalculator = await connection.getRecentBlockhash();
-    const size = getTransactionSize(transaction);
     // Default fee per byte is 0.00001 lamports but can vary
     const baseFee = feeCalculator.feeCalculator?.lamportsPerSignature || 5000;
     return baseFee;

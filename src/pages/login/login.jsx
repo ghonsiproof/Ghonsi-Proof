@@ -23,6 +23,20 @@ function Login() {
     setIsGetStarted(params.get('mode') === 'getstarted');
   }, [location]);
 
+  // Check for existing wallet session on mount
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const walletAddress = localStorage.getItem('wallet_address');
+      const sessionToken = localStorage.getItem('session_token');
+      
+      if (walletAddress && sessionToken) {
+        console.log('[v0] Existing wallet session found, redirecting...');
+        setTimeout(() => navigate('/home'), 500);
+      }
+    };
+    checkExistingSession();
+  }, [navigate]);
+
   // When wallet connects, automatically trigger sign message
   useEffect(() => {
     if (connected && activeTab === 'wallet' && !hasSigned) {
@@ -42,33 +56,45 @@ function Login() {
         return;
       }
 
+      console.log('[v0] Starting wallet authentication for:', walletAddress);
+
       // Sign a message to prove wallet ownership
       const messageToSign = `Sign this message to verify your Ghonsi Proof account.\nWallet: ${walletAddress}\nTimestamp: ${Date.now()}`;
       const signResult = await sign(messageToSign);
 
-      if (signResult) {
-        // Authenticate with Supabase using wallet signature
-        const authResult = await signInWithWallet(walletAddress, {
-          signature: signResult.signature,
-          publicKey: signResult.publicKey,
-          walletName: localStorage.getItem('connected_wallet') || 'Phantom'
-        });
+      if (!signResult) {
+        setMessage('Failed to sign message. Please try again.');
+        setIsLoading(false);
+        return;
+      }
 
-        if (authResult) {
-          setHasSigned(true);
-          setMessage('✅ Wallet verified! Redirecting...');
-          console.log('[v0] User signed in:', authResult.user?.id, 'isNewUser:', authResult.isNewUser);
-          // Redirect new wallet users to create profile
-          if (authResult.isNewUser) {
-            setTimeout(() => navigate('/createProfile'), 1000);
-          } else {
-            setTimeout(() => navigate('/home'), 1000);
-          }
+      console.log('[v0] Message signed successfully');
+
+      // Authenticate with Supabase using wallet signature
+      const authResult = await signInWithWallet(walletAddress, {
+        signature: signResult.signature,
+        publicKey: signResult.publicKey,
+        walletName: localStorage.getItem('connected_wallet') || 'Phantom'
+      });
+
+      if (authResult && authResult.userId) {
+        console.log('[v0] Wallet authentication successful:', authResult.userId);
+        setHasSigned(true);
+        setMessage('✅ Wallet verified! Redirecting...');
+
+        // Store additional session info
+        localStorage.setItem('auth_method', 'wallet');
+        localStorage.setItem('last_login', new Date().toISOString());
+
+        // Redirect new wallet users to create profile, others to home
+        if (authResult.isNewUser) {
+          setTimeout(() => navigate('/createProfile'), 1000);
         } else {
-          setMessage('Failed to authenticate. Please try again.');
+          setTimeout(() => navigate('/home'), 1000);
         }
       } else {
-        setMessage('Failed to sign message. Please try again.');
+        console.error('[v0] Authentication returned invalid result:', authResult);
+        setMessage('Failed to authenticate. Please try again.');
       }
     } catch (err) {
       console.error('[v0] Wallet auth error:', err);

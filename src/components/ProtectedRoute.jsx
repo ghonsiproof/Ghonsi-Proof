@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '../config/supabaseClient';
+import { verifyWalletSession } from '../utils/supabaseAuth';
 
 function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
@@ -24,12 +25,26 @@ function ProtectedRoute({ children }) {
 
   const checkAuth = async () => {
     try {
-      // Only check Supabase session - this is the single source of truth
+      // Check Supabase session first
       const { data: { session } } = await supabase.auth.getSession();
       
-      console.log('[v0] Auth check - Session exists:', !!session);
+      if (session) {
+        console.log('[v0] Auth check - Supabase session exists');
+        setIsAuthenticated(true);
+        setLoading(false);
+        return;
+      }
+
+      // Fall back to wallet session verification
+      const walletSessionValid = await verifyWalletSession();
       
-      setIsAuthenticated(!!session);
+      if (walletSessionValid) {
+        console.log('[v0] Auth check - Wallet session verified');
+        setIsAuthenticated(true);
+      } else {
+        console.log('[v0] Auth check - No valid session found');
+        setIsAuthenticated(false);
+      }
     } catch (error) {
       console.error('[v0] Error checking auth:', error);
       setIsAuthenticated(false);
