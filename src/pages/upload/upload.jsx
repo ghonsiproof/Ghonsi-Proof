@@ -16,7 +16,6 @@ import { extractDocumentData, supportsExtraction } from '../../utils/extractionA
 import { uploadDocumentWithMetadata } from '../../utils/pinataUpload';
 import { submitProofToBlockchain, updateProofWithBlockchainData } from '../../utils/blockchainSubmission';
 import { useWallet } from '../../hooks/useWallet';
-import { useConnection } from '@solana/wallet-adapter-react';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import TransactionSignerModal from '../../components/TransactionSignerModal';
