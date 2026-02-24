@@ -21,7 +21,7 @@ export const uploadProof = async (
       throw new Error("User not authenticated");
     }
 
-    // 1. Insert proof record
+    // 1. Insert proof record with IPFS and transaction data
     const { data: proof, error: proofError } = await supabase
       .from("proofs")
       .insert({
@@ -30,6 +30,9 @@ export const uploadProof = async (
         proof_name: proofData.proofName,
         summary: proofData.summary,
         reference_link: proofData.referenceLink || null,
+        ipfs_hash: proofData.ipfsHash || null,
+        ipfs_url: proofData.ipfsUrl || null,
+        transaction_hash: proofData.transactionHash || null,
         status: "verified",
         verified_at: new Date().toISOString(),
       })

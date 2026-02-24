@@ -13,11 +13,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { uploadProof } from '../../utils/proofsApi';
 import { extractDocumentData, supportsExtraction } from '../../utils/extractionApi';
+import { uploadDocumentWithMetadata } from '../../utils/pinataUpload';
+import { useWallet } from '../../hooks/useWallet';
+import { useConnection } from '@solana/wallet-adapter-react';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
+import TransactionSignerModal from '../../components/TransactionSignerModal';
 import './upload.css';
 
 function Upload() {
+  // Wallet and connection hooks
+  const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
+
   // Form state management
   const [proofType, setProofType] = useState('');
   const [proofName, setProofName] = useState('');
@@ -34,6 +42,11 @@ function Upload() {
   const [uploadError, setUploadError] = useState('');
   const [supportingError, setSupportingError] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
+
+  // Transaction signer modal state
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [extractedDocumentData, setExtractedDocumentData] = useState(null);
+  const [pendingProofData, setPendingProofData] = useState(null);
 
   // Refs for DOM manipulation and click-outside detection
   const dropdownRef = useRef(null);
@@ -241,7 +254,8 @@ function Upload() {
 
   /**
    * Handles form submission and proof upload
-   * Validates required fields, authenticates user, and submits proof data
+   * Now shows transaction signer modal after validation
+   * After transaction is signed, uploads to Pinata and saves proof to database
    * @param {Event} e - Form submit event
    */
   const handleSubmit = async (e) => {
@@ -256,29 +270,99 @@ function Upload() {
       setSupportingError('A Reference Document is required.');
       hasError = true;
     }
+    if (!connected) {
+      setUploadError('Please connect your wallet to upload proofs.');
+      hasError = true;
+    }
     if (hasError) return;
-    setIsUploading(true);
-    setShowPendingModal(true);
+
     try {
       const user = await getCurrentUser();
       if (!user) throw new Error('You must be logged in to upload proofs');
-      const proofData = {
+
+      // Prepare the document data for IPFS storage
+      const documentData = {
         proofType: proofType,
         proofName: proofName,
         summary: summary,
         referenceLink: referenceLink || null,
+        walletAddress: publicKey?.toString() || null,
+        userId: user.id,
+        uploadedAt: new Date().toISOString(),
       };
-      await uploadProof(proofData, [], [referenceFiles[0]]);
+
+      // Store data and show transaction modal
+      setExtractedDocumentData(documentData);
+      setPendingProofData({
+        proofType: proofType,
+        proofName: proofName,
+        summary: summary,
+        referenceLink: referenceLink || null,
+      });
+      setShowTransactionModal(true);
+    } catch (error) {
+      console.error('[v0] Error preparing proof submission:', error);
+      setUploadError(error.message || 'Failed to prepare proof submission');
+    }
+  };
+
+  /**
+   * Handles successful transaction
+   * Uploads document to Pinata IPFS and saves proof to database
+   * @param {Object} txData - Transaction data from modal (txHash, amount, documentData)
+   */
+  const handleTransactionSuccess = async (txData) => {
+    setShowTransactionModal(false);
+    setShowPendingModal(true);
+
+    try {
+      console.log('[v0] Transaction successful, uploading to Pinata:', txData.txHash);
+
+      // Prepare metadata with transaction hash
+      const metadata = {
+        transactionHash: txData.txHash,
+        walletAddress: publicKey?.toString() || null,
+        amount: txData.amount,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Upload to Pinata IPFS
+      const ipfsResult = await uploadDocumentWithMetadata(extractedDocumentData, metadata);
+      console.log('[v0] Pinata upload successful:', ipfsResult);
+
+      // Upload proof to database with IPFS hash
+      const user = await getCurrentUser();
+      const proofDataWithIPFS = {
+        ...pendingProofData,
+        ipfsHash: ipfsResult.hash,
+        ipfsUrl: ipfsResult.url,
+        transactionHash: txData.txHash,
+      };
+
+      await uploadProof(proofDataWithIPFS, [], [referenceFiles[0]]);
+
+      console.log('[v0] Proof submitted successfully with IPFS hash:', ipfsResult.hash);
+
       setTimeout(() => {
         setShowPendingModal(false);
         setTimeout(() => setShowSubmittedModal(true), 300);
-      }, 2000);
+      }, 1500);
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadError(error.message || 'Failed to upload proof');
+      console.error('[v0] Error completing proof submission:', error);
+      setUploadError(error.message || 'Failed to upload proof to IPFS. Transaction was successful but proof storage failed.');
       setShowPendingModal(false);
       setIsUploading(false);
     }
+  };
+
+  /**
+   * Handles transaction modal close
+   * Resets modal state without completing upload
+   */
+  const handleTransactionModalClose = () => {
+    setShowTransactionModal(false);
+    setExtractedDocumentData(null);
+    setPendingProofData(null);
   };
 
   /**
@@ -296,6 +380,9 @@ function Upload() {
     setUploadError('');
     setIsUploading(false);
     setIsExtracting(false);
+    setShowTransactionModal(false);
+    setExtractedDocumentData(null);
+    setPendingProofData(null);
   };
 
   /**
@@ -325,6 +412,16 @@ function Upload() {
       <div className="fixed inset-0 pointer-events-none opacity-20 bg-grid z-0" />
 
       <Header />
+
+      {/* Transaction Signer Modal */}
+      <TransactionSignerModal
+        isOpen={showTransactionModal}
+        onClose={handleTransactionModalClose}
+        onSuccess={handleTransactionSuccess}
+        amount={0.01}
+        treasuryAddress={process.env.REACT_APP_TREASURY_WALLET || 'EKGNwqNBUBtH5Fnmcjjoj4Tci6dCXdcCrxcjTaWm5bLf'}
+        documentData={extractedDocumentData}
+      />
 
       <main className="relative z-10 flex-grow px-4 py-8 max-w-4xl mx-auto w-full mt-[105px]">
 

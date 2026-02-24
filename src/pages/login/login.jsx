@@ -60,7 +60,7 @@ function Login() {
           console.log('[v0] User signed in:', authResult.user?.id, 'isNewUser:', authResult.isNewUser);
           // Redirect new wallet users to create profile
           if (authResult.isNewUser) {
-            setTimeout(() => navigate('/create-profile'), 1000);
+            setTimeout(() => navigate('/createProfile'), 1000);
           } else {
             setTimeout(() => navigate('/home'), 1000);
           }
@@ -114,7 +114,7 @@ function Login() {
       setMessage('Successfully signed in!');
       // Redirect new email users to create profile
       if (result.isNewUser) {
-        setTimeout(() => navigate('/create-profile'), 1000);
+        setTimeout(() => navigate('/createProfile'), 1000);
       } else {
         setTimeout(() => navigate('/home'), 1000);
       }
