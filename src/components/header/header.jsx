@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Bell, Wallet } from 'lucide-react';
-import { getCurrentUser, logout } from '../../utils/supabaseAuth';
+import { supabase } from '../../config/supabaseClient';
+import { logout } from '../../utils/supabaseAuth';
 import { getUnreadCount } from '../../utils/messagesApi';
 import { useWallet } from '../../hooks/useWallet';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
@@ -25,20 +26,21 @@ function Header() {
 
   const checkAuthStatus = useCallback(async () => {
     try {
-      if (connected && walletAddress) {
+      // Check Supabase session first (single source of truth)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
         setIsLoggedIn(true);
+        const count = await getUnreadCount(session.user.id);
+        setUnreadCount(count);
       } else {
-        const currentUser = await getCurrentUser();
-        setIsLoggedIn(!!currentUser);
-        if (currentUser) {
-          const count = await getUnreadCount(currentUser.id);
-          setUnreadCount(count);
-        }
+        setIsLoggedIn(false);
       }
     } catch (error) {
+      console.error('[v0] Error checking auth status:', error);
       setIsLoggedIn(false);
     }
-  }, [connected, walletAddress]);
+  }, []);
 
   useEffect(() => {
     checkAuthStatus();

@@ -52,19 +52,24 @@ function Message() {
       
       // Send response message to the requester
       if (status === 'accepted') {
-        const portfolioUrl = `${window.location.origin}/request?id=${currentUser.id}`;
+        const portfolioUrl = `${window.location.origin}/portfolio?id=${currentUser.id}`;
+        const requesterProfile = await getProfile(selectedMessage.sender_id);
+        const requesterName = requesterProfile?.display_name || 'User';
         await sendResponseMessage(
           currentUser.id,
           selectedMessage.sender_id,
-          `Here is the portfolio: ${portfolioUrl}`,
-          senderName
+          `Hi ${requesterName}\n\n${senderName} has accepted your request to view the portfolio:\n\nHere is the portfolio: ${portfolioUrl}`,
+          'PORTFOLIO REQUEST UPDATE'
         );
       } else if (status === 'rejected') {
+        const requesterProfile = await getProfile(selectedMessage.sender_id);
+        const requesterName = requesterProfile?.display_name || 'User';
+        const homeUrl = `${window.location.origin}/`;
         await sendResponseMessage(
           currentUser.id,
           selectedMessage.sender_id,
-          `${senderName} rejected your request to view their portfolio`,
-          senderName
+          `Hi ${requesterName}\n\n${senderName} rejected your request to view their portfolio.\n\nYou can explore similar profiles here: ${homeUrl}`,
+          'PORTFOLIO REQUEST UPDATE'
         );
       }
     } catch (error) {

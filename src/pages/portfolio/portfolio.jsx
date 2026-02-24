@@ -7,17 +7,23 @@ import { getCurrentUser } from '../../utils/supabaseAuth';
 import { getProfile } from '../../utils/profileApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
+// Helper function to truncate wallet address
+const truncateWalletAddress = (address) => {
+  if (!address || address.length < 10) return address;
+  return `${address.slice(0, 5)}...${address.slice(-4)}`;
+};
+
 // Auto-skill extraction
 const PROOF_TYPE_LABELS = {
-  job_history:  'Work Experience',
+  job_history: 'Work Experience',
   certificates: 'Certified',
-  milestones:   'Milestones',
-  community:    'Community',
-  skills:       'Skills',
-  Project:      'Projects',
-  Certificate:  'Certifications',
-  Milestone:    'Milestones',
-  Achievement:  'Achievements',
+  milestones: 'Milestones',
+  community: 'Community',
+  skills: 'Skills',
+  Project: 'Projects',
+  Certificate: 'Certifications',
+  Milestone: 'Milestones',
+  Achievement: 'Achievements',
 };
 
 const KEYWORD_MAP = [
@@ -48,7 +54,7 @@ function deriveSkillsFromProofs(proofs) {
     });
 
     // 4. Use any explicit tags/skills arrays if the API returns them
-    if (Array.isArray(proof.tags))   proof.tags.forEach(t => skillSet.add(t));
+    if (Array.isArray(proof.tags)) proof.tags.forEach(t => skillSet.add(t));
     if (Array.isArray(proof.skills)) proof.skills.forEach(s => skillSet.add(s));
   });
   return Array.from(skillSet);
@@ -56,16 +62,16 @@ function deriveSkillsFromProofs(proofs) {
 
 export default function Portfolio() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab]   = useState('All Proofs');
+  const [activeTab, setActiveTab] = useState('All Proofs');
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [emailCopied, setEmailCopied] = useState(false);
-  const [isDragging, setIsDragging]   = useState(false);
-  const [startX, setStartX]           = useState(0);
-  const [scrollLeft, setScrollLeft]   = useState(0);
-  const [stats, setStats]             = useState({ total: 0, verified: 0 });
-  const [user, setUser]               = useState(null);
-  const [profile, setProfile]         = useState(null);
-  const [proofs, setProofs]           = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [stats, setStats] = useState({ total: 0, verified: 0 });
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [proofs, setProofs] = useState([]);
   const [portfolioLinkCopied, setPortfolioLinkCopied] = useState(false);
   const tabsRef = useRef(null);
 
@@ -78,14 +84,19 @@ export default function Portfolio() {
   useEffect(() => {
     const loadProfileData = async () => {
       try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+
         const currentUser = await getCurrentUser();
-        if (currentUser) {
+        const targetUserId = userId || currentUser?.id;
+
+        if (targetUserId) {
           setUser(currentUser);
-          const profileData = await getProfile(currentUser.id);
+          const profileData = await getProfile(targetUserId);
           setProfile(profileData);
-          const userProofs = await getUserProofs(currentUser.id);
+          const userProofs = await getUserProofs(targetUserId);
           setProofs(userProofs);
-          const liveStats = await getProofStats(currentUser.id);
+          const liveStats = await getProofStats(targetUserId);
           setStats({ total: liveStats.total, verified: liveStats.verified });
         }
       } catch (err) {
@@ -103,7 +114,7 @@ export default function Portfolio() {
   }, [proofs, profile]);
 
   const copyEmail = () => {
-    const emailToCopy = user?.email || '';
+    const emailToCopy = profile?.users?.email || profile?.email || '';
     if (emailToCopy) {
       navigator.clipboard.writeText(emailToCopy).then(() => {
         setEmailCopied(true);
@@ -113,7 +124,7 @@ export default function Portfolio() {
   };
 
   const handleSharePortfolio = () => {
-    const portfolioUrl = `${window.location.origin}/request?id=${user?.id}`;
+    const portfolioUrl = `${window.location.origin}/portfolio?id=${user?.id}`;
     navigator.clipboard.writeText(portfolioUrl).then(() => {
       setPortfolioLinkCopied(true);
       setTimeout(() => setPortfolioLinkCopied(false), 2000);
@@ -152,12 +163,36 @@ export default function Portfolio() {
     : '??';
 
   const tabs = [
-    { name: 'All Proofs',   value: 'All Proofs',  count: proofs.length },
-    { name: 'Work History', value: 'job_history',  count: proofs.filter(p => p.proof_type === 'job_history').length },
-    { name: 'Certificates', value: 'certificates', count: proofs.filter(p => p.proof_type === 'certificates').length },
-    { name: 'Milestones',   value: 'milestones',   count: proofs.filter(p => p.proof_type === 'milestones').length },
-    { name: 'Achievement',  value: 'achievement',  count: proofs.length },
-    { name: 'Skills',       value: 'skills',       count: proofs.filter(p => p.proof_type === 'skills').length },
+    {
+      name: 'All Proofs',
+      value: 'All Proofs',
+      count: proofs.length
+    },
+    {
+      name: 'Work History',
+      value: 'job_history',
+      count: proofs.filter(p => p.proof_type === 'job_history').length
+    },
+    {
+      name: 'Certificates',
+      value: 'certificates',
+      count: proofs.filter(p => p.proof_type === 'certificates').length
+    },
+    {
+      name: 'Milestones',
+      value: 'milestones',
+      count: proofs.filter(p => p.proof_type === 'milestones').length
+    },
+    {
+      name: 'Achievement',
+      value: 'achievement',
+      count: proofs.length
+    },
+    {
+      name: 'Skills',
+      value: 'skills',
+      count: proofs.filter(p => p.proof_type === 'skills').length
+    },
   ];
 
   const activeTabValue = tabs.find(t => t.name === activeTab)?.value || 'All Proofs';
@@ -171,8 +206,8 @@ export default function Portfolio() {
     setScrollLeft(tabsRef.current.scrollLeft);
   };
   const handleMouseLeave = () => setIsDragging(false);
-  const handleMouseUp    = () => setIsDragging(false);
-  const handleMouseMove  = (e) => {
+  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseMove = (e) => {
     if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - tabsRef.current.offsetLeft;
@@ -262,36 +297,51 @@ export default function Portfolio() {
 
                     {/* Email and wallet address */}
                     <div className="grid grid-cols-2 gap-1.5 mb-3">
+                      {/* Email section - always show email icon */}
                       <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                         <Mail size={11} className="text-[#C19A4A] shrink-0" />
-                        <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">{user?.email || 'No email'}</span>
-                        <button
-                          onClick={copyEmail}
-                          style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
-                          className="text-gray-500 hover:text-[#C19A4A] transition-colors"
-                          aria-label="Copy email"
-                        >
-                          {emailCopied
-                            ? <span className="text-[10px] text-[#22c55e]">✓</span>
-                            : <Copy size={11} />}
-                        </button>
+                        {(profile?.users?.email || profile?.email) ? (
+                          <>
+                            <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">{profile?.users?.email || profile?.email}</span>
+                            <button
+                              onClick={copyEmail}
+                              style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+                              className="text-gray-500 hover:text-[#C19A4A] transition-colors"
+                              aria-label="Copy email"
+                            >
+                              {emailCopied
+                                ? <span className="text-[10px] text-[#22c55e]">✓</span>
+                                : <Copy size={11} />}
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-[10px] text-gray-500 truncate flex-1 min-w-0">No email added</span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
-                        <Wallet size={11} className="text-[#C19A4A] shrink-0" />
-                        <code className="text-[10px] text-gray-400 font-mono truncate flex-1 min-w-0">
-                          {user?.wallet_address ? `${user.wallet_address.slice(0, 4)}...${user.wallet_address.slice(-4)}` : 'No wallet connected'}
-                        </code>
-                        {user?.wallet_address && (
+                      {/* Wallet section - show if wallet address exists */}
+                      {profile?.users?.wallet_address && (
+                        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
+                          <Wallet size={11} className="text-[#C19A4A] shrink-0" />
+                          <code className="text-[10px] text-gray-400 font-mono truncate flex-1 min-w-0">
+                            {truncateWalletAddress(profile.users.wallet_address)}
+                          </code>
                           <a
-                            href={`https://solscan.io/account/${user.wallet_address}`}
+                            href={`https://solscan.io/account/${profile.users.wallet_address}`}
                             target="_blank" rel="noopener noreferrer"
                             style={{ flexShrink: 0 }}
                             className="text-gray-500 hover:text-[#C19A4A] transition-colors"
                           >
                             <ExternalLink size={11} />
                           </a>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                      {/* Show placeholder if no wallet is connected */}
+                      {!profile?.users?.wallet_address && (
+                        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
+                          <Wallet size={11} className="text-[#C19A4A] shrink-0" />
+                          <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">No wallet connected</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Social media links */}
@@ -316,7 +366,7 @@ export default function Portfolio() {
               <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#C19A4A] to-[#d9b563]">
                 <div className="bg-[#1A1F2E] rounded-xl p-4 text-center h-full">
                   <div className="text-2xl font-bold text-[#C19A4A] mb-1">{stats.total}</div>
-                  <div className="text-xs text-white">Achievements</div>
+                  <div className="text-xs text-white">Verifiable</div>
                 </div>
               </div>
             </div>
@@ -355,11 +405,10 @@ export default function Portfolio() {
             onMouseUp={handleMouseUp} onMouseMove={handleMouseMove}>
             {tabs.map(tab => (
               <button key={tab.name} onClick={() => !isDragging && setActiveTab(tab.name)}
-                className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-semibold transition-all shrink-0 ${
-                  activeTab === tab.name
-                    ? 'bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-black shadow-[0_0_30px_rgba(193,154,74,0.3)]'
-                    : 'bg-[#1A1F2E] text-white border border-white/5 hover:bg-[#252b3d] hover:border-[#C19A4A]/20'
-                }`}>
+                className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-semibold transition-all shrink-0 ${activeTab === tab.name
+                  ? 'bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-black shadow-[0_0_30px_rgba(193,154,74,0.3)]'
+                  : 'bg-[#1A1F2E] text-white border border-white/5 hover:bg-[#252b3d] hover:border-[#C19A4A]/20'
+                  }`}>
                 {tab.name}{' '}
                 <span className={`ml-1 text-[10px] ${activeTab === tab.name ? 'text-black/60' : 'text-gray-400'}`}>
                   ({tab.count})
@@ -403,9 +452,9 @@ export default function Portfolio() {
 
                     <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
                       <div className="flex items-center gap-1.5">
-                        {proof.proof_type === 'Project'     && <FolderGit2 size={14} className="text-[#C19A4A]" />}
+                        {proof.proof_type === 'Project' && <FolderGit2 size={14} className="text-[#C19A4A]" />}
                         {proof.proof_type === 'Certificate' && <Award size={14} className="text-[#C19A4A]" />}
-                        {proof.proof_type === 'Milestone'   && <Flag size={14} className="text-[#C19A4A]" />}
+                        {proof.proof_type === 'Milestone' && <Flag size={14} className="text-[#C19A4A]" />}
                         {proof.proof_type === 'Achievement' && <Trophy size={14} className="text-[#C19A4A]" />}
                         <span>{proof.proof_type}</span>
                       </div>
