@@ -23,7 +23,7 @@ const PROOF_TYPE_LABELS = {
   Project:      'Projects',
   Certificate:  'Certifications',
   Milestone:    'Milestones',
- Achievement :  'Achievements',
+  Achievement :  'Achievements',
 };
 
 const KEYWORD_MAP = [
@@ -84,14 +84,19 @@ export default function Portfolio() {
   useEffect(() => {
     const loadProfileData = async () => {
       try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+        
         const currentUser = await getCurrentUser();
-        if (currentUser) {
+        const targetUserId = userId || currentUser?.id;
+        
+        if (targetUserId) {
           setUser(currentUser);
-          const profileData = await getProfile(currentUser.id);
+          const profileData = await getProfile(targetUserId);
           setProfile(profileData);
-          const userProofs = await getUserProofs(currentUser.id);
+          const userProofs = await getUserProofs(targetUserId);
           setProofs(userProofs);
-          const liveStats = await getProofStats(currentUser.id);
+          const liveStats = await getProofStats(targetUserId);
           setStats({ total: liveStats.total, verified: liveStats.verified });
         }
       } catch (err) {
@@ -119,7 +124,7 @@ export default function Portfolio() {
   };
 
   const handleSharePortfolio = () => {
-    const portfolioUrl = `${window.location.origin}/request?id=${user?.id}`;
+    const portfolioUrl = `${window.location.origin}/portfolio?id=${user?.id}`;
     navigator.clipboard.writeText(portfolioUrl).then(() => {
       setPortfolioLinkCopied(true);
       setTimeout(() => setPortfolioLinkCopied(false), 2000);
@@ -175,9 +180,9 @@ export default function Portfolio() {
       value: 'milestones',   
       count: proofs.filter(p => p.proof_type === 'milestones').length },
     { 
-      name: 'Community Contribution',  
-      value: 'community Contribution',  
-      count: proofs.filter(p => p.proof_type === 'Community Contribution').length },
+      name: 'Achievement',  
+      value: 'achievement',  
+      count: proofs.length },
     { 
       name: 'Skills',       
       value: 'skills',       
