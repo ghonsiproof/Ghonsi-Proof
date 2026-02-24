@@ -26,7 +26,7 @@ function Header() {
 
   const checkAuthStatus = useCallback(async () => {
     try {
-      // Check Supabase session first (single source of truth)
+      // Check Supabase session first
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
@@ -34,7 +34,16 @@ function Header() {
         const count = await getUnreadCount(session.user.id);
         setUnreadCount(count);
       } else {
-        setIsLoggedIn(false);
+        // Fall back to checking wallet session from localStorage
+        const walletAddress = localStorage.getItem('wallet_address');
+        const userId = localStorage.getItem('user_id');
+        
+        if (walletAddress && userId) {
+          console.log('[v0] Wallet session found, user is logged in');
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
       }
     } catch (error) {
       console.error('[v0] Error checking auth status:', error);
