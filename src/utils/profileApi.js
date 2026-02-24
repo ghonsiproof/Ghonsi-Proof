@@ -83,19 +83,19 @@ export const getProfileById = async (userId) => {
  * Required for createProfile.jsx
  */
 export const createProfile = async (profileData) => {
-  const user = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user.data.user) {
+  if (!user) {
     throw new Error("User not authenticated");
   }
 
-  const uid = generateUID(user.data.user.id);
-  const email = user.data.user.email;
+  const uid = generateUID(user.id);
+  const email = user.email;
 
   const { data, error } = await supabase
     .from("profiles")
     .insert([{
-      user_id: user.data.user.id,
+      user_id: user.id,
       uid,
       email,
       ...profileData,
