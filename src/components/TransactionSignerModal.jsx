@@ -36,12 +36,14 @@ const TransactionSignerModal = ({
         setError(null);
         console.log('[v0] Preparing transaction details');
 
-        await createTransferTransaction(
+        const transaction = await createTransferTransaction(
           publicKey,
           amount,
           treasuryAddress,
           connection
         );
+
+        console.log('[v0] Transaction prepared:', transaction);
 
         setTransactionDetails({
           from: publicKey.toString(),
