@@ -114,7 +114,7 @@ export default function Portfolio() {
   }, [proofs, profile]);
 
   const copyEmail = () => {
-    const emailToCopy = user?.email || '';
+    const emailToCopy = profile?.users?.email || '';
     if (emailToCopy) {
       navigator.clipboard.writeText(emailToCopy).then(() => {
         setEmailCopied(true);
@@ -294,9 +294,9 @@ export default function Portfolio() {
                       {/* Email section - always show email icon */}
                       <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                         <Mail size={11} className="text-[#C19A4A] shrink-0" />
-                        {user?.email ? (
+                        {profile?.users?.email ? (
                           <>
-                            <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">{user.email}</span>
+                            <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">{profile.users.email}</span>
                             <button
                               onClick={copyEmail}
                               style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -312,15 +312,15 @@ export default function Portfolio() {
                           <span className="text-[10px] text-gray-500 truncate flex-1 min-w-0">No email added</span>
                         )}
                       </div>
-                      {/* Wallet section - show if wallet address exists (from user object which includes localStorage) */}
-                      {user?.wallet_address && (
+                      {/* Wallet section - show if wallet address exists */}
+                      {profile?.users?.wallet_address && (
                         <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                           <Wallet size={11} className="text-[#C19A4A] shrink-0" />
                           <code className="text-[10px] text-gray-400 font-mono truncate flex-1 min-w-0">
-                            {truncateWalletAddress(user.wallet_address)}
+                            {truncateWalletAddress(profile.users.wallet_address)}
                           </code>
                           <a
-                            href={`https://solscan.io/account/${user.wallet_address}`}
+                            href={`https://solscan.io/account/${profile.users.wallet_address}`}
                             target="_blank" rel="noopener noreferrer"
                             style={{ flexShrink: 0 }}
                             className="text-gray-500 hover:text-[#C19A4A] transition-colors"
@@ -330,7 +330,7 @@ export default function Portfolio() {
                         </div>
                       )}
                       {/* Show placeholder if no wallet is connected */}
-                      {!user?.wallet_address && (
+                      {!profile?.users?.wallet_address && (
                         <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                           <Wallet size={11} className="text-[#C19A4A] shrink-0" />
                           <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">No wallet connected</span>
