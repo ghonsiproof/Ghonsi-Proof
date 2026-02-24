@@ -5,6 +5,24 @@
  */
 
 /**
+ * Validate Pinata configuration
+ * @throws {Error} If Pinata JWT is not configured
+ */
+const validatePinataConfig = () => {
+  const jwt = process.env.REACT_APP_PINATA_JWT;
+  
+  if (!jwt) {
+    console.error('[v0] Pinata JWT not configured! Add REACT_APP_PINATA_JWT to .env');
+    throw new Error(
+      'Pinata IPFS not configured. Please set REACT_APP_PINATA_JWT environment variable. ' +
+      'Get your JWT from https://dashboard.pinata.cloud'
+    );
+  }
+  
+  return jwt;
+};
+
+/**
  * Upload document metadata to Pinata IPFS
  * @param {Object} documentData - The document extraction data to upload
  * @param {string} fileName - Optional file name for the upload
@@ -12,11 +30,7 @@
  */
 export const uploadToPinata = async (documentData, fileName = 'document-proof') => {
   try {
-    const pinataJwt = process.env.REACT_APP_PINATA_JWT;
-
-    if (!pinataJwt) {
-      throw new Error('REACT_APP_PINATA_JWT environment variable is not set');
-    }
+    const pinataJwt = validatePinataConfig();
 
     console.log('[v0] Uploading to Pinata IPFS:', fileName);
 
@@ -34,6 +48,7 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
       keyvalues: {
         uploadedAt: new Date().toISOString(),
         type: 'document-proof',
+        appName: 'ghonsi-proof',
       },
     };
     formData.append('pinataMetadata', JSON.stringify(metadata));
@@ -54,9 +69,19 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('[v0] Pinata upload error:', errorData);
-      throw new Error(`Pinata upload failed: ${errorData.error?.reason || response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[v0] Pinata upload error:', {
+        status: response.status,
+        error: errorData,
+      });
+      
+      throw new Error(
+        `Pinata upload failed: ${
+          errorData.error?.reason ||
+          errorData.message ||
+          response.statusText
+        }`
+      );
     }
 
     const result = await response.json();
@@ -140,5 +165,34 @@ export const getAlternativeGatewayUrls = (ipfsHash) => {
     `https://ipfs.io/ipfs/${ipfsHash}`,
     `https://cloudflare-ipfs.com/ipfs/${ipfsHash}`,
     `https://dweb.link/ipfs/${ipfsHash}`,
+    `https://ipfs.digitalocean.com/ipfs/${ipfsHash}`,
   ];
 };
+
+/**
+ * Fetch from Pinata with fallback to alternative gateways
+ * @param {string} ipfsHash - The IPFS hash
+ * @returns {Promise<Object>} The retrieved data
+ */
+export const fetchFromPinataWithFallback = async (ipfsHash) => {
+  const urls = [getPinataGatewayUrl(ipfsHash), ...getAlternativeGatewayUrls(ipfsHash)];
+
+  let lastError;
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) continue;
+
+      const data = await response.json();
+      console.log('[v0] Successfully fetched from:', url);
+      return data;
+    } catch (error) {
+      lastError = error;
+      console.warn(`[v0] Failed to fetch from ${url}, trying next gateway...`);
+    }
+  }
+
+  throw lastError || new Error('Failed to retrieve data from any IPFS gateway');
+};
+
