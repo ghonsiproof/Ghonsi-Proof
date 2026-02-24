@@ -18,7 +18,7 @@ const TransactionSignerModal = ({
   treasuryAddress,
   documentData,
 }) => {
-  const { publicKey, signTransaction, connected } = useWallet();
+  const { publicKey, connected, solanaWallet } = useWallet();
   const { connection } = useConnection();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -89,7 +89,7 @@ const TransactionSignerModal = ({
 
       // Sign the transaction with user's wallet
       console.log('[v0] Requesting wallet signature');
-      const signedTx = await signTransaction(transaction);
+      const signedTx = await solanaWallet.signTransaction(transaction);
 
       if (!signedTx) {
         throw new Error('Transaction signing failed');

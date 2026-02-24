@@ -31,6 +31,13 @@ function PublicProfile () {
         setLoading(true);
         const walletFromUrl = window.location.pathname.split('/').pop();
         const profileData = await getProfileByWallet(walletFromUrl);
+        
+        if (!profileData) {
+          setError('Profile not found');
+          setLoading(false);
+          return;
+        }
+        
         setDynamicProfile(profileData);
 
         const allProofs = await getUserProofs(profileData.user_id);
@@ -79,6 +86,26 @@ function PublicProfile () {
   return (
     <div className="min-h-screen pb-28 max-w-full mx-auto bg-[#0B0F1B] border-x border-white/5 text-white font-sans selection:bg-[#C19A4A] selection:text-[#0B0F1B]">
       
+      {loading && (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#C19A4A]"></div>
+            <p className="mt-4 text-[#C19A4A]">Loading profile...</p>
+          </div>
+        </div>
+      )}
+      
+      {error && (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-red-400 text-lg">Error: {error}</p>
+            <button onClick={() => window.history.back()} className="mt-4 bg-[#C19A4A] text-black px-4 py-2 rounded-lg hover:bg-[#a8853b] transition-colors">Go Back</button>
+          </div>
+        </div>
+      )}
+      
+      {!loading && !error && dynamicProfile && (
+      <>
       <div className="flex items-center justify-between px-4 py-3 sticky top-0 z-50 bg-[#0B0F1B]/95 backdrop-blur-sm border-b border-white/5">
         <div className="flex items-center gap-3">
           <a href="/" className="logo">
@@ -278,6 +305,8 @@ function PublicProfile () {
           )}
         </div>
       </main>
+      </>
+      )}
     </div>
   );
 }
