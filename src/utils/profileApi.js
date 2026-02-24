@@ -53,6 +53,12 @@ export const getProfile = async (userId) => {
     }
   }
   
+  // Map wallet_address from nested users table to top-level profile object
+  // This ensures the dashboard can access profile.wallet_address correctly
+  if (data?.users?.wallet_address) {
+    data.wallet_address = data.users.wallet_address;
+  }
+  
   return data;
 };
 
