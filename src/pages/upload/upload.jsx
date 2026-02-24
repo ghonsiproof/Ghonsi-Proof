@@ -10,15 +10,15 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getCurrentUser } from '../../utils/supabaseAuth';
-import { uploadProof } from '../../utils/proofsApi';
-import { extractDocumentData, supportsExtraction } from '../../utils/extractionApi';
-import { uploadDocumentWithMetadata } from '../../utils/pinataUpload';
-import { useWallet } from '../../hooks/useWallet';
+import { getCurrentUser } from '@utils/supabaseAuth';
+import { uploadProof } from '@utils/proofsApi';
+import { extractDocumentData, supportsExtraction } from '@utils/extractionApi';
+import { uploadDocumentWithMetadata } from '@utils/pinataUpload';
+import { useWallet } from '@hooks/useWallet';
 import { useConnection } from '@solana/wallet-adapter-react';
-import Header from '../../components/header/header.jsx';
-import Footer from '../../components/footer/footer.jsx';
-import TransactionSignerModal from '../../components/TransactionSignerModal';
+import Header from '@components/header/header.jsx';
+import Footer from '@components/footer/footer.jsx';
+import TransactionSignerModal from '@components/TransactionSignerModal';
 import './upload.css';
 
 function Upload() {
