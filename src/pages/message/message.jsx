@@ -52,11 +52,11 @@ function Message() {
       
       // Send response message to the requester
       if (status === 'accepted') {
-        const portfolioUrl = `${window.location.origin}/request?id=${currentUser.id}`;
+        const portfolioUrl = `${window.location.origin}/portfolio?id=${currentUser.id}`;
         await sendResponseMessage(
           currentUser.id,
           selectedMessage.sender_id,
-          `Here is the portfolio: ${portfolioUrl}`,
+          `Here is my portfolio: ${portfolioUrl}`,
           senderName
         );
       } else if (status === 'rejected') {
