@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, updateUserEmailWithSync, linkWalletToUser } from '../../utils/supabaseAuth';
+import { getCurrentUser, linkWalletToUser, sendOTPToEmail, verifyOTP } from '../../utils/supabaseAuth';
 import { getUserProofs, getProofStats } from '../../utils/proofsApi';
 import { getProfile, updateProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import { 
   CheckCircle2, ExternalLink, FileText, Award, Plus, Briefcase, 
-  Share2, Settings, Copy, User, Clock, Wallet, Mail, Save, X, Loader2 
+  Share2, Settings, Copy, User, Clock, Wallet, Mail, X, Loader2 
 } from 'lucide-react';
 
 // ─── Gradient border wrapper — mirrors portfolio's p-[2px] card pattern ───────
@@ -67,6 +67,9 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
   const [emailInput, setEmailInput]       = useState('');
   const [isSavingEmail, setIsSavingEmail] = useState(false);
   const [isLinkingWallet, setIsLinkingWallet] = useState(false);
+  const [otpSent, setOtpSent]             = useState(false);
+  const [otpCode, setOtpCode]             = useState('');
+  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
 
   const walletAddress    = profile?.wallet_address;
   const hasWallet        = walletAddress && walletAddress !== 'Not connected';
@@ -125,25 +128,48 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
     }
   };
 
-  const handleSaveEmail = async () => {
+  const handleSendOTP = async () => {
     if (!emailInput || !emailInput.includes('@')) {
       alert('Please enter a valid email.');
       return;
     }
     setIsSavingEmail(true);
     try {
-      // Use the synchronized email update function to update both Supabase Auth and users table
-      const { error: authError } = await updateUserEmailWithSync(user.id, emailInput);
-      if (authError) throw authError;
+      await sendOTPToEmail(emailInput);
+      setOtpSent(true);
+      alert('OTP sent to your email. Please check your inbox.');
+    } catch (error) {
+      console.error('Failed to send OTP:', error);
+      alert('Error sending OTP: ' + error.message);
+    } finally {
+      setIsSavingEmail(false);
+    }
+  };
+
+  const handleVerifyOTPAndSaveEmail = async () => {
+    if (!otpCode || otpCode.trim().length === 0) {
+      alert('Please enter the OTP code.');
+      return;
+    }
+    setIsVerifyingOTP(true);
+    try {
+      // Verify OTP with Supabase
+      const { error: verifyError } = await verifyOTP(emailInput, otpCode);
+      if (verifyError) throw verifyError;
+
+      // OTP verified, now update the profile
       await updateProfile(user.id, { email: emailInput });
       onProfileUpdate();
       setIsAddingEmail(false);
-      alert('Email updated! Please check your inbox to confirm.');
+      setOtpSent(false);
+      setOtpCode('');
+      setEmailInput('');
+      alert('Email verified and saved successfully!');
     } catch (error) {
-      console.error('Email update failed:', error);
-      alert('Error updating email: ' + error.message);
+      console.error('OTP verification failed:', error);
+      alert('Error verifying OTP: ' + error.message);
     } finally {
-      setIsSavingEmail(false);
+      setIsVerifyingOTP(false);
     }
   };
 
@@ -213,21 +239,39 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
                 {user?.email || profile?.email}
               </span>
             ) : isAddingEmail ? (
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="email"
-                  placeholder="name@example.com"
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  className="bg-[#0B0F1B] border border-[#C19A4A]/20 text-white px-2 py-0.5 rounded text-[11px] w-28 focus:outline-none focus:border-[#C19A4A]"
-                  autoFocus
-                />
-                <button onClick={handleSaveEmail} disabled={isSavingEmail} className="text-green-400 hover:text-green-300">
-                  {isSavingEmail ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                </button>
-                <button onClick={() => setIsAddingEmail(false)} className="text-gray-500 hover:text-white">
-                  <X size={13} />
-                </button>
+              <div className="flex flex-col items-end gap-2 w-full">
+                <div className="flex items-center gap-1.5 w-full justify-end">
+                  <input
+                    type="email"
+                    placeholder="name@example.com"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    disabled={otpSent}
+                    className="bg-[#0B0F1B] border border-[#C19A4A]/20 text-white px-2 py-0.5 rounded text-[11px] w-40 focus:outline-none focus:border-[#C19A4A] disabled:opacity-50"
+                    autoFocus
+                  />
+                  <button onClick={handleSendOTP} disabled={isSavingEmail || otpSent} className="text-blue-400 hover:text-blue-300">
+                    {isSavingEmail ? <Loader2 size={13} className="animate-spin" /> : <Mail size={13} />}
+                  </button>
+                  <button onClick={() => { setIsAddingEmail(false); setOtpSent(false); setOtpCode(''); }} className="text-gray-500 hover:text-white">
+                    <X size={13} />
+                  </button>
+                </div>
+                {otpSent && (
+                  <div className="flex items-center gap-1.5 w-full justify-end">
+                    <input
+                      type="text"
+                      placeholder="Enter OTP"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      className="bg-[#0B0F1B] border border-[#C19A4A]/20 text-white px-2 py-0.5 rounded text-[11px] w-32 focus:outline-none focus:border-[#C19A4A]"
+                      maxLength="6"
+                    />
+                    <button onClick={handleVerifyOTPAndSaveEmail} disabled={isVerifyingOTP} className="text-green-400 hover:text-green-300">
+                      {isVerifyingOTP ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <button
@@ -397,6 +441,7 @@ const QuickActions = () => {
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 function Dashboard() {
+  const navigate = useNavigate();
   const [user, setUser]       = useState(null);
   const [profile, setProfile] = useState(null);
   const [proofs, setProofs]   = useState([]);
@@ -406,23 +451,32 @@ function Dashboard() {
   const loadDashboardData = async () => {
     try {
       const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      if (currentUser) {
-        const userProfile = await getProfile(currentUser.id);
-        setProfile(userProfile);
-        const userProofs = await getUserProofs(currentUser.id);
-        setProofs(userProofs || []);
-        const proofStats = await getProofStats(currentUser.id);
-        setStats(proofStats);
+      console.log('[v0] Dashboard - Current user:', currentUser);
+      
+      if (!currentUser) {
+        console.log('[v0] No user found, redirecting to login');
+        setLoading(false);
+        navigate('/login');
+        return;
       }
+      
+      setUser(currentUser);
+      const userProfile = await getProfile(currentUser.id);
+      setProfile(userProfile);
+      const userProofs = await getUserProofs(currentUser.id);
+      setProofs(userProofs || []);
+      const proofStats = await getProofStats(currentUser.id);
+      setStats(proofStats);
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error('[v0] Error loading dashboard data:', error);
+      setLoading(false);
+      navigate('/login');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadDashboardData(); }, []);
+  useEffect(() => { loadDashboardData(); }, [navigate, loadDashboardData]);
 
   if (loading) {
     return (
