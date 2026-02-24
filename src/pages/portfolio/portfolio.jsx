@@ -15,15 +15,15 @@ const truncateWalletAddress = (address) => {
 
 // Auto-skill extraction
 const PROOF_TYPE_LABELS = {
-  job_history:  'Work Experience',
+  job_history: 'Work Experience',
   certificates: 'Certified',
-  milestones:   'Milestones',
-  community:    'Community',
-  skills:       'Skills',
-  Project:      'Projects',
-  Certificate:  'Certifications',
-  Milestone:    'Milestones',
-  Achievement :  'Achievements',
+  milestones: 'Milestones',
+  community: 'Community',
+  skills: 'Skills',
+  Project: 'Projects',
+  Certificate: 'Certifications',
+  Milestone: 'Milestones',
+  Achievement: 'Achievements',
 };
 
 const KEYWORD_MAP = [
@@ -54,7 +54,7 @@ function deriveSkillsFromProofs(proofs) {
     });
 
     // 4. Use any explicit tags/skills arrays if the API returns them
-    if (Array.isArray(proof.tags))   proof.tags.forEach(t => skillSet.add(t));
+    if (Array.isArray(proof.tags)) proof.tags.forEach(t => skillSet.add(t));
     if (Array.isArray(proof.skills)) proof.skills.forEach(s => skillSet.add(s));
   });
   return Array.from(skillSet);
@@ -62,16 +62,16 @@ function deriveSkillsFromProofs(proofs) {
 
 export default function Portfolio() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab]   = useState('All Proofs');
+  const [activeTab, setActiveTab] = useState('All Proofs');
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [emailCopied, setEmailCopied] = useState(false);
-  const [isDragging, setIsDragging]   = useState(false);
-  const [startX, setStartX]           = useState(0);
-  const [scrollLeft, setScrollLeft]   = useState(0);
-  const [stats, setStats]             = useState({ total: 0, verified: 0 });
-  const [user, setUser]               = useState(null);
-  const [profile, setProfile]         = useState(null);
-  const [proofs, setProofs]           = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [stats, setStats] = useState({ total: 0, verified: 0 });
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [proofs, setProofs] = useState([]);
   const [portfolioLinkCopied, setPortfolioLinkCopied] = useState(false);
   const tabsRef = useRef(null);
 
@@ -86,10 +86,10 @@ export default function Portfolio() {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('id');
-        
+
         const currentUser = await getCurrentUser();
         const targetUserId = userId || currentUser?.id;
-        
+
         if (targetUserId) {
           setUser(currentUser);
           const profileData = await getProfile(targetUserId);
@@ -163,30 +163,36 @@ export default function Portfolio() {
     : '??';
 
   const tabs = [
-    { 
-      name: 'All Proofs',   
-      value: 'All Proofs',  
-      count: proofs.length },
-    { 
-      name: 'Work History', 
-      value: 'job_history',  
-      count: proofs.filter(p => p.proof_type === 'job_history').length },
-    { 
-      name: 'Certificates', 
-      value: 'certificates', 
-      count: proofs.filter(p => p.proof_type === 'certificates').length },
-    { 
-      name: 'Milestones',   
-      value: 'milestones',   
-      count: proofs.filter(p => p.proof_type === 'milestones').length },
-    { 
-      name: 'Achievement',  
-      value: 'achievement',  
-      count: proofs.length },
-    { 
-      name: 'Skills',       
-      value: 'skills',       
-      count: proofs.filter(p => p.proof_type === 'skills').length },
+    {
+      name: 'All Proofs',
+      value: 'All Proofs',
+      count: proofs.length
+    },
+    {
+      name: 'Work History',
+      value: 'job_history',
+      count: proofs.filter(p => p.proof_type === 'job_history').length
+    },
+    {
+      name: 'Certificates',
+      value: 'certificates',
+      count: proofs.filter(p => p.proof_type === 'certificates').length
+    },
+    {
+      name: 'Milestones',
+      value: 'milestones',
+      count: proofs.filter(p => p.proof_type === 'milestones').length
+    },
+    {
+      name: 'Achievement',
+      value: 'achievement',
+      count: proofs.length
+    },
+    {
+      name: 'Skills',
+      value: 'skills',
+      count: proofs.filter(p => p.proof_type === 'skills').length
+    },
   ];
 
   const activeTabValue = tabs.find(t => t.name === activeTab)?.value || 'All Proofs';
@@ -200,8 +206,8 @@ export default function Portfolio() {
     setScrollLeft(tabsRef.current.scrollLeft);
   };
   const handleMouseLeave = () => setIsDragging(false);
-  const handleMouseUp    = () => setIsDragging(false);
-  const handleMouseMove  = (e) => {
+  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseMove = (e) => {
     if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - tabsRef.current.offsetLeft;
@@ -399,11 +405,10 @@ export default function Portfolio() {
             onMouseUp={handleMouseUp} onMouseMove={handleMouseMove}>
             {tabs.map(tab => (
               <button key={tab.name} onClick={() => !isDragging && setActiveTab(tab.name)}
-                className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-semibold transition-all shrink-0 ${
-                  activeTab === tab.name
-                    ? 'bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-black shadow-[0_0_30px_rgba(193,154,74,0.3)]'
-                    : 'bg-[#1A1F2E] text-white border border-white/5 hover:bg-[#252b3d] hover:border-[#C19A4A]/20'
-                }`}>
+                className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-semibold transition-all shrink-0 ${activeTab === tab.name
+                  ? 'bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-black shadow-[0_0_30px_rgba(193,154,74,0.3)]'
+                  : 'bg-[#1A1F2E] text-white border border-white/5 hover:bg-[#252b3d] hover:border-[#C19A4A]/20'
+                  }`}>
                 {tab.name}{' '}
                 <span className={`ml-1 text-[10px] ${activeTab === tab.name ? 'text-black/60' : 'text-gray-400'}`}>
                   ({tab.count})
@@ -447,9 +452,9 @@ export default function Portfolio() {
 
                     <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
                       <div className="flex items-center gap-1.5">
-                        {proof.proof_type === 'Project'     && <FolderGit2 size={14} className="text-[#C19A4A]" />}
+                        {proof.proof_type === 'Project' && <FolderGit2 size={14} className="text-[#C19A4A]" />}
                         {proof.proof_type === 'Certificate' && <Award size={14} className="text-[#C19A4A]" />}
-                        {proof.proof_type === 'Milestone'   && <Flag size={14} className="text-[#C19A4A]" />}
+                        {proof.proof_type === 'Milestone' && <Flag size={14} className="text-[#C19A4A]" />}
                         {proof.proof_type === 'Achievement' && <Trophy size={14} className="text-[#C19A4A]" />}
                         <span>{proof.proof_type}</span>
                       </div>
