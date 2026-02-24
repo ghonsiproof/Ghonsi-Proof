@@ -278,20 +278,21 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
 // ─── Stats Row ─────────────────────────────────────────────────────────────────
 const StatsRow = ({ stats }) => (
   <div className="grid grid-cols-2 gap-4">
-    {/* Total Proofs — subtle gradient border */}
-    <GradientCard variant="subtle" innerClassName="p-5 text-center">
-      <div className="text-3xl font-bold text-white mb-1 tracking-tight">{stats?.total || 0}</div>
-      <div className="text-xs text-gray-400 font-medium">Total Proofs</div>
-    </GradientCard>
-
-    {/* Verifiable — full gold gradient border + gold number, exact portfolio pattern */}
-    <GradientCard variant="subtle" innerClassName="relative overflow-hidden p-5 text-center">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/8 to-transparent rounded-2xl pointer-events-none" />
-      <div className="relative text-3xl font-bold text-[#C19A4A] mb-1 tracking-tight">
-        {stats?.verified || 0}
+    {/* Total Proofs — faint gold gradient border (matches portfolio) */}
+    <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#C19A4A]/30 to-transparent">
+      <div className="bg-[#1A1F2E] rounded-xl p-4 text-center h-full">
+        <div className="text-2xl font-bold text-white mb-1">{stats?.total || 0}</div>
+        <div className="text-xs text-gray-400">Total Proofs</div>
       </div>
-      <div className="relative text-xs text-white font-medium">Verifiable</div>
-    </GradientCard>
+    </div>
+
+    {/* Verifiable — full gold gradient border + gold number (matches portfolio) */}
+    <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#C19A4A] to-[#d9b563]">
+      <div className="bg-[#1A1F2E] rounded-xl p-4 text-center h-full">
+        <div className="text-2xl font-bold text-[#C19A4A] mb-1">{stats?.verified || 0}</div>
+        <div className="text-xs text-white">Verifiable</div>
+      </div>
+    </div>
   </div>
 );
 
