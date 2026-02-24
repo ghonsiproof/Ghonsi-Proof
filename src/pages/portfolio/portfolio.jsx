@@ -158,12 +158,30 @@ export default function Portfolio() {
     : '??';
 
   const tabs = [
-    { name: 'All Proofs',   value: 'All Proofs',  count: proofs.length },
-    { name: 'Work History', value: 'job_history',  count: proofs.filter(p => p.proof_type === 'job_history').length },
-    { name: 'Certificates', value: 'certificates', count: proofs.filter(p => p.proof_type === 'certificates').length },
-    { name: 'Milestones',   value: 'milestones',   count: proofs.filter(p => p.proof_type === 'milestones').length },
-    { name: 'Community Contribution',  value: 'community Contribution',  count: proofs.filter(p => p.proof_type === 'Community Contribution').length },
-    { name: 'Skills',       value: 'skills',       count: proofs.filter(p => p.proof_type === 'skills').length },
+    { 
+      name: 'All Proofs',   
+      value: 'All Proofs',  
+      count: proofs.length },
+    { 
+      name: 'Work History', 
+      value: 'job_history',  
+      count: proofs.filter(p => p.proof_type === 'job_history').length },
+    { 
+      name: 'Certificates', 
+      value: 'certificates', 
+      count: proofs.filter(p => p.proof_type === 'certificates').length },
+    { 
+      name: 'Milestones',   
+      value: 'milestones',   
+      count: proofs.filter(p => p.proof_type === 'milestones').length },
+    { 
+      name: 'Community Contribution',  
+      value: 'community Contribution',  
+      count: proofs.filter(p => p.proof_type === 'Community Contribution').length },
+    { 
+      name: 'Skills',       
+      value: 'skills',       
+      count: proofs.filter(p => p.proof_type === 'skills').length },
   ];
 
   const activeTabValue = tabs.find(t => t.name === activeTab)?.value || 'All Proofs';
