@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, updateUserEmailWithSync, linkWalletToUser, sendOTPToEmail, verifyOTP } from '../../utils/supabaseAuth';
+import { getCurrentUser, linkWalletToUser, sendOTPToEmail, verifyOTP } from '../../utils/supabaseAuth';
 import { getUserProofs, getProofStats } from '../../utils/proofsApi';
 import { getProfile, updateProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import { 
   CheckCircle2, ExternalLink, FileText, Award, Plus, Briefcase, 
-  Share2, Settings, Copy, User, Clock, Wallet, Mail, Save, X, Loader2 
+  Share2, Settings, Copy, User, Clock, Wallet, Mail, X, Loader2 
 } from 'lucide-react';
 
 // ─── Gradient border wrapper — mirrors portfolio's p-[2px] card pattern ───────
@@ -476,7 +476,7 @@ function Dashboard() {
     }
   };
 
-  useEffect(() => { loadDashboardData(); }, [navigate]);
+  useEffect(() => { loadDashboardData(); }, [navigate, loadDashboardData]);
 
   if (loading) {
     return (
