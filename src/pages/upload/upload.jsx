@@ -15,7 +15,6 @@ import { uploadProof } from '../../utils/proofsApi';
 import { extractDocumentData, supportsExtraction } from '../../utils/extractionApi';
 import { uploadDocumentWithMetadata } from '../../utils/pinataUpload';
 import { useWallet } from '../../hooks/useWallet';
-import { useConnection } from '@solana/wallet-adapter-react';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import TransactionSignerModal from '../../components/TransactionSignerModal';
@@ -24,7 +23,6 @@ import './upload.css';
 function Upload() {
   // Wallet and connection hooks
   const { publicKey, connected } = useWallet();
-  const { connection } = useConnection();
 
   // Form state management
   const [proofType, setProofType] = useState('');
@@ -331,7 +329,7 @@ function Upload() {
       console.log('[v0] Pinata upload successful:', ipfsResult);
 
       // Upload proof to database with IPFS hash
-      const user = await getCurrentUser();
+      await getCurrentUser(); // Ensure user is authenticated
       const proofDataWithIPFS = {
         ...pendingProofData,
         ipfsHash: ipfsResult.hash,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '../hooks/useWallet';
 import { useConnection } from '@solana/wallet-adapter-react';
-import { createTransferTransaction, formatLamportsToSol } from '../utils/transactionSigner';
+import { createTransferTransaction } from '../utils/transactionSigner';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import '../pages/upload/upload.css';
 
@@ -36,7 +36,7 @@ const TransactionSignerModal = ({
         setError(null);
         console.log('[v0] Preparing transaction details');
 
-        const tx = await createTransferTransaction(
+        await createTransferTransaction(
           publicKey,
           amount,
           treasuryAddress,
