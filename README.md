@@ -787,7 +787,7 @@ This project is proprietary and confidential. All rights reserved by Ghonsi Proo
 
 ---
 
-## 🙏 Acknowledgments
+## 🙏 Acknowledgments.
 
 - Solana Foundation
 - Web3 Community
