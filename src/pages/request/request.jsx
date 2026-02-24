@@ -95,7 +95,7 @@ function Request() {
         const user = await getCurrentUser();
         if (user) {
           if (user.email) setFormData(prev => ({ ...prev, email: user.email }));
-          const { data: userData, error } = await supabase
+          const { data: userData } = await supabase
             .from('users')
             .select('id')
             .or(`id.eq.${user.id},wallet_address.eq.${user.wallet_address || user.id}`)
