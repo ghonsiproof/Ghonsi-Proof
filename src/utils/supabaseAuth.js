@@ -7,7 +7,7 @@ import { supabase } from '../config/supabaseClient';
 // Generate a UUID (compatible with Supabase's uuid_generate_v4)
 const generateUUID = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
+    const r = (Math.random() * 16) | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
@@ -254,7 +254,7 @@ export const mergeEmailToWallet = async (emailUserId, walletUserId) => {
 // Link wallet to existing email user
 export const linkWalletToUser = async (userId, walletAddress) => {
   try {
-    const { data: existingWallet, error: walletError } = await supabase
+    const { data: existingWallet } = await supabase
       .from('users')
       .select('id, email')
       .eq('wallet_address', walletAddress)
@@ -300,7 +300,7 @@ export const linkWalletToUser = async (userId, walletAddress) => {
 // Link email to existing wallet user
 export const linkEmailToUser = async (userId, email) => {
   try {
-    const { data: existingEmail, error: emailError } = await supabase
+    const { data: existingEmail } = await supabase
       .from('users')
       .select('id, wallet_address')
       .eq('email', email)
