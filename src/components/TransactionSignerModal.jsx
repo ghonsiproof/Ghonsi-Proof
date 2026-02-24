@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '../../hooks/useWallet';
+import { useWallet } from '../hooks/useWallet';
 import { useConnection } from '@solana/wallet-adapter-react';
-import { createTransferTransaction, formatLamportsToSol } from '../../utils/transactionSigner';
+import { createTransferTransaction, formatLamportsToSol } from '../utils/transactionSigner';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
-import '../upload/upload.css';
+import '../pages/upload/upload.css';
 
 /**
  * TransactionSignerModal Component
