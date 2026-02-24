@@ -313,3 +313,19 @@ export const updateUserEmail = async (email) => {
   const { data, error } = await supabase.auth.updateUser({ email });
   return { data, error };
 };
+
+export const updateUserEmailWithSync = async (userId, email) => {
+  const { data, error } = await supabase.auth.updateUser({ email });
+  if (!error) {
+    await supabase.from('users').update({ email }).eq('id', userId);
+  }
+  return { data, error };
+};
+
+export const linkWalletToUser = async (userId, walletAddress) => {
+  const { data, error } = await supabase
+    .from('users')
+    .update({ wallet_address: walletAddress })
+    .eq('id', userId);
+  return { data, error };
+};
