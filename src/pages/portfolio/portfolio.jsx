@@ -78,14 +78,19 @@ export default function Portfolio() {
   useEffect(() => {
     const loadProfileData = async () => {
       try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+        
         const currentUser = await getCurrentUser();
-        if (currentUser) {
+        const targetUserId = userId || currentUser?.id;
+        
+        if (targetUserId) {
           setUser(currentUser);
-          const profileData = await getProfile(currentUser.id);
+          const profileData = await getProfile(targetUserId);
           setProfile(profileData);
-          const userProofs = await getUserProofs(currentUser.id);
+          const userProofs = await getUserProofs(targetUserId);
           setProofs(userProofs);
-          const liveStats = await getProofStats(currentUser.id);
+          const liveStats = await getProofStats(targetUserId);
           setStats({ total: liveStats.total, verified: liveStats.verified });
         }
       } catch (err) {
@@ -113,7 +118,7 @@ export default function Portfolio() {
   };
 
   const handleSharePortfolio = () => {
-    const portfolioUrl = `${window.location.origin}/request?id=${user?.id}`;
+    const portfolioUrl = `${window.location.origin}/portfolio?id=${user?.id}`;
     navigator.clipboard.writeText(portfolioUrl).then(() => {
       setPortfolioLinkCopied(true);
       setTimeout(() => setPortfolioLinkCopied(false), 2000);
@@ -152,12 +157,30 @@ export default function Portfolio() {
     : '??';
 
   const tabs = [
-    { name: 'All Proofs',   value: 'All Proofs',  count: proofs.length },
-    { name: 'Work History', value: 'job_history',  count: proofs.filter(p => p.proof_type === 'job_history').length },
-    { name: 'Certificates', value: 'certificates', count: proofs.filter(p => p.proof_type === 'certificates').length },
-    { name: 'Milestones',   value: 'milestones',   count: proofs.filter(p => p.proof_type === 'milestones').length },
-    { name: 'Achievement',  value: 'achievement',  count: proofs.length },
-    { name: 'Skills',       value: 'skills',       count: proofs.filter(p => p.proof_type === 'skills').length },
+    { 
+      name: 'All Proofs',   
+      value: 'All Proofs',  
+      count: proofs.length },
+    { 
+      name: 'Work History', 
+      value: 'job_history',  
+      count: proofs.filter(p => p.proof_type === 'job_history').length },
+    { 
+      name: 'Certificates', 
+      value: 'certificates', 
+      count: proofs.filter(p => p.proof_type === 'certificates').length },
+    { 
+      name: 'Milestones',   
+      value: 'milestones',   
+      count: proofs.filter(p => p.proof_type === 'milestones').length },
+    { 
+      name: 'Achievement',  
+      value: 'achievement',  
+      count: proofs.length },
+    { 
+      name: 'Skills',       
+      value: 'skills',       
+      count: proofs.filter(p => p.proof_type === 'skills').length },
   ];
 
   const activeTabValue = tabs.find(t => t.name === activeTab)?.value || 'All Proofs';
