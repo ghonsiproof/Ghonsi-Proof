@@ -16,26 +16,20 @@ function ProtectedRoute({ children }) {
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, []);
 
   const checkAuth = async () => {
     try {
-      // Check Supabase session (email auth)
+      // Only check Supabase session - this is the single source of truth
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Check wallet session (localStorage)
-      const walletAddress = localStorage.getItem('wallet_address');
-      const userId = localStorage.getItem('user_id');
+      console.log('[v0] Auth check - Session exists:', !!session);
       
-      console.log('[v0] Auth check - Session:', !!session, 'Wallet:', !!walletAddress, 'UserId:', !!userId);
-      
-      // User is authenticated if:
-      // 1. They have a Supabase session (email auth), OR
-      // 2. They have both wallet address AND user_id (wallet auth)
-      const hasSession = !!session || (!!walletAddress && !!userId);
-      setIsAuthenticated(hasSession);
+      setIsAuthenticated(!!session);
     } catch (error) {
       console.error('[v0] Error checking auth:', error);
       setIsAuthenticated(false);
