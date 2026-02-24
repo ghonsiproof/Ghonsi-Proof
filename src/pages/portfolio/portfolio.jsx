@@ -7,6 +7,12 @@ import { getCurrentUser } from '../../utils/supabaseAuth';
 import { getProfile } from '../../utils/profileApi';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
+// Helper function to truncate wallet address
+const truncateWalletAddress = (address) => {
+  if (!address || address.length < 10) return address;
+  return `${address.slice(0, 5)}...${address.slice(-4)}`;
+};
+
 // Auto-skill extraction
 const PROOF_TYPE_LABELS = {
   job_history:  'Work Experience',
@@ -17,7 +23,7 @@ const PROOF_TYPE_LABELS = {
   Project:      'Projects',
   Certificate:  'Certifications',
   Milestone:    'Milestones',
-  Achievement:  'Achievements',
+ Achievement :  'Achievements',
 };
 
 const KEYWORD_MAP = [
@@ -156,7 +162,7 @@ export default function Portfolio() {
     { name: 'Work History', value: 'job_history',  count: proofs.filter(p => p.proof_type === 'job_history').length },
     { name: 'Certificates', value: 'certificates', count: proofs.filter(p => p.proof_type === 'certificates').length },
     { name: 'Milestones',   value: 'milestones',   count: proofs.filter(p => p.proof_type === 'milestones').length },
-    { name: 'Achievement',  value: 'achievement',  count: proofs.length },
+    { name: 'Community Contribution',  value: 'community Contribution',  count: proofs.filter(p => p.proof_type === 'Community Contribution').length },
     { name: 'Skills',       value: 'skills',       count: proofs.filter(p => p.proof_type === 'skills').length },
   ];
 
@@ -262,34 +268,51 @@ export default function Portfolio() {
 
                     {/* Email and wallet address */}
                     <div className="grid grid-cols-2 gap-1.5 mb-3">
+                      {/* Email section - always show email icon */}
                       <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                         <Mail size={11} className="text-[#C19A4A] shrink-0" />
-                        <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">{user?.email || 'No email'}</span>
-                        <button
-                          onClick={copyEmail}
-                          style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
-                          className="text-gray-500 hover:text-[#C19A4A] transition-colors"
-                          aria-label="Copy email"
-                        >
-                          {emailCopied
-                            ? <span className="text-[10px] text-[#22c55e]">✓</span>
-                            : <Copy size={11} />}
-                        </button>
+                        {user?.email ? (
+                          <>
+                            <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">{user.email}</span>
+                            <button
+                              onClick={copyEmail}
+                              style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+                              className="text-gray-500 hover:text-[#C19A4A] transition-colors"
+                              aria-label="Copy email"
+                            >
+                              {emailCopied
+                                ? <span className="text-[10px] text-[#22c55e]">✓</span>
+                                : <Copy size={11} />}
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-[10px] text-gray-500 truncate flex-1 min-w-0">No email added</span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
-                        <Wallet size={11} className="text-[#C19A4A] shrink-0" />
-                        <code className="text-[10px] text-gray-400 font-mono truncate flex-1 min-w-0">
-                          {profile?.users?.wallet_address || 'No wallet con...'}
-                        </code>
-                        <a
-                          href={`https://solscan.io/account/${profile?.users?.wallet_address || ''}`}
-                          target="_blank" rel="noopener noreferrer"
-                          style={{ flexShrink: 0 }}
-                          className="text-gray-500 hover:text-[#C19A4A] transition-colors"
-                        >
-                          <ExternalLink size={11} />
-                        </a>
-                      </div>
+                      {/* Wallet section - show if wallet address exists (from user object which includes localStorage) */}
+                      {user?.wallet_address && (
+                        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
+                          <Wallet size={11} className="text-[#C19A4A] shrink-0" />
+                          <code className="text-[10px] text-gray-400 font-mono truncate flex-1 min-w-0">
+                            {truncateWalletAddress(user.wallet_address)}
+                          </code>
+                          <a
+                            href={`https://solscan.io/account/${user.wallet_address}`}
+                            target="_blank" rel="noopener noreferrer"
+                            style={{ flexShrink: 0 }}
+                            className="text-gray-500 hover:text-[#C19A4A] transition-colors"
+                          >
+                            <ExternalLink size={11} />
+                          </a>
+                        </div>
+                      )}
+                      {/* Show placeholder if no wallet is connected */}
+                      {!user?.wallet_address && (
+                        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
+                          <Wallet size={11} className="text-[#C19A4A] shrink-0" />
+                          <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">No wallet connected</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Social media links */}
@@ -314,7 +337,7 @@ export default function Portfolio() {
               <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#C19A4A] to-[#d9b563]">
                 <div className="bg-[#1A1F2E] rounded-xl p-4 text-center h-full">
                   <div className="text-2xl font-bold text-[#C19A4A] mb-1">{stats.total}</div>
-                  <div className="text-xs text-white">Achievements</div>
+                  <div className="text-xs text-white">Verifiable</div>
                 </div>
               </div>
             </div>
