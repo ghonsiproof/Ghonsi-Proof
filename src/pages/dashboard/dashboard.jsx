@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, updateUserEmail } from '../../utils/supabaseAuth'; 
+import { getCurrentUser, updateUserEmailWithSync, linkWalletToUser } from '../../utils/supabaseAuth';
 import { getUserProofs, getProofStats } from '../../utils/proofsApi';
 import { getProfile, updateProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
@@ -66,7 +66,7 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
   const [isAddingEmail, setIsAddingEmail] = useState(false);
   const [emailInput, setEmailInput]       = useState('');
   const [isSavingEmail, setIsSavingEmail] = useState(false);
-  const [isConnectingWallet, setIsConnectingWallet] = useState(false);
+  const [isLinkingWallet, setIsLinkingWallet] = useState(false);
 
   const walletAddress    = profile?.wallet_address;
   const hasWallet        = walletAddress && walletAddress !== 'Not connected';
@@ -99,25 +99,29 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
     setTimeout(() => setUidCopied(false), 2000);
   }, [userUID]);
 
-  const connectWallet = async () => {
-    setIsConnectingWallet(true);
+  const handleLinkWallet = async () => {
+    setIsLinkingWallet(true);
     try {
       if (typeof window.ethereum !== 'undefined') {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const address = accounts[0];
         if (user && address) {
-          const { error } = await updateProfile(user.id, { wallet_address: address });
+          // Use linkWalletToUser from supabaseAuth to properly update the users table
+          const { error } = await linkWalletToUser(user.id, address);
           if (error) throw error;
+          // Also update the profile table for display purposes
+          await updateProfile(user.id, { wallet_address: address });
           onProfileUpdate();
+          alert('Wallet linked successfully!');
         }
       } else {
         alert('Please install Phantom or any Solana powered wallet extension.');
       }
     } catch (error) {
-      console.error('Wallet connection failed:', error);
-      alert('Failed to connect wallet. Please try again.');
+      console.error('Wallet linking failed:', error);
+      alert('Failed to link wallet: ' + error.message);
     } finally {
-      setIsConnectingWallet(false);
+      setIsLinkingWallet(false);
     }
   };
 
@@ -128,7 +132,8 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
     }
     setIsSavingEmail(true);
     try {
-      const { error: authError } = await updateUserEmail(emailInput);
+      // Use the synchronized email update function to update both Supabase Auth and users table
+      const { error: authError } = await updateUserEmailWithSync(user.id, emailInput);
       if (authError) throw authError;
       await updateProfile(user.id, { email: emailInput });
       onProfileUpdate();
@@ -188,11 +193,11 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
               </button>
             ) : (
               <button
-                onClick={connectWallet}
-                disabled={isConnectingWallet}
+                onClick={handleLinkWallet}
+                disabled={isLinkingWallet}
                 className="px-2.5 py-1 bg-[#C19A4A]/10 text-[#C19A4A] border border-[#C19A4A]/20 rounded-lg text-[11px] hover:bg-[#C19A4A] hover:text-[#0B0F1B] transition-all flex items-center gap-1.5"
               >
-                {isConnectingWallet ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                {isLinkingWallet ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
                 Connect
               </button>
             )}
