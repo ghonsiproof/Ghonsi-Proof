@@ -5,6 +5,8 @@ import { createPortfolioRequestMessage } from '../../utils/messagesApi';
 import { getProfileById } from '../../utils/profileApi';
 import { getUserProofs, getProofStats } from '../../utils/proofsApi';
 import { saveFormData, getFormData, clearFormData } from '../../utils/formPersistence';
+import { useToast } from '../../components/Toast';
+import ToastContainer from '../../components/Toast';
 import { supabase } from '../../config/supabaseClient';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
@@ -38,6 +40,7 @@ const SectionTitle = ({ children }) => (
 );
 
 function Request() {
+  const { toasts, addToast, removeToast } = useToast();
   const [profileData, setProfileData]           = useState(null);
   const [loading, setLoading]                   = useState(true);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -139,8 +142,16 @@ function Request() {
     try {
       const urlParams          = new URLSearchParams(window.location.search);
       const profileOwnerUserId = urlParams.get('id');
-      if (!profileOwnerUserId) { alert('Invalid profile. Please try again.'); return; }
-      if (!currentUserId)      { alert('Please log in to send a request.'); return; }
+      if (!profileOwnerUserId) { 
+        addToast('Invalid profile. Please try again.', 'error');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return; 
+      }
+      if (!currentUserId) { 
+        addToast('Please log in to send a request.', 'error');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return; 
+      }
 
       await createPortfolioRequestMessage(
         profileOwnerUserId,
@@ -148,13 +159,15 @@ function Request() {
         currentUserId,
         profileData.name
       );
-      clearFormData('portfolioRequest'); // Clear saved form data after successful submission
+      clearFormData('portfolioRequest');
       setShowRequestModal(false);
       setShowSuccessModal(true);
       setFormData({ name: '', email: '' });
+      addToast('Request sent successfully!', 'success');
     } catch (error) {
       console.error('Error sending request:', error);
-      alert('Error: ' + error.message);
+      addToast('Error: ' + error.message, 'error');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       setShowRequestModal(false);
     }
   };
@@ -196,6 +209,9 @@ function Request() {
       className="max-w-full mx-auto bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A]/30 mt-[105px] relative overflow-hidden"
       style={{ fontFamily: 'Inter, sans-serif' }}
     >
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
       {/* Blob animation keyframes + pulse */}
       <style>{`
         @keyframes scaleIn {

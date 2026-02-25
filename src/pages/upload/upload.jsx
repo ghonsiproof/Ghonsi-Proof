@@ -17,6 +17,9 @@ import { uploadDocumentWithMetadata } from '../../utils/pinataUpload';
 import { submitProofToBlockchain, updateProofWithBlockchainData } from '../../utils/blockchainSubmission';
 import { saveFormData, getFormData, clearFormData } from '../../utils/formPersistence';
 import { useWallet } from '../../hooks/useWallet';
+import { useToast } from '../../components/Toast';
+import ToastContainer from '../../components/Toast';
+import ProgressBar from '../../components/ProgressBar';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import TransactionSignerModal from '../../components/TransactionSignerModal';
@@ -26,7 +29,15 @@ function Upload() {
   // Wallet and connection hooks
   const { publicKey, connected } = useWallet();
 
-  // Form state management
+  // Toast notifications
+  const { toasts, addToast, removeToast } = useToast();
+
+  // Progress tracking
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadSpeed, setUploadSpeed] = useState('');
+  const [uploadStartTime, setUploadStartTime] = useState(null);
+
+  // Form state
   const [proofType, setProofType] = useState('');
   const [proofName, setProofName] = useState('');
   const [summary, setSummary] = useState('');
@@ -254,16 +265,49 @@ function Upload() {
     const error = validateFile(file);
     if (error) {
       setSupportingError(error);
+      addToast(error, 'error');
       setTimeout(() => setSupportingError(''), 5000);
       return;
     }
+    
+    // Start progress tracking
+    setUploadStartTime(Date.now());
+    setUploadProgress(0);
+    
+    // Simulate file reading progress
+    const fileSize = file.size;
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90; // Don't reach 100 until actual upload completes
+        }
+        // Speed up progress for smaller files
+        const increment = fileSize > 10000000 ? 2 : 5;
+        return prev + increment;
+      });
+      
+      // Calculate speed (bytes per second)
+      const elapsed = (Date.now() - uploadStartTime) / 1000;
+      const speed = fileSize / elapsed;
+      const speedMB = (speed / (1024 * 1024)).toFixed(2);
+      setUploadSpeed(`${speedMB} MB/s`);
+    }, 100);
+    
     setReferenceFiles([file]);
     if (proofType) {
       const extracted = await extractProofData(file, proofType);
+      clearInterval(progressInterval);
       if (extracted) {
         if (!summary.trim() && extracted.summary) setSummary(extracted.summary);
         if (!proofName.trim() && extracted.title) setProofName(extracted.title);
       }
+      setUploadProgress(100);
+      addToast('Document processed successfully', 'success');
+      setTimeout(() => {
+        setUploadProgress(0);
+        setUploadSpeed('');
+      }, 2000);
     }
   };
 
@@ -326,7 +370,9 @@ function Upload() {
       setShowTransactionModal(true);
     } catch (error) {
       console.error('[v0] Error preparing proof submission:', error);
-      setUploadError(error.message || 'Failed to prepare proof submission');
+      const errorMsg = error.message || 'Failed to prepare proof submission';
+      addToast(errorMsg, 'error');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -394,9 +440,13 @@ function Upload() {
       }, 1500);
     } catch (error) {
       console.error('[v0] Error completing proof submission:', error);
-      setUploadError(error.message || 'Failed to complete proof submission. IPFS upload may have succeeded but blockchain submission failed.');
+      const errorMsg = error.message || 'Failed to complete proof submission. IPFS upload may have succeeded but blockchain submission failed.';
+      addToast(errorMsg, 'error');
       setShowPendingModal(false);
       setIsUploading(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setUploadProgress(0);
+      setUploadSpeed('');
     }
   };
 
@@ -447,6 +497,9 @@ function Upload() {
 
   return (
     <div className="min-h-screen bg-[#0B0F1B] text-white selection:bg-[#C19A4A]/30 relative overflow-hidden flex flex-col">
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       {/* Background Elements – matches Home & Portfolio */}
       <div className="fixed inset-0 opacity-30 pointer-events-none z-0">
@@ -682,6 +735,22 @@ function Upload() {
                     onChange={(e) => handleReferenceFiles(Array.from(e.target.files))}
                   />
                 </div>
+
+                {/* Upload Progress Bar */}
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-4 bg-gray-800/50 rounded-xl border border-[#C19A4A]/20"
+                  >
+                    <ProgressBar 
+                      progress={uploadProgress} 
+                      label="Processing document..."
+                      speed={uploadSpeed}
+                      showSpeed={true}
+                    />
+                  </motion.div>
+                )}
 
                 {/* Selected File Display */}
                 <AnimatePresence>
