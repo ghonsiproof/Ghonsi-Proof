@@ -21,6 +21,7 @@ export const useWallet = () => {
         disconnect,
         wallet,
         signMessage,
+        signTransaction,
     } = solanaWallet;
 
     // Connect wallet and open modal if needed
@@ -93,6 +94,7 @@ export const useWallet = () => {
         disconnectWallet,
         getWalletAddress,
         sign,
+        signTransaction,
 
         // Raw solana wallet for advanced usage
         solanaWallet,
