@@ -24,8 +24,12 @@ export const submitProofToBlockchain = async (proofData, walletAddress) => {
   try {
     console.log('[v0] Submitting proof to blockchain:', proofData.proofId);
 
+    // FIX: blockchain backend requires proofId max 32 chars.
+    // Supabase UUIDs are 36 chars with dashes — strip dashes to get exactly 32 hex chars.
+    const blockchainProofId = proofData.proofId.replace(/-/g, '');
+
     const submissionData = {
-      proofId: proofData.proofId,
+      proofId: blockchainProofId,
       title: proofData.title,
       description: proofData.description,
       proofType: proofData.proofType,
@@ -68,9 +72,7 @@ export const updateProofWithBlockchainData = async (proofId, blockchainData) => 
     const { data, error } = await supabase
       .from('proofs')
       .update({
-        transaction_hash: blockchainData.tx,
-        proof_pda: blockchainData.proofPda,
-        nft_mint: blockchainData.mint,
+        blockchain_tx: blockchainData.tx,
         status: 'submitted_onchain',
         updated_at: new Date().toISOString(),
       })
@@ -96,7 +98,7 @@ export const getProofBlockchainStatus = async (proofId) => {
   try {
     const { data, error } = await supabase
       .from('proofs')
-      .select('id, proof_name, transaction_hash, proof_pda, nft_mint, status, created_at')
+      .select('id, proof_name, blockchain_tx, status, created_at')
       .eq('id', proofId)
       .single();
 
@@ -104,12 +106,9 @@ export const getProofBlockchainStatus = async (proofId) => {
 
     return {
       ...data,
-      isSubmittedOnchain: !!data.transaction_hash,
-      transactionLink: data.transaction_hash
-        ? `https://explorer.solana.com/tx/${data.transaction_hash}?cluster=devnet`
-        : null,
-      pdaLink: data.proof_pda
-        ? `https://explorer.solana.com/address/${data.proof_pda}?cluster=devnet`
+      isSubmittedOnchain: !!data.blockchain_tx,
+      transactionLink: data.blockchain_tx
+        ? `https://explorer.solana.com/tx/${data.blockchain_tx}?cluster=devnet`
         : null,
     };
   } catch (error) {
