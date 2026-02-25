@@ -60,9 +60,6 @@ const ProofDetailModal = ({ proof, onClose }) => {
     ? `https://solscan.io/tx/${proof.blockchain_tx}?cluster=devnet`
     : null;
   const documentUrl = proof.file_ipfs_url || null;
-  const metadataUrl = proof.file_ipfs_hash
-    ? `https://gateway.pinata.cloud/ipfs/${proof.file_ipfs_hash}`
-    : null;
 
   return (
     <div

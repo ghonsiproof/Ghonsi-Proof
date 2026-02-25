@@ -31,7 +31,9 @@ const TransactionSignerModal = ({
   // Hard guard — prevents double-submission on re-render
   const isSubmittingRef = useRef(false);
 
-  // Reset every time modal opens so there is never stale state
+  // Reset every time modal opens so there is never stale state.
+  // amount, publicKey, and treasuryAddress are included so the displayed
+  // transaction details always reflect the latest prop values on open.
   useEffect(() => {
     if (!isOpen) return;
     isSubmittingRef.current = false;
@@ -45,7 +47,7 @@ const TransactionSignerModal = ({
       amount: `${amount} SOL`,
       fee: '5,000 lamports (~$0.0000075)',
     });
-  }, [isOpen]); // only fires on open/close — intentional
+  }, [isOpen, amount, publicKey, treasuryAddress]);
 
   const handleSignTransaction = async () => {
     if (isSubmittingRef.current) return;
