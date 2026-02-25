@@ -340,7 +340,7 @@ const StatsRow = ({ stats }) => (
   </div>
 );
 
-// ─── Proof Item ────────���───────────────────────────────────────────────────────
+// ─── Proof Item ────────�����───────────────────────────────────────────────────────
 const ProofItem = ({ title, type, date, status }) => (
   // dim gradient border — same as portfolio proof cards
   <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-white/10 to-transparent group">
@@ -374,7 +374,7 @@ const RecentProofs = ({ proofs }) => {
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center px-1">
-        <SectionTitle>Recent Proofs</SectionTitle>
+        <SectionTitle>Recent Proofs ({proofs?.length || 0})</SectionTitle>
         <button
           onClick={() => navigate('/portfolio')}
           className="text-xs text-[#C19A4A]/70 hover:text-[#C19A4A] transition-colors"
@@ -384,13 +384,13 @@ const RecentProofs = ({ proofs }) => {
       </div>
       <div className="space-y-2.5">
         {proofs && proofs.length > 0 ? (
-          proofs.slice(0, 3).map((proof) => (
+          proofs.map((proof) => (
             <ProofItem
               key={proof.id}
-              title={proof.title}
-              type={proof.type || 'Project'}
+              title={proof.proof_name || proof.title || 'Untitled'}
+              type={proof.proof_type || proof.type || 'Document'}
               date={new Date(proof.created_at).toLocaleDateString()}
-              status={proof.verification_status === 'verified' ? 'Verified' : 'Pending'}
+              status={proof.status === 'verified' ? 'Verified' : 'Pending'}
             />
           ))
         ) : (
