@@ -315,6 +315,7 @@ function Upload() {
         proofName,
         summary,
         referenceLink: referenceLink || null,
+        userId: user.id,
       });
       setShowTransactionModal(true);
     } catch (error) {

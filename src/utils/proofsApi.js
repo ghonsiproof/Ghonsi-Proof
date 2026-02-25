@@ -31,11 +31,9 @@ export const uploadProof = async (
         proof_name: proofData.proofName,
         summary: proofData.summary,
         reference_link: proofData.referenceLink || null,
-        ipfs_hash: proofData.ipfsHash || null,
-        ipfs_url: proofData.ipfsUrl || null,
-        file_ipfs_hash: proofData.fileIpfsHash || null,
-        file_ipfs_url: proofData.fileIpfsUrl || null,
-        transaction_hash: proofData.transactionHash || null,
+        file_ipfs_hash: proofData.fileIpfsHash || proofData.ipfsHash || null,
+        file_ipfs_url: proofData.fileIpfsUrl || proofData.ipfsUrl || null,
+        blockchain_tx: proofData.transactionHash || null,
         status: "verified",
         verified_at: new Date().toISOString(),
       })
@@ -67,6 +65,7 @@ export const uploadProof = async (
     };
   } catch (error) {
     console.error("Upload proof error:", error);
+    console.error("Upload proof error details:", JSON.stringify(error, null, 2));
     throw error;
   }
 };
