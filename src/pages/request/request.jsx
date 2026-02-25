@@ -4,6 +4,7 @@ import { getCurrentUser } from '../../utils/supabaseAuth';
 import { createPortfolioRequestMessage } from '../../utils/messagesApi';
 import { getProfileById } from '../../utils/profileApi';
 import { getUserProofs, getProofStats } from '../../utils/proofsApi';
+import { saveFormData, getFormData, clearFormData } from '../../utils/formPersistence';
 import { supabase } from '../../config/supabaseClient';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
@@ -47,6 +48,13 @@ function Request() {
   const [currentUserId, setCurrentUserId]       = useState(null);
 
   useEffect(() => {
+    // Restore form data on mount
+    const savedData = getFormData('portfolioRequest');
+    if (savedData) {
+      console.log('[v0] Restoring portfolio request form data');
+      setFormData(savedData);
+    }
+
     const fetchProfile = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const userId    = urlParams.get('id');
@@ -117,6 +125,15 @@ function Request() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Auto-save form data
+  useEffect(() => {
+    const saveTimeout = setTimeout(() => {
+      saveFormData('portfolioRequest', formData);
+    }, 1000); // Debounce saves by 1 second
+
+    return () => clearTimeout(saveTimeout);
+  }, [formData]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -131,6 +148,7 @@ function Request() {
         currentUserId,
         profileData.name
       );
+      clearFormData('portfolioRequest'); // Clear saved form data after successful submission
       setShowRequestModal(false);
       setShowSuccessModal(true);
       setFormData({ name: '', email: '' });
