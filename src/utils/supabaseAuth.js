@@ -338,7 +338,7 @@ export const linkEmailToUser = async (userId, email) => {
 // Sign in with wallet (Solana) - Web3 authentication
 export const signInWithWallet = async (walletAddress, signatureData) => {
   try {
-    console.log('[v0] Signing in with wallet:', walletAddress);
+    console.log('Signing in with wallet:', walletAddress);
 
     // Check if user exists with this wallet
     const { data: existingUser, error: fetchError } = await supabase
@@ -370,12 +370,12 @@ export const signInWithWallet = async (walletAddress, signatureData) => {
 
       if (createError) throw createError;
       user = newUser;
-      console.log('[v0] Created new user with wallet:', walletAddress, 'ID:', userId);
+      console.log('Created new user with wallet:', walletAddress, 'ID:', userId);
     } else if (fetchError) {
       throw fetchError;
     } else if (existingUser) {
       userId = existingUser.id;
-      console.log('[v0] Existing user found:', userId);
+      console.log('Existing user found:', userId);
     }
 
     // Store wallet connection info in localStorage for reference
@@ -390,7 +390,7 @@ export const signInWithWallet = async (walletAddress, signatureData) => {
     localStorage.setItem('session_token', sessionToken);
     localStorage.setItem('session_created', new Date().toISOString());
 
-    console.log('[v0] User authenticated with session:', userId);
+    console.log('User authenticated with session:', userId);
 
     return {
       user,
@@ -401,7 +401,7 @@ export const signInWithWallet = async (walletAddress, signatureData) => {
       sessionToken
     };
   } catch (error) {
-    console.error('[v0] Wallet sign-in error:', error);
+    console.error('Wallet sign-in error:', error);
     throw error;
   }
 };
@@ -416,7 +416,7 @@ export const logout = async () => {
         if (error) console.log('Supabase signout error:', error);
       }
     } catch (error) {
-      console.log('[v0] No Supabase session to sign out from');
+      console.log('No Supabase session to sign out from');
     }
 
     // Clear all wallet and session data
@@ -430,9 +430,9 @@ export const logout = async () => {
     localStorage.removeItem('userLoggedIn');
     localStorage.removeItem('userEmail');
 
-    console.log('[v0] User logged out, session cleared');
+    console.log('User logged out, session cleared');
   } catch (error) {
-    console.error('[v0] Logout error:', error);
+    console.error('Logout error:', error);
     // Force clear all data anyway
     localStorage.removeItem('wallet_address');
     localStorage.removeItem('connected_wallet');
@@ -460,7 +460,7 @@ export const getCurrentUser = async () => {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
-      console.log('[v0] Error getting session:', sessionError);
+      console.log('Error getting session:', sessionError);
     }
 
     if (session?.user) {
@@ -472,7 +472,7 @@ export const getCurrentUser = async () => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.log('[v0] Error fetching user profile:', error);
+        console.log('Error fetching user profile:', error);
       }
 
       // Return the user data with session info
@@ -485,12 +485,12 @@ export const getCurrentUser = async () => {
     }
 
     // Fall back to wallet session if no Supabase session
-    console.log('[v0] No Supabase session, checking wallet session');
+    console.log('No Supabase session, checking wallet session');
     const walletAddress = localStorage.getItem('wallet_address');
     const userId = localStorage.getItem('user_id');
 
     if (!walletAddress || !userId) {
-      console.log('[v0] No wallet session found either');
+      console.log('No wallet session found either');
       return null;
     }
 
@@ -503,11 +503,11 @@ export const getCurrentUser = async () => {
       .single();
 
     if (error) {
-      console.log('[v0] Error fetching wallet user profile:', error);
+      console.log('Error fetching wallet user profile:', error);
       return null;
     }
 
-    console.log('[v0] Wallet user found:', userId);
+    console.log('Wallet user found:', userId);
     return {
       ...user,
       id: userId,
@@ -515,7 +515,7 @@ export const getCurrentUser = async () => {
       wallet_address: walletAddress,
     };
   } catch (error) {
-    console.log('[v0] No authenticated user found:', error);
+    console.log('No authenticated user found:', error);
     return null;
   }
 };
@@ -543,14 +543,14 @@ export const isAuthenticated = async () => {
         .single();
 
       if (!error && user) {
-        console.log('[v0] Valid wallet session found');
+        console.log('Valid wallet session found');
         return true;
       }
     }
 
     return false;
   } catch (error) {
-    console.log('[v0] Error checking authentication:', error);
+    console.log('Error checking authentication:', error);
     return false;
   }
 };
@@ -582,14 +582,14 @@ export const verifyWalletSession = async () => {
       .single();
 
     if (error || !user) {
-      console.log('[v0] Wallet session verification failed');
+      console.log('Wallet session verification failed');
       return false;
     }
 
-    console.log('[v0] Wallet session verified');
+    console.log('Wallet session verified');
     return true;
   } catch (error) {
-    console.error('[v0] Error verifying wallet session:', error);
+    console.error('Error verifying wallet session:', error);
     return false;
   }
 };

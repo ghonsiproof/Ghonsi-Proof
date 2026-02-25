@@ -12,7 +12,7 @@ function ProtectedRoute({ children }) {
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[v0] Auth state changed:', event, !!session);
+      console.log('Auth state changed:', event, !!session);
       checkAuth();
     });
 
@@ -29,7 +29,7 @@ function ProtectedRoute({ children }) {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        console.log('[v0] Auth check - Supabase session exists');
+        console.log('Auth check - Supabase session exists');
         setIsAuthenticated(true);
         setLoading(false);
         return;
@@ -39,14 +39,14 @@ function ProtectedRoute({ children }) {
       const walletSessionValid = await verifyWalletSession();
       
       if (walletSessionValid) {
-        console.log('[v0] Auth check - Wallet session verified');
+        console.log('Auth check - Wallet session verified');
         setIsAuthenticated(true);
       } else {
-        console.log('[v0] Auth check - No valid session found');
+        console.log('Auth check - No valid session found');
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('[v0] Error checking auth:', error);
+      console.error('Error checking auth:', error);
       setIsAuthenticated(false);
     } finally {
       setLoading(false);

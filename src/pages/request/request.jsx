@@ -54,7 +54,7 @@ function Request() {
     // Restore form data on mount
     const savedData = getFormData('portfolioRequest');
     if (savedData) {
-      console.log('[v0] Restoring portfolio request form data');
+      console.log('Restoring portfolio request form data');
       setFormData(savedData);
     }
 

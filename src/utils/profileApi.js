@@ -47,7 +47,7 @@ export const getProfile = async (userId) => {
         }
       } catch (error) {
         // If no Supabase auth session, email may be null for wallet-only users
-        console.log('[v0] No Supabase auth session, email may be null for wallet user');
+        console.log('No Supabase auth session, email may be null for wallet user');
       }
     }
     if (Object.keys(updates).length > 0) {
@@ -106,7 +106,7 @@ export const createProfile = async (profileData) => {
       email = user.email;
     }
   } catch (error) {
-    console.log('[v0] No Supabase auth session');
+    console.log('No Supabase auth session');
   }
 
   // If no Supabase session, use wallet session data from profileData

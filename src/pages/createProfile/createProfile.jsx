@@ -35,7 +35,7 @@ function CreateProfile() {
         // First, try to restore saved form data (in case of page refresh)
         const savedFormData = getFormData('createProfile');
         if (savedFormData) {
-          console.log('[v0] Restoring saved form data');
+          console.log('Restoring saved form data');
           setFormData(savedFormData.formData);
           setCurrentStep(savedFormData.currentStep || 1);
           if (savedFormData.profilePhoto) {

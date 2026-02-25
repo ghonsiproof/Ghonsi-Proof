@@ -36,7 +36,7 @@ export const useWallet = () => {
             }
             return true;
         } catch (error) {
-            console.error('[v0] Error connecting wallet:', error);
+            console.error('Error connecting wallet:', error);
             return false;
         }
     }, [connected, wallet, connect, setWalletModalVisible]);
@@ -47,7 +47,7 @@ export const useWallet = () => {
             await disconnect();
             return true;
         } catch (error) {
-            console.error('[v0] Error disconnecting wallet:', error);
+            console.error('Error disconnecting wallet:', error);
             return false;
         }
     }, [disconnect]);
@@ -71,7 +71,7 @@ export const useWallet = () => {
                     publicKey: publicKey.toString(),
                 };
             } catch (error) {
-                console.error('[v0] Error signing message:', error);
+                console.error('Error signing message:', error);
                 return null;
             }
         },

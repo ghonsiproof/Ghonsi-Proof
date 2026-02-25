@@ -30,7 +30,7 @@ function Login() {
       const sessionToken = localStorage.getItem('session_token');
       
       if (walletAddress && sessionToken) {
-        console.log('[v0] Existing wallet session found, redirecting...');
+        console.log('Existing wallet session found, redirecting...');
         setTimeout(() => navigate('/home'), 500);
       }
     };
@@ -56,7 +56,7 @@ function Login() {
         return;
       }
 
-      console.log('[v0] Starting wallet authentication for:', walletAddress);
+      console.log('Starting wallet authentication for:', walletAddress);
 
       // Sign a message to prove wallet ownership
       const messageToSign = `Sign this message to verify your Ghonsi Proof account.\nWallet: ${walletAddress}\nTimestamp: ${Date.now()}`;
@@ -68,7 +68,7 @@ function Login() {
         return;
       }
 
-      console.log('[v0] Message signed successfully');
+      console.log('Message signed successfully');
 
       // Authenticate with Supabase using wallet signature
       const authResult = await signInWithWallet(walletAddress, {
@@ -78,7 +78,7 @@ function Login() {
       });
 
       if (authResult && authResult.userId) {
-        console.log('[v0] Wallet authentication successful:', authResult.userId);
+        console.log('Wallet authentication successful:', authResult.userId);
         setHasSigned(true);
         setMessage('✅ Wallet verified! Redirecting...');
 
@@ -93,11 +93,11 @@ function Login() {
           setTimeout(() => navigate('/home'), 1000);
         }
       } else {
-        console.error('[v0] Authentication returned invalid result:', authResult);
+        console.error('Authentication returned invalid result:', authResult);
         setMessage('Failed to authenticate. Please try again.');
       }
     } catch (err) {
-      console.error('[v0] Wallet auth error:', err);
+      console.error('Wallet auth error:', err);
       setMessage('Error: ' + (err.message || 'Unknown error during wallet authentication'));
     } finally {
       setIsLoading(false);
@@ -136,7 +136,7 @@ function Login() {
     setMessage('');
     try {
       const result = await verifyOTP(trimmed, otpCode);
-      console.log('[v0] OTP verified, user:', result.user?.id, 'isNewUser:', result.isNewUser);
+      console.log('OTP verified, user:', result.user?.id, 'isNewUser:', result.isNewUser);
       setMessage('Successfully signed in!');
       // Redirect new email users to create profile
       if (result.isNewUser) {
@@ -145,7 +145,7 @@ function Login() {
         setTimeout(() => navigate('/home'), 1000);
       }
     } catch (error) {
-      console.error('[v0] OTP verification error:', error);
+      console.error('OTP verification error:', error);
       setMessage('Invalid or expired code. Please try again.');
     } finally {
       setIsLoading(false);
