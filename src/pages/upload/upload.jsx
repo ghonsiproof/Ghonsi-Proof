@@ -19,10 +19,9 @@ import { saveFormData, getFormData, clearFormData } from '../../utils/formPersis
 import { useWallet } from '../../hooks/useWallet';
 import { useToast } from '../../components/Toast';
 import ToastContainer from '../../components/Toast';
-import ProgressBar from '../../components/ProgressBar';
+import TransactionSignerModal from '../../components/TransactionSignerModal';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
-import TransactionSignerModal from '../../components/TransactionSignerModal';
 import './upload.css';
 
 function Upload() {
@@ -31,11 +30,6 @@ function Upload() {
 
   // Toast notifications
   const { toasts, addToast, removeToast } = useToast();
-
-  // Progress tracking
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadSpeed, setUploadSpeed] = useState('');
-  const [uploadStartTime, setUploadStartTime] = useState(null);
 
   // Form state
   const [proofType, setProofType] = useState('');
@@ -241,12 +235,12 @@ function Upload() {
   };
 
   /**
-   * Handles reference file selection, validation, and extraction trigger.
-   * FIX: use local startTime variable (not state) to avoid stale closure in setInterval
+   * Handles reference file selection, validation, and extraction trigger
    */
   const handleReferenceFiles = async (files) => {
     setSupportingError('');
     if (files.length === 0) return;
+
     const file = files[0];
     const error = validateFile(file);
     if (error) {
@@ -256,54 +250,15 @@ function Upload() {
       return;
     }
 
-    // FIX: capture start time as local variable — state is async and would be stale in the interval
-    const startTime = Date.now();
-    setUploadStartTime(startTime);
-    setUploadProgress(0);
-
-    const fileSize = file.size;
-    const progressInterval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return 90;
-        }
-        const increment = fileSize > 10000000 ? 2 : 5;
-        return prev + increment;
-      });
-
-      // FIX: use local startTime, not uploadStartTime state (would be null/stale)
-      const elapsed = (Date.now() - startTime) / 1000;
-      if (elapsed > 0) {
-        const speed = fileSize / elapsed;
-        const speedMB = (speed / (1024 * 1024)).toFixed(2);
-        setUploadSpeed(`${speedMB} MB/s`);
-      }
-    }, 100);
-
     setReferenceFiles([file]);
 
     if (proofType) {
       const extracted = await extractProofData(file, proofType);
-      clearInterval(progressInterval);
       if (extracted) {
         if (!summary.trim() && extracted.summary) setSummary(extracted.summary);
         if (!proofName.trim() && extracted.title) setProofName(extracted.title);
       }
-      setUploadProgress(100);
       addToast('Document processed successfully', 'success');
-      setTimeout(() => {
-        setUploadProgress(0);
-        setUploadSpeed('');
-      }, 2000);
-    } else {
-      // No proof type selected yet — clear interval and progress
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      setTimeout(() => {
-        setUploadProgress(0);
-        setUploadSpeed('');
-      }, 2000);
     }
   };
 
@@ -337,6 +292,9 @@ function Upload() {
     }
     if (hasError) return;
 
+    // FIX: set uploading state immediately so button disables and prevents double-submit
+    setIsUploading(true);
+
     try {
       const user = await getCurrentUser();
       if (!user) throw new Error('You must be logged in to upload proofs');
@@ -363,20 +321,13 @@ function Upload() {
       console.error('[v0] Error preparing proof submission:', error);
       const errorMsg = error.message || 'Failed to prepare proof submission';
       addToast(errorMsg, 'error');
+      setIsUploading(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   /**
    * Handles successful transaction.
-   *
-   * FIX: uploadDocumentWithMetadata now receives 3 args:
-   *   1. referenceFiles[0]     — the actual File object (PDF/image/doc)
-   *   2. extractedDocumentData — structured proof metadata
-   *   3. metadata              — transaction hash, wallet, etc.
-   *
-   * Old code only passed 2 args and the real file was NEVER uploaded to IPFS.
-   * FIX: also stores fileIpfsHash + fileIpfsUrl separately in the DB record.
    */
   const handleTransactionSuccess = async (txData) => {
     setShowTransactionModal(false);
@@ -392,22 +343,20 @@ function Upload() {
         timestamp: new Date().toISOString(),
       };
 
-      // FIX: pass actual file as first arg — was missing before, causing only JSON to be uploaded
       const ipfsResult = await uploadDocumentWithMetadata(
-        referenceFiles[0],     // actual File object (PDF/image/doc)
-        extractedDocumentData, // proof metadata JSON
-        metadata               // transaction/wallet metadata
+        referenceFiles[0],
+        extractedDocumentData,
+        metadata
       );
 
       console.log('[v0] Pinata dual upload successful:', ipfsResult);
 
-      // FIX: store both metadata hash and raw file hash in the database
       const proofDataWithIPFS = {
         ...pendingProofData,
-        ipfsHash: ipfsResult.hash,         // metadata JSON IPFS hash (primary)
-        ipfsUrl: ipfsResult.url,           // metadata JSON IPFS URL
-        fileIpfsHash: ipfsResult.fileHash, // raw document file IPFS hash
-        fileIpfsUrl: ipfsResult.fileUrl,   // raw document file IPFS URL
+        ipfsHash: ipfsResult.hash,
+        ipfsUrl: ipfsResult.url,
+        fileIpfsHash: ipfsResult.fileHash,
+        fileIpfsUrl: ipfsResult.fileUrl,
         transactionHash: txData.txHash,
       };
 
@@ -448,8 +397,6 @@ function Upload() {
       setShowPendingModal(false);
       setIsUploading(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      setUploadProgress(0);
-      setUploadSpeed('');
     }
   };
 
@@ -460,6 +407,8 @@ function Upload() {
     setShowTransactionModal(false);
     setExtractedDocumentData(null);
     setPendingProofData(null);
+    // FIX: reset uploading state when user cancels the transaction modal
+    setIsUploading(false);
   };
 
   /**
@@ -731,22 +680,6 @@ function Upload() {
                     onChange={(e) => handleReferenceFiles(Array.from(e.target.files))}
                   />
                 </div>
-
-                {/* Upload Progress Bar */}
-                {uploadProgress > 0 && uploadProgress < 100 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 p-4 bg-gray-800/50 rounded-xl border border-[#C19A4A]/20"
-                  >
-                    <ProgressBar
-                      progress={uploadProgress}
-                      label="Processing document..."
-                      speed={uploadSpeed}
-                      showSpeed={true}
-                    />
-                  </motion.div>
-                )}
 
                 {/* Selected File Display */}
                 <AnimatePresence>

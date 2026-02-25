@@ -51,7 +51,8 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
     formData.append('pinataMetadata', JSON.stringify(metadata));
     formData.append('pinataOptions', JSON.stringify({ cidVersion: 0 }));
 
-    const response = await fetch('https://uploads.pinata.cloud/pinning/pinFileToIPFS', {
+    // FIX: use api.pinata.cloud, not uploads.pinata.cloud
+    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${pinataJwt}`,
@@ -66,8 +67,7 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
         error: errorData,
       });
       throw new Error(
-        `Pinata upload failed: ${errorData.error?.reason || errorData.message || response.statusText
-        }`
+        `Pinata upload failed: ${errorData.error?.reason || errorData.message || response.statusText}`
       );
     }
 
@@ -90,9 +90,7 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
 };
 
 /**
- * FIX: Upload the actual File object (PDF/image/doc) to Pinata IPFS.
- * Previously missing — the old code only ever uploaded JSON, never the real file.
- *
+ * Upload the actual File object (PDF/image/doc) to Pinata IPFS.
  * @param {File} file - The actual File object from the user's file input
  * @param {Object} keyvalues - Optional key-value pairs to tag the pin with
  * @returns {Promise<{hash: string, url: string}>}
@@ -120,7 +118,8 @@ export const uploadFileToPinata = async (file, keyvalues = {}) => {
     formData.append('pinataMetadata', JSON.stringify(metadata));
     formData.append('pinataOptions', JSON.stringify({ cidVersion: 0 }));
 
-    const response = await fetch('https://uploads.pinata.cloud/pinning/pinFileToIPFS', {
+    // FIX: use api.pinata.cloud, not uploads.pinata.cloud
+    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${pinataJwt}`,
@@ -135,8 +134,7 @@ export const uploadFileToPinata = async (file, keyvalues = {}) => {
         error: errorData,
       });
       throw new Error(
-        `Pinata file upload failed: ${errorData.error?.reason || errorData.message || response.statusText
-        }`
+        `Pinata file upload failed: ${errorData.error?.reason || errorData.message || response.statusText}`
       );
     }
 
@@ -159,19 +157,10 @@ export const uploadFileToPinata = async (file, keyvalues = {}) => {
 };
 
 /**
- * FIX: Upload both the actual document file AND its metadata JSON to Pinata IPFS.
- *
- * Old signature: uploadDocumentWithMetadata(documentData, metadata)
- *   → only uploaded a JSON blob, never the real file
- *
- * New signature: uploadDocumentWithMetadata(file, documentData, metadata)
- *   → uploads real file first, then metadata JSON that references the file's hash
- *
- * Returns hashes/URLs for both so the database can store both references.
- *
+ * Upload both the actual document file AND its metadata JSON to Pinata IPFS.
  * @param {File} file - The actual File object from the user's file input
- * @param {Object} documentData - Structured proof info (proofType, summary, walletAddress, etc.)
- * @param {Object} metadata - Transaction/session metadata (txHash, walletAddress, timestamp, etc.)
+ * @param {Object} documentData - Structured proof info
+ * @param {Object} metadata - Transaction/session metadata
  * @returns {Promise<{hash, url, fileHash, fileUrl}>}
  */
 export const uploadDocumentWithMetadata = async (file, documentData, metadata = {}) => {
@@ -183,7 +172,7 @@ export const uploadDocumentWithMetadata = async (file, documentData, metadata = 
     transactionHash: metadata.transactionHash || '',
   });
 
-  // Step 2: Upload metadata JSON that embeds a reference to the file's IPFS hash
+  // Step 2: Upload metadata JSON that references the file's IPFS hash
   const enrichedData = {
     ...documentData,
     fileIpfsHash: fileResult.hash,
@@ -202,10 +191,8 @@ export const uploadDocumentWithMetadata = async (file, documentData, metadata = 
   });
 
   return {
-    // Primary reference (metadata JSON) — use this for blockchain URI
     hash: metadataResult.hash,
     url: metadataResult.url,
-    // Raw file reference — store in DB separately
     fileHash: fileResult.hash,
     fileUrl: fileResult.url,
   };

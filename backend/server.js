@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const { Connection, PublicKey, Keypair } = require('@solana/web3.js');
+const anchor = require('@coral-xyz/anchor');
 require('dotenv').config();
 
 const app = express();
@@ -20,6 +22,89 @@ const supabase = createClient(
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Ghonsi Proof Messages API' });
 });
+
+// ─────────────────────────────────────────────
+// BLOCKCHAIN: Submit proof to Solana
+// ─────────────────────────────────────────────
+app.post('/api/submit-proof', async (req, res) => {
+  try {
+    const { proofId, title, description, proofType, ipfsUri, walletAddress } = req.body;
+
+    if (!proofId || !title || !description || !proofType || !ipfsUri || !walletAddress) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    console.log('[server] Submitting proof to blockchain:', proofId);
+
+    // Load the backend wallet keypair (this pays for the transaction)
+    const privateKeyEnv = process.env.SOLANA_BACKEND_PRIVATE_KEY;
+    if (!privateKeyEnv) {
+      throw new Error('SOLANA_BACKEND_PRIVATE_KEY not configured in environment');
+    }
+
+    const privateKeyArray = JSON.parse(privateKeyEnv);
+    const backendKeypair = Keypair.fromSecretKey(Uint8Array.from(privateKeyArray));
+
+    // Connect to Solana
+    const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+    const connection = new Connection(rpcUrl, 'confirmed');
+
+    // Load the IDL
+    const idl = require('../ghonsi_proof/target/idl/ghonsi_proof.json');
+    const programId = new PublicKey(process.env.PROGRAM_ID || idl.address);
+
+    // Set up Anchor provider using backend keypair
+    const provider = new anchor.AnchorProvider(
+      connection,
+      new anchor.Wallet(backendKeypair),
+      { commitment: 'confirmed' }
+    );
+    anchor.setProvider(provider);
+
+    const program = new anchor.Program(idl, provider);
+
+    // Derive proof PDA
+    const userPublicKey = new PublicKey(walletAddress);
+    const [proofPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('proof'),
+        userPublicKey.toBuffer(),
+        Buffer.from(proofId),
+      ],
+      programId
+    );
+
+    console.log('[server] Proof PDA:', proofPda.toString());
+
+    // Submit to blockchain
+    const tx = await program.methods
+      .submitProof(proofId, title, description, proofType, ipfsUri)
+      .accounts({
+        proof: proofPda,
+        user: userPublicKey,
+        payer: backendKeypair.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([backendKeypair])
+      .rpc();
+
+    console.log('[server] Blockchain tx successful:', tx);
+
+    res.json({
+      success: true,
+      tx,
+      proofPda: proofPda.toString(),
+      mint: null, // populate if your program mints an NFT
+    });
+  } catch (error) {
+    console.error('[server] Blockchain submission error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────
+// MESSAGES
+// ─────────────────────────────────────────────
 
 // Send message
 app.post('/api/messages', async (req, res) => {

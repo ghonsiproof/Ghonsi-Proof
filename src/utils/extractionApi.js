@@ -3,7 +3,7 @@
  * Handles communication with the document extraction service
  */
 
-const API_URL = 'https://extraction-api-e54a.onrender.com/api/extract/';
+const API_URL = 'https://extraction-api-e54a.onrender.com';
 
 /**
  * Map UI proof types to API proof types
@@ -32,7 +32,6 @@ export const supportsExtraction = (proofType) => {
  * @returns {Promise<Object>} - The extracted data
  */
 export const extractDocumentData = async (file, proofType) => {
-  // Check if extraction is supported for this proof type
   if (!supportsExtraction(proofType)) {
     console.log(`Extraction not supported for proof type: ${proofType}`);
     return null;
@@ -40,7 +39,6 @@ export const extractDocumentData = async (file, proofType) => {
 
   const apiProofType = proofTypeMapping[proofType];
 
-  // Create FormData for multipart upload
   const formData = new FormData();
   formData.append('file', file);
   formData.append('proof_type', apiProofType);

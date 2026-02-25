@@ -8,7 +8,6 @@ import '../pages/upload/upload.css';
 /**
  * TransactionSignerModal Component
  * Displays transaction details and prompts user to sign the transaction
- * Used after document extraction to charge SOL fee to Pinata upload
  */
 const TransactionSignerModal = ({
   isOpen,
@@ -27,37 +26,25 @@ const TransactionSignerModal = ({
   const [txHash, setTxHash] = useState(null);
   const [transactionDetails, setTransactionDetails] = useState(null);
 
-  // Create and display transaction details when modal opens
+  // FIX: just set display details — don't call createTransferTransaction here.
+  // The old code created a real transaction on mount and threw it away,
+  // which wasted a blockhash and could cause "Blockhash not found" errors
+  // by the time the user actually clicked Sign.
   useEffect(() => {
     if (!isOpen || !publicKey || !treasuryAddress) return;
 
-    const prepareTransaction = async () => {
-      try {
-        setError(null);
-        console.log('[v0] Preparing transaction details');
+    setError(null);
+    setSuccess(false);
+    setTxHash(null);
 
-        await createTransferTransaction(
-          publicKey,
-          amount,
-          treasuryAddress,
-          connection
-        );
-
-        setTransactionDetails({
-          from: publicKey.toString(),
-          to: treasuryAddress,
-          amount: `${amount} SOL`,
-          fee: '5,000 lamports (~$0.0000075)',
-          total: `${amount} SOL + network fee`,
-        });
-      } catch (err) {
-        console.error('[v0] Transaction preparation error:', err);
-        setError(err.message || 'Failed to prepare transaction');
-      }
-    };
-
-    prepareTransaction();
-  }, [isOpen, publicKey, treasuryAddress, amount, connection]);
+    setTransactionDetails({
+      from: publicKey.toString(),
+      to: treasuryAddress,
+      amount: `${amount} SOL`,
+      fee: '5,000 lamports (~$0.0000075)',
+      total: `${amount} SOL + network fee`,
+    });
+  }, [isOpen, publicKey, treasuryAddress, amount]);
 
   // Handle transaction signing
   const handleSignTransaction = async () => {
@@ -77,7 +64,8 @@ const TransactionSignerModal = ({
     try {
       console.log('[v0] Starting transaction signing process');
 
-      // Create the transaction
+      // Create the transaction fresh right before signing
+      // so the blockhash is as recent as possible
       const transaction = await createTransferTransaction(
         publicKey,
         amount,
@@ -85,7 +73,6 @@ const TransactionSignerModal = ({
         connection
       );
 
-      // Sign the transaction with user's wallet
       console.log('[v0] Requesting wallet signature');
       const signedTx = await signTransaction(transaction);
 
@@ -93,11 +80,9 @@ const TransactionSignerModal = ({
         throw new Error('Transaction signing failed');
       }
 
-      // Send the transaction
       console.log('[v0] Sending signed transaction');
       const signature = await connection.sendRawTransaction(signedTx.serialize());
 
-      // Confirm transaction
       console.log('[v0] Confirming transaction:', signature);
       const confirmation = await connection.confirmTransaction(signature, 'confirmed');
 
@@ -109,7 +94,6 @@ const TransactionSignerModal = ({
       setTxHash(signature);
       setSuccess(true);
 
-      // Call success callback after a short delay
       setTimeout(() => {
         onSuccess({
           txHash: signature,
@@ -120,7 +104,6 @@ const TransactionSignerModal = ({
     } catch (err) {
       console.error('[v0] Transaction error:', err);
 
-      // Handle wallet rejection
       if (err.message.includes('4001') || err.message.includes('user rejected')) {
         setError('You rejected the transaction. Please try again if you want to continue.');
       } else {
@@ -136,6 +119,7 @@ const TransactionSignerModal = ({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-gradient-to-br from-[#0B0F1B] to-[#1a1f2e] border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-screen overflow-y-auto">
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-white">Confirm Transaction</h2>

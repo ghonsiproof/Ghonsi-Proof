@@ -6,9 +6,11 @@
 import { supabase } from '../config/supabaseClient';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
+// FIX: use full backend URL, not a relative path (which 404s on Vercel)
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+
 /**
  * Submit proof to blockchain via backend
- * This calls a backend endpoint that executes the submit-proof script
  * @param {Object} proofData - Proof information to submit
  * @param {string} proofData.proofId - Unique proof ID
  * @param {string} proofData.title - Proof title
@@ -22,7 +24,6 @@ export const submitProofToBlockchain = async (proofData, walletAddress) => {
   try {
     console.log('[v0] Submitting proof to blockchain:', proofData.proofId);
 
-    // Prepare submission data
     const submissionData = {
       proofId: proofData.proofId,
       title: proofData.title,
@@ -33,8 +34,8 @@ export const submitProofToBlockchain = async (proofData, walletAddress) => {
       timestamp: new Date().toISOString(),
     };
 
-    // Call backend API to submit to blockchain
-    const response = await fetch('/api/submit-proof', {
+    // FIX: full URL so this works in production on Vercel
+    const response = await fetch(`${BACKEND_URL}/api/submit-proof`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -43,7 +44,7 @@ export const submitProofToBlockchain = async (proofData, walletAddress) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || 'Failed to submit proof to blockchain');
     }
 
@@ -104,7 +105,7 @@ export const getProofBlockchainStatus = async (proofId) => {
     return {
       ...data,
       isSubmittedOnchain: !!data.transaction_hash,
-      transactionLink: data.transaction_hash 
+      transactionLink: data.transaction_hash
         ? `https://explorer.solana.com/tx/${data.transaction_hash}?cluster=devnet`
         : null,
       pdaLink: data.proof_pda
@@ -143,14 +144,16 @@ export const checkWalletBalance = async (publicKey, connection) => {
  */
 export const verifyBlockchainTransaction = async (txHash, connection) => {
   try {
-    const signature = txHash;
-    const status = await connection.getSignatureStatus(signature);
-    
-    if (status.value?.confirmationStatus === 'confirmed' || status.value?.confirmationStatus === 'finalized') {
+    const status = await connection.getSignatureStatus(txHash);
+
+    if (
+      status.value?.confirmationStatus === 'confirmed' ||
+      status.value?.confirmationStatus === 'finalized'
+    ) {
       console.log('[v0] Transaction verified as confirmed');
       return true;
     }
-    
+
     console.log('[v0] Transaction status:', status.value?.confirmationStatus);
     return false;
   } catch (error) {
