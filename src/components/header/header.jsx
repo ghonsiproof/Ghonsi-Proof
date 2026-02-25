@@ -21,8 +21,8 @@ function Header() {
   const walletMenuRef = useRef(null);
   const walletButtonRef = useRef(null);
 
-  const walletAddress = getWalletAddress();
-  const walletName = wallet?.adapter?.name || null;
+  const walletAddress = getWalletAddress() || localStorage.getItem('wallet_address');
+  const walletName = wallet?.adapter?.name || localStorage.getItem('wallet_name') || null;
 
   const checkAuthStatus = useCallback(async () => {
     try {
@@ -39,14 +39,14 @@ function Header() {
         const userId = localStorage.getItem('user_id');
         
         if (walletAddress && userId) {
-          console.log('[v0] Wallet session found, user is logged in');
+          console.log('Wallet session found, user is logged in');
           setIsLoggedIn(true);
         } else {
           setIsLoggedIn(false);
         }
       }
     } catch (error) {
-      console.error('[v0] Error checking auth status:', error);
+      console.error('Error checking auth status:', error);
       setIsLoggedIn(false);
     }
   }, []);

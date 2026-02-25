@@ -448,13 +448,13 @@ function Dashboard() {
   const [stats, setStats]     = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       const currentUser = await getCurrentUser();
-      console.log('[v0] Dashboard - Current user:', currentUser);
+      console.log('Dashboard - Current user:', currentUser);
       
       if (!currentUser) {
-        console.log('[v0] No user found, redirecting to login');
+        console.log('No user found, redirecting to login');
         setLoading(false);
         navigate('/login');
         return;
@@ -468,13 +468,13 @@ function Dashboard() {
       const proofStats = await getProofStats(currentUser.id);
       setStats(proofStats);
     } catch (error) {
-      console.error('[v0] Error loading dashboard data:', error);
+      console.error('Error loading dashboard data:', error);
       setLoading(false);
       navigate('/login');
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => { loadDashboardData(); }, [navigate, loadDashboardData]);
 
