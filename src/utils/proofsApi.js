@@ -15,18 +15,18 @@ export const uploadProof = async (
   supportingFiles = []
 ) => {
   try {
-    const user = await supabase.auth.getUser();
-
-    if (!user.data.user) {
+    // FIX: app uses wallet-based auth, not Supabase auth session.
+    // userId is passed directly in proofData from upload.jsx
+    const userId = proofData.userId;
+    if (!userId) {
       throw new Error("User not authenticated");
     }
 
     // 1. Insert proof record with IPFS and transaction data
-    // FIX: also persist file_ipfs_hash and file_ipfs_url
     const { data: proof, error: proofError } = await supabase
       .from("proofs")
       .insert({
-        user_id: user.data.user.id,
+        user_id: userId,
         proof_type: proofData.proofType,
         proof_name: proofData.proofName,
         summary: proofData.summary,
@@ -49,7 +49,7 @@ export const uploadProof = async (
       proof.id,
       referenceFiles,
       "reference",
-      user.data.user.id
+      userId
     );
 
     // 3. Upload supporting files
@@ -57,7 +57,7 @@ export const uploadProof = async (
       proof.id,
       supportingFiles,
       "supporting",
-      user.data.user.id
+      userId
     );
 
     return {

@@ -1,5 +1,5 @@
 // Corrected import: Go up one level, then into 'config'
-import { supabase } from '../config/supabaseClient'; 
+import { supabase } from '../config/supabaseClient';
 
 /**
  * Profile Management API
@@ -29,7 +29,7 @@ export const getProfile = async (userId) => {
     .single();
 
   if (error && error.code !== "PGRST116") throw error; // Ignore "not found" error
-  
+
   // If profile exists but has no UID or email, update it
   if (data) {
     const updates = {};
@@ -58,13 +58,13 @@ export const getProfile = async (userId) => {
       if (updateError) console.error('Profile update error:', updateError);
     }
   }
-  
+
   // Map wallet_address from nested users table to top-level profile object
   // This ensures the dashboard can access profile.wallet_address correctly
   if (data?.users?.wallet_address) {
     data.wallet_address = data.users.wallet_address;
   }
-  
+
   return data;
 };
 
