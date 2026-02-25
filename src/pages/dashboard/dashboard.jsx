@@ -340,7 +340,7 @@ const StatsRow = ({ stats }) => (
   </div>
 );
 
-// ─── Proof Item ────────────────────────────────────────────────────────────────
+// ─── Proof Item ────────���───────────────────────────────────────────────────────
 const ProofItem = ({ title, type, date, status }) => (
   // dim gradient border — same as portfolio proof cards
   <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-white/10 to-transparent group">
@@ -476,7 +476,7 @@ function Dashboard() {
     }
   }, [navigate]);
 
-  useEffect(() => { loadDashboardData(); }, [navigate, loadDashboardData]);
+  useEffect(() => { loadDashboardData(); }, [loadDashboardData]);
 
   if (loading) {
     return (
