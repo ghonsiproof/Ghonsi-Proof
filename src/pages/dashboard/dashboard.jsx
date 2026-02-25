@@ -340,7 +340,7 @@ const StatsRow = ({ stats }) => (
   </div>
 );
 
-// ─── Proof Item ────────────────────────────────────────────────────────────────
+// ─── Proof Item ────────���───────────────────────────────────────────────────────
 const ProofItem = ({ title, type, date, status }) => (
   // dim gradient border — same as portfolio proof cards
   <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-white/10 to-transparent group">
@@ -448,7 +448,7 @@ function Dashboard() {
   const [stats, setStats]     = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       const currentUser = await getCurrentUser();
       console.log('[v0] Dashboard - Current user:', currentUser);
@@ -474,9 +474,9 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
-  useEffect(() => { loadDashboardData(); }, [navigate, loadDashboardData]);
+  useEffect(() => { loadDashboardData(); }, [loadDashboardData]);
 
   if (loading) {
     return (
