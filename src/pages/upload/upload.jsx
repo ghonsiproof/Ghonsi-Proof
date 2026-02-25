@@ -15,6 +15,7 @@ import { uploadProof } from '../../utils/proofsApi';
 import { extractDocumentData, supportsExtraction } from '../../utils/extractionApi';
 import { uploadDocumentWithMetadata } from '../../utils/pinataUpload';
 import { submitProofToBlockchain, updateProofWithBlockchainData } from '../../utils/blockchainSubmission';
+import { saveFormData, getFormData, clearFormData } from '../../utils/formPersistence';
 import { useWallet } from '../../hooks/useWallet';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
@@ -174,6 +175,16 @@ function Upload() {
    * Closes the dropdown when user clicks anywhere outside of it
    */
   useEffect(() => {
+    // Restore form data on mount
+    const savedData = getFormData('uploadProof');
+    if (savedData) {
+      console.log('[v0] Restoring upload form data');
+      setProofType(savedData.proofType || '');
+      setProofName(savedData.proofName || '');
+      setSummary(savedData.summary || '');
+      setReferenceLink(savedData.referenceLink || '');
+    }
+
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsDropdownOpen(false);
@@ -182,6 +193,20 @@ function Upload() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // Auto-save upload form data
+  useEffect(() => {
+    const saveTimeout = setTimeout(() => {
+      saveFormData('uploadProof', {
+        proofType,
+        proofName,
+        summary,
+        referenceLink,
+      });
+    }, 1000); // Debounce saves by 1 second
+
+    return () => clearTimeout(saveTimeout);
+  }, [proofType, proofName, summary, referenceLink]);
 
   /**
    * Handles proof type selection from dropdown
@@ -363,6 +388,7 @@ function Upload() {
       console.log('[v0] Proof fully submitted: database + IPFS + blockchain');
 
       setTimeout(() => {
+        clearFormData('uploadProof'); // Clear saved form data after successful submission
         setShowPendingModal(false);
         setTimeout(() => setShowSubmittedModal(true), 300);
       }, 1500);

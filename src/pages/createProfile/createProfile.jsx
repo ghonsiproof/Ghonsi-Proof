@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { createProfile, getProfile, updateProfile } from '../../utils/profileApi';
+import { saveFormData, getFormData, clearFormData } from '../../utils/formPersistence';
 import { supabase } from '../../config/supabaseClient';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
@@ -31,6 +32,18 @@ function CreateProfile() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
+        // First, try to restore saved form data (in case of page refresh)
+        const savedFormData = getFormData('createProfile');
+        if (savedFormData) {
+          console.log('[v0] Restoring saved form data');
+          setFormData(savedFormData.formData);
+          setCurrentStep(savedFormData.currentStep || 1);
+          if (savedFormData.profilePhoto) {
+            setProfilePhoto(savedFormData.profilePhoto);
+          }
+          return; // Don't load from DB if we have recent form data
+        }
+
         const user = await getCurrentUser();
         if (!user) return;
 
@@ -79,6 +92,19 @@ function CreateProfile() {
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
+
+  // Auto-save form data whenever it changes
+  useEffect(() => {
+    const saveTimeout = setTimeout(() => {
+      saveFormData('createProfile', {
+        formData,
+        currentStep,
+        profilePhoto: profilePhoto ? { preview: profilePhoto.preview, file: null } : null,
+      });
+    }, 1000); // Debounce saves by 1 second
+
+    return () => clearTimeout(saveTimeout);
+  }, [formData, currentStep, profilePhoto]);
 
   const handlePhotoUpload = (e) => {
     setPhotoError('');
@@ -203,6 +229,7 @@ function CreateProfile() {
           await createProfile({ user_id: user.id, ...profileData });
         }
         
+        clearFormData('createProfile'); // Clear saved form data after successful submission
         setShowSuccess(true);
       } catch (error) {
         console.error('Profile save error:', error);
