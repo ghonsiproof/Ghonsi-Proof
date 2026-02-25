@@ -19,9 +19,9 @@ export const saveFormData = (formName, data) => {
       timestamp: Date.now(),
     };
     localStorage.setItem(key, JSON.stringify(payload));
-    console.log(`[v0] Form data saved for ${formName}`);
+    console.log(`Form data saved for ${formName}`);
   } catch (error) {
-    console.error(`[v0] Error saving form data for ${formName}:`, error);
+    console.error(`Error saving form data for ${formName}:`, error);
   }
 };
 
@@ -44,14 +44,14 @@ export const getFormData = (formName) => {
 
     if (isExpired) {
       localStorage.removeItem(key);
-      console.log(`[v0] Form data expired for ${formName}`);
+      console.log(`Form data expired for ${formName}`);
       return null;
     }
 
-    console.log(`[v0] Form data retrieved for ${formName}`);
+    console.log(`Form data retrieved for ${formName}`);
     return payload.data;
   } catch (error) {
-    console.error(`[v0] Error retrieving form data for ${formName}:`, error);
+    console.error(`Error retrieving form data for ${formName}:`, error);
     return null;
   }
 };
@@ -64,9 +64,9 @@ export const clearFormData = (formName) => {
   try {
     const key = `${FORM_DATA_PREFIX}${formName}`;
     localStorage.removeItem(key);
-    console.log(`[v0] Form data cleared for ${formName}`);
+    console.log(`Form data cleared for ${formName}`);
   } catch (error) {
-    console.error(`[v0] Error clearing form data for ${formName}:`, error);
+    console.error(`Error clearing form data for ${formName}:`, error);
   }
 };
 
@@ -77,8 +77,8 @@ export const clearAllFormData = () => {
   try {
     const keys = Object.keys(localStorage).filter(key => key.startsWith(FORM_DATA_PREFIX));
     keys.forEach(key => localStorage.removeItem(key));
-    console.log(`[v0] All form data cleared`);
+    console.log(`All form data cleared`);
   } catch (error) {
-    console.error(`[v0] Error clearing all form data:`, error);
+    console.error(`Error clearing all form data:`, error);
   }
 };

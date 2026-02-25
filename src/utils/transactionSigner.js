@@ -20,7 +20,7 @@ export const createTransferTransaction = async (
   connection
 ) => {
   try {
-    console.log('[v0] Creating transfer transaction:', {
+    console.log('Creating transfer transaction:', {
       from: fromPublicKey.toString(),
       to: toAddress,
       amount: `${amount} SOL`,
@@ -47,10 +47,10 @@ export const createTransferTransaction = async (
 
     transaction.add(instruction);
 
-    console.log('[v0] Transaction created successfully');
+    console.log('Transaction created successfully');
     return transaction;
   } catch (error) {
-    console.error('[v0] Error creating transfer transaction:', error);
+    console.error('Error creating transfer transaction:', error);
     throw error;
   }
 };
@@ -91,7 +91,7 @@ export const estimateTransactionFee = async (connection, transaction) => {
     const baseFee = feeCalculator.feeCalculator?.lamportsPerSignature || 5000;
     return baseFee;
   } catch (error) {
-    console.error('[v0] Error estimating fee:', error);
+    console.error('Error estimating fee:', error);
     return 5000; // Default fallback
   }
 };

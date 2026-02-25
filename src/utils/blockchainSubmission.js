@@ -20,7 +20,7 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
  */
 export const submitProofToBlockchain = async (proofData, walletAddress) => {
   try {
-    console.log('[v0] Submitting proof to blockchain:', proofData.proofId);
+    console.log('Submitting proof to blockchain:', proofData.proofId);
 
     // Prepare submission data
     const submissionData = {
@@ -48,11 +48,11 @@ export const submitProofToBlockchain = async (proofData, walletAddress) => {
     }
 
     const result = await response.json();
-    console.log('[v0] Blockchain submission successful:', result);
+    console.log('Blockchain submission successful:', result);
 
     return result;
   } catch (error) {
-    console.error('[v0] Blockchain submission error:', error);
+    console.error('Blockchain submission error:', error);
     throw error;
   }
 };
@@ -78,10 +78,10 @@ export const updateProofWithBlockchainData = async (proofId, blockchainData) => 
       .single();
 
     if (error) throw error;
-    console.log('[v0] Proof updated with blockchain data:', proofId);
+    console.log('Proof updated with blockchain data:', proofId);
     return data;
   } catch (error) {
-    console.error('[v0] Error updating proof with blockchain data:', error);
+    console.error('Error updating proof with blockchain data:', error);
     throw error;
   }
 };
@@ -112,7 +112,7 @@ export const getProofBlockchainStatus = async (proofId) => {
         : null,
     };
   } catch (error) {
-    console.error('[v0] Error fetching proof blockchain status:', error);
+    console.error('Error fetching proof blockchain status:', error);
     throw error;
   }
 };
@@ -127,10 +127,10 @@ export const checkWalletBalance = async (publicKey, connection) => {
   try {
     const balance = await connection.getBalance(publicKey);
     const balanceInSol = balance / LAMPORTS_PER_SOL;
-    console.log('[v0] Wallet balance:', balanceInSol, 'SOL');
+    console.log('Wallet balance:', balanceInSol, 'SOL');
     return balanceInSol;
   } catch (error) {
-    console.error('[v0] Error checking wallet balance:', error);
+    console.error('Error checking wallet balance:', error);
     throw error;
   }
 };
@@ -147,14 +147,14 @@ export const verifyBlockchainTransaction = async (txHash, connection) => {
     const status = await connection.getSignatureStatus(signature);
     
     if (status.value?.confirmationStatus === 'confirmed' || status.value?.confirmationStatus === 'finalized') {
-      console.log('[v0] Transaction verified as confirmed');
+      console.log('Transaction verified as confirmed');
       return true;
     }
     
-    console.log('[v0] Transaction status:', status.value?.confirmationStatus);
+    console.log('Transaction status:', status.value?.confirmationStatus);
     return false;
   } catch (error) {
-    console.error('[v0] Error verifying transaction:', error);
+    console.error('Error verifying transaction:', error);
     throw error;
   }
 };

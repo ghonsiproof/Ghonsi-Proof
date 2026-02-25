@@ -34,7 +34,7 @@ const TransactionSignerModal = ({
     const prepareTransaction = async () => {
       try {
         setError(null);
-        console.log('[v0] Preparing transaction details');
+        console.log('Preparing transaction details');
 
         await createTransferTransaction(
           publicKey,
@@ -51,7 +51,7 @@ const TransactionSignerModal = ({
           total: `${amount} SOL + network fee`,
         });
       } catch (err) {
-        console.error('[v0] Transaction preparation error:', err);
+        console.error('Transaction preparation error:', err);
         setError(err.message || 'Failed to prepare transaction');
       }
     };
@@ -75,7 +75,7 @@ const TransactionSignerModal = ({
     setError(null);
 
     try {
-      console.log('[v0] Starting transaction signing process');
+      console.log('Starting transaction signing process');
 
       // Create the transaction
       const transaction = await createTransferTransaction(
@@ -86,7 +86,7 @@ const TransactionSignerModal = ({
       );
 
       // Sign the transaction with user's wallet
-      console.log('[v0] Requesting wallet signature');
+      console.log('Requesting wallet signature');
       const signedTx = await signTransaction(transaction);
 
       if (!signedTx) {
@@ -94,18 +94,18 @@ const TransactionSignerModal = ({
       }
 
       // Send the transaction
-      console.log('[v0] Sending signed transaction');
+      console.log('Sending signed transaction');
       const signature = await connection.sendRawTransaction(signedTx.serialize());
 
       // Confirm transaction
-      console.log('[v0] Confirming transaction:', signature);
+      console.log('Confirming transaction:', signature);
       const confirmation = await connection.confirmTransaction(signature, 'confirmed');
 
       if (confirmation.value.err) {
         throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
       }
 
-      console.log('[v0] Transaction successful:', signature);
+      console.log('Transaction successful:', signature);
       setTxHash(signature);
       setSuccess(true);
 
@@ -118,7 +118,7 @@ const TransactionSignerModal = ({
         });
       }, 1500);
     } catch (err) {
-      console.error('[v0] Transaction error:', err);
+      console.error('Transaction error:', err);
 
       // Handle wallet rejection
       if (err.message.includes('4001') || err.message.includes('user rejected')) {

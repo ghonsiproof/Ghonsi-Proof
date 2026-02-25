@@ -13,12 +13,12 @@ import { supabase } from '../config/supabaseClient';
  */
 export const initializeSessionRecovery = async () => {
   try {
-    console.log('[v0] Initializing session recovery...');
+    console.log('Initializing session recovery...');
 
     // Check Supabase session first
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      console.log('[v0] Supabase session found, user authenticated');
+      console.log('Supabase session found, user authenticated');
       return { authenticated: true, type: 'supabase' };
     }
 
@@ -27,19 +27,19 @@ export const initializeSessionRecovery = async () => {
     if (walletSession.walletAddress && walletSession.userId) {
       const isValid = await verifyWalletSession();
       if (isValid) {
-        console.log('[v0] Wallet session recovered:', walletSession.userId);
+        console.log('Wallet session recovered:', walletSession.userId);
         return { authenticated: true, type: 'wallet', session: walletSession };
       } else {
-        console.log('[v0] Wallet session invalid, clearing...');
+        console.log('Wallet session invalid, clearing...');
         clearWalletSession();
         return { authenticated: false, type: 'wallet_invalid' };
       }
     }
 
-    console.log('[v0] No valid session found');
+    console.log('No valid session found');
     return { authenticated: false, type: 'none' };
   } catch (error) {
-    console.error('[v0] Session recovery error:', error);
+    console.error('Session recovery error:', error);
     return { authenticated: false, type: 'error', error };
   }
 };
@@ -56,7 +56,7 @@ export const clearWalletSession = () => {
   localStorage.removeItem('session_token');
   localStorage.removeItem('session_created');
   localStorage.removeItem('auth_method');
-  console.log('[v0] Wallet session cleared');
+  console.log('Wallet session cleared');
 };
 
 /**
@@ -72,7 +72,7 @@ export const hasActiveSession = async () => {
     // Check wallet session
     return await verifyWalletSession();
   } catch (error) {
-    console.error('[v0] Error checking active session:', error);
+    console.error('Error checking active session:', error);
     return false;
   }
 };
@@ -108,7 +108,7 @@ export const getCurrentAuthenticatedUser = async () => {
 
     return null;
   } catch (error) {
-    console.error('[v0] Error getting authenticated user:', error);
+    console.error('Error getting authenticated user:', error);
     return null;
   }
 };
@@ -122,22 +122,22 @@ export const validateSession = async () => {
     // Check Supabase session
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      console.log('[v0] Supabase session valid');
+      console.log('Supabase session valid');
       return true;
     }
 
     // Check and validate wallet session
     const isValid = await verifyWalletSession();
     if (isValid) {
-      console.log('[v0] Wallet session valid');
+      console.log('Wallet session valid');
       return true;
     }
 
-    console.log('[v0] Session validation failed');
+    console.log('Session validation failed');
     clearWalletSession();
     return false;
   } catch (error) {
-    console.error('[v0] Session validation error:', error);
+    console.error('Session validation error:', error);
     clearWalletSession();
     return false;
   }
@@ -149,7 +149,7 @@ export const validateSession = async () => {
 export const debugSessionInfo = () => {
   const walletSession = getWalletSession();
   
-  console.log('[v0] === SESSION DEBUG INFO ===');
+  console.log('=== SESSION DEBUG INFO ===');
   console.log('Wallet Address:', walletSession.walletAddress);
   console.log('User ID:', walletSession.userId);
   console.log('Connected Wallet:', walletSession.connectedWallet);

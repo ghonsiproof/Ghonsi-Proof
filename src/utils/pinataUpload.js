@@ -12,7 +12,7 @@ const validatePinataConfig = () => {
   const jwt = process.env.REACT_APP_PINATA_JWT;
 
   if (!jwt) {
-    console.error('[v0] Pinata JWT not configured! Add REACT_APP_PINATA_JWT to .env');
+    console.error('Pinata JWT not configured! Add REACT_APP_PINATA_JWT to .env');
     throw new Error(
       'Pinata IPFS not configured. Please set REACT_APP_PINATA_JWT environment variable. ' +
       'Get your JWT from https://dashboard.pinata.cloud'
@@ -32,7 +32,7 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
   try {
     const pinataJwt = validatePinataConfig();
 
-    console.log('[v0] Uploading metadata JSON to Pinata IPFS:', fileName);
+    console.log('Uploading metadata JSON to Pinata IPFS:', fileName);
 
     const jsonData = JSON.stringify(documentData);
     const blob = new Blob([jsonData], { type: 'application/json' });
@@ -61,7 +61,7 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('[v0] Pinata metadata upload error:', {
+      console.error('Pinata metadata upload error:', {
         status: response.status,
         error: errorData,
       });
@@ -73,7 +73,7 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
 
     const result = await response.json();
 
-    console.log('[v0] Pinata metadata upload successful:', {
+    console.log('Pinata metadata upload successful:', {
       hash: result.IpfsHash,
       url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
     });
@@ -84,7 +84,7 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
       timestamp: result.Timestamp,
     };
   } catch (error) {
-    console.error('[v0] Pinata upload error:', error);
+    console.error('Pinata upload error:', error);
     throw error;
   }
 };
@@ -101,7 +101,7 @@ export const uploadFileToPinata = async (file, keyvalues = {}) => {
   try {
     const pinataJwt = validatePinataConfig();
 
-    console.log('[v0] Uploading actual file to Pinata IPFS:', file.name);
+    console.log('Uploading actual file to Pinata IPFS:', file.name);
 
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -130,7 +130,7 @@ export const uploadFileToPinata = async (file, keyvalues = {}) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('[v0] Pinata file upload error:', {
+      console.error('Pinata file upload error:', {
         status: response.status,
         error: errorData,
       });
@@ -142,7 +142,7 @@ export const uploadFileToPinata = async (file, keyvalues = {}) => {
 
     const result = await response.json();
 
-    console.log('[v0] Pinata file upload successful:', {
+    console.log('Pinata file upload successful:', {
       hash: result.IpfsHash,
       url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
     });
@@ -153,7 +153,7 @@ export const uploadFileToPinata = async (file, keyvalues = {}) => {
       timestamp: result.Timestamp,
     };
   } catch (error) {
-    console.error('[v0] Pinata file upload error:', error);
+    console.error('Pinata file upload error:', error);
     throw error;
   }
 };
@@ -175,7 +175,7 @@ export const uploadFileToPinata = async (file, keyvalues = {}) => {
  * @returns {Promise<{hash, url, fileHash, fileUrl}>}
  */
 export const uploadDocumentWithMetadata = async (file, documentData, metadata = {}) => {
-  console.log('[v0] Starting dual Pinata upload: actual file + metadata JSON');
+  console.log('Starting dual Pinata upload: actual file + metadata JSON');
 
   // Step 1: Upload the real document file
   const fileResult = await uploadFileToPinata(file, {
@@ -196,7 +196,7 @@ export const uploadDocumentWithMetadata = async (file, documentData, metadata = 
 
   const metadataResult = await uploadToPinata(enrichedData, `metadata-${Date.now()}`);
 
-  console.log('[v0] Dual Pinata upload complete:', {
+  console.log('Dual Pinata upload complete:', {
     fileHash: fileResult.hash,
     metadataHash: metadataResult.hash,
   });
@@ -219,7 +219,7 @@ export const uploadDocumentWithMetadata = async (file, documentData, metadata = 
 export const retrieveFromPinata = async (ipfsHash) => {
   try {
     const url = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
-    console.log('[v0] Retrieving from Pinata:', url);
+    console.log('Retrieving from Pinata:', url);
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -227,10 +227,10 @@ export const retrieveFromPinata = async (ipfsHash) => {
     }
 
     const data = await response.json();
-    console.log('[v0] Retrieved from Pinata successfully');
+    console.log('Retrieved from Pinata successfully');
     return data;
   } catch (error) {
-    console.error('[v0] Error retrieving from Pinata:', error);
+    console.error('Error retrieving from Pinata:', error);
     throw error;
   }
 };
@@ -272,11 +272,11 @@ export const fetchFromPinataWithFallback = async (ipfsHash) => {
       const response = await fetch(url);
       if (!response.ok) continue;
       const data = await response.json();
-      console.log('[v0] Successfully fetched from:', url);
+      console.log('Successfully fetched from:', url);
       return data;
     } catch (error) {
       lastError = error;
-      console.warn(`[v0] Failed to fetch from ${url}, trying next gateway...`);
+      console.warn(`Failed to fetch from ${url}, trying next gateway...`);
     }
   }
 

@@ -35,7 +35,6 @@ function Upload() {
   // Progress tracking
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSpeed, setUploadSpeed] = useState('');
-  const [uploadStartTime, setUploadStartTime] = useState(null);
 
   // Form state
   const [proofType, setProofType] = useState('');
@@ -182,7 +181,7 @@ function Upload() {
   useEffect(() => {
     const savedData = getFormData('uploadProof');
     if (savedData) {
-      console.log('[v0] Restoring upload form data');
+      console.log('Restoring upload form data');
       setProofType(savedData.proofType || '');
       setProofName(savedData.proofName || '');
       setSummary(savedData.summary || '');
@@ -258,7 +257,6 @@ function Upload() {
 
     // FIX: capture start time as local variable — state is async and would be stale in the interval
     const startTime = Date.now();
-    setUploadStartTime(startTime);
     setUploadProgress(0);
 
     const fileSize = file.size;
@@ -360,7 +358,7 @@ function Upload() {
       });
       setShowTransactionModal(true);
     } catch (error) {
-      console.error('[v0] Error preparing proof submission:', error);
+      console.error('Error preparing proof submission:', error);
       const errorMsg = error.message || 'Failed to prepare proof submission';
       addToast(errorMsg, 'error');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -383,7 +381,7 @@ function Upload() {
     setShowPendingModal(true);
 
     try {
-      console.log('[v0] Transaction successful, uploading to Pinata:', txData.txHash);
+      console.log('Transaction successful, uploading to Pinata:', txData.txHash);
 
       const metadata = {
         transactionHash: txData.txHash,
@@ -399,7 +397,7 @@ function Upload() {
         metadata               // transaction/wallet metadata
       );
 
-      console.log('[v0] Pinata dual upload successful:', ipfsResult);
+      console.log('Pinata dual upload successful:', ipfsResult);
 
       // FIX: store both metadata hash and raw file hash in the database
       const proofDataWithIPFS = {
@@ -414,9 +412,9 @@ function Upload() {
       const uploadedProof = await uploadProof(proofDataWithIPFS, [], [referenceFiles[0]]);
       const proofId = uploadedProof.proof.id;
 
-      console.log('[v0] Proof saved to database:', proofId);
+      console.log('Proof saved to database:', proofId);
 
-      console.log('[v0] Submitting proof to blockchain...');
+      console.log('Submitting proof to blockchain...');
       const blockchainResult = await submitProofToBlockchain(
         {
           proofId,
@@ -428,11 +426,11 @@ function Upload() {
         publicKey?.toString()
       );
 
-      console.log('[v0] Blockchain submission successful:', blockchainResult);
+      console.log('Blockchain submission successful:', blockchainResult);
 
       await updateProofWithBlockchainData(proofId, blockchainResult);
 
-      console.log('[v0] Proof fully submitted: file + metadata on IPFS + database + blockchain');
+      console.log('Proof fully submitted: file + metadata on IPFS + database + blockchain');
 
       setTimeout(() => {
         clearFormData('uploadProof');
@@ -440,7 +438,7 @@ function Upload() {
         setTimeout(() => setShowSubmittedModal(true), 300);
       }, 1500);
     } catch (error) {
-      console.error('[v0] Error completing proof submission:', error);
+      console.error('Error completing proof submission:', error);
       const errorMsg =
         error.message ||
         'Failed to complete proof submission. IPFS upload may have succeeded but blockchain submission failed.';

@@ -18,7 +18,7 @@ export const bindWallet = async (walletAddress, walletName = 'Connected Wallet',
     const user = await getCurrentUser();
     if (!user) throw new Error('User not authenticated');
 
-    console.log('[v0] Binding wallet:', { walletAddress, walletName, makePrimary });
+    console.log('Binding wallet:', { walletAddress, walletName, makePrimary });
 
     // If making primary, unset other primaries
     if (makePrimary) {
@@ -44,10 +44,10 @@ export const bindWallet = async (walletAddress, walletName = 'Connected Wallet',
 
     if (error) throw error;
 
-    console.log('[v0] Wallet bound successfully:', data);
+    console.log('Wallet bound successfully:', data);
     return data;
   } catch (error) {
-    console.error('[v0] Error binding wallet:', error);
+    console.error('Error binding wallet:', error);
     throw error;
   }
 };
@@ -62,7 +62,7 @@ export const unbindWallet = async (walletAddress) => {
     const user = await getCurrentUser();
     if (!user) throw new Error('User not authenticated');
 
-    console.log('[v0] Unbinding wallet:', walletAddress);
+    console.log('Unbinding wallet:', walletAddress);
 
     // Check if user has other wallets
     const { data: wallets } = await supabase
@@ -84,10 +84,10 @@ export const unbindWallet = async (walletAddress) => {
 
     if (error) throw error;
 
-    console.log('[v0] Wallet unbound successfully');
+    console.log('Wallet unbound successfully');
     return true;
   } catch (error) {
-    console.error('[v0] Error unbinding wallet:', error);
+    console.error('Error unbinding wallet:', error);
     throw error;
   }
 };
@@ -110,10 +110,10 @@ export const getUserWallets = async () => {
 
     if (error) throw error;
 
-    console.log('[v0] Retrieved user wallets:', data);
+    console.log('Retrieved user wallets:', data);
     return data || [];
   } catch (error) {
-    console.error('[v0] Error retrieving user wallets:', error);
+    console.error('Error retrieving user wallets:', error);
     return [];
   }
 };
@@ -128,7 +128,7 @@ export const setPrimaryWallet = async (walletAddress) => {
     const user = await getCurrentUser();
     if (!user) throw new Error('User not authenticated');
 
-    console.log('[v0] Setting primary wallet:', walletAddress);
+    console.log('Setting primary wallet:', walletAddress);
 
     // Unset all primaries
     await supabase
@@ -147,10 +147,10 @@ export const setPrimaryWallet = async (walletAddress) => {
 
     if (error) throw error;
 
-    console.log('[v0] Primary wallet updated:', data);
+    console.log('Primary wallet updated:', data);
     return data;
   } catch (error) {
-    console.error('[v0] Error setting primary wallet:', error);
+    console.error('Error setting primary wallet:', error);
     throw error;
   }
 };
@@ -165,7 +165,7 @@ export const updateEmail = async (newEmail) => {
     const user = await getCurrentUser();
     if (!user) throw new Error('User not authenticated');
 
-    console.log('[v0] Updating email to:', newEmail);
+    console.log('Updating email to:', newEmail);
 
     // Update user email in Supabase auth
     const { data: authData, error: authError } = await supabase.auth.updateUser({
@@ -184,10 +184,10 @@ export const updateEmail = async (newEmail) => {
 
     if (profileError) throw profileError;
 
-    console.log('[v0] Email updated successfully');
+    console.log('Email updated successfully');
     return profileData;
   } catch (error) {
-    console.error('[v0] Error updating email:', error);
+    console.error('Error updating email:', error);
     throw error;
   }
 };
@@ -213,7 +213,7 @@ export const getUserEmails = async () => {
       verified: user.email_confirmed_at ? true : false,
     };
   } catch (error) {
-    console.error('[v0] Error retrieving user emails:', error);
+    console.error('Error retrieving user emails:', error);
     throw error;
   }
 };
@@ -228,7 +228,7 @@ export const addSecondaryEmail = async (email) => {
     const user = await getCurrentUser();
     if (!user) throw new Error('User not authenticated');
 
-    console.log('[v0] Adding secondary email:', email);
+    console.log('Adding secondary email:', email);
 
     const { data, error } = await supabase
       .from('profiles')
@@ -242,10 +242,10 @@ export const addSecondaryEmail = async (email) => {
 
     if (error) throw error;
 
-    console.log('[v0] Secondary email added');
+    console.log('Secondary email added');
     return data;
   } catch (error) {
-    console.error('[v0] Error adding secondary email:', error);
+    console.error('Error adding secondary email:', error);
     throw error;
   }
 };
@@ -259,7 +259,7 @@ export const removeProfileEmail = async () => {
     const user = await getCurrentUser();
     if (!user) throw new Error('User not authenticated');
 
-    console.log('[v0] Removing profile email');
+    console.log('Removing profile email');
 
     const { data, error } = await supabase
       .from('profiles')
@@ -273,10 +273,10 @@ export const removeProfileEmail = async () => {
 
     if (error) throw error;
 
-    console.log('[v0] Profile email removed');
+    console.log('Profile email removed');
     return data;
   } catch (error) {
-    console.error('[v0] Error removing profile email:', error);
+    console.error('Error removing profile email:', error);
     throw error;
   }
 };
