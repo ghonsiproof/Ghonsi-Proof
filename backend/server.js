@@ -8,11 +8,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Initialize Supabase with SERVICE ROLE key (bypasses RLS)
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -20,11 +18,12 @@ const supabase = createClient(
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Ghonsi Proof Messages API' });
+  res.json({ status: 'ok', message: 'Ghonsi Proof API' });
 });
 
 // ─────────────────────────────────────────────
 // BLOCKCHAIN: Submit proof to Solana
+// Calls mint_proof instruction from the IDL
 // ─────────────────────────────────────────────
 app.post('/api/submit-proof', async (req, res) => {
   try {
@@ -34,67 +33,122 @@ app.post('/api/submit-proof', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    console.log('[server] Submitting proof to blockchain:', proofId);
+    // Validate field lengths against program constraints
+    if (proofId.length > 32) return res.status(400).json({ error: 'proofId max 32 characters' });
+    if (title.length > 64) return res.status(400).json({ error: 'title max 64 characters' });
+    if (ipfsUri.length > 200) return res.status(400).json({ error: 'ipfsUri max 200 characters' });
+    if (description.length > 500) return res.status(400).json({ error: 'description max 500 characters' });
 
-    // Load the backend wallet keypair (this pays for the transaction)
+    console.log('[server] Minting proof NFT on blockchain:', proofId);
+
+    // Load backend wallet
     const privateKeyEnv = process.env.SOLANA_BACKEND_PRIVATE_KEY;
-    if (!privateKeyEnv) {
-      throw new Error('SOLANA_BACKEND_PRIVATE_KEY not configured in environment');
-    }
-
-    const privateKeyArray = JSON.parse(privateKeyEnv);
-    const backendKeypair = Keypair.fromSecretKey(Uint8Array.from(privateKeyArray));
+    if (!privateKeyEnv) throw new Error('SOLANA_BACKEND_PRIVATE_KEY not configured');
+    const backendKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(privateKeyEnv)));
 
     // Connect to Solana
-    const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
-    const connection = new Connection(rpcUrl, 'confirmed');
+    const connection = new Connection(
+      process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
+      'confirmed'
+    );
 
-    // Load the IDL
+    // Load IDL
     const idl = require('../ghonsi_proof/target/idl/ghonsi_proof.json');
     const programId = new PublicKey(process.env.PROGRAM_ID || idl.address);
 
-    // Set up Anchor provider using backend keypair
+    // Anchor provider — backend keypair is the payer/owner
     const provider = new anchor.AnchorProvider(
       connection,
       new anchor.Wallet(backendKeypair),
       { commitment: 'confirmed' }
     );
     anchor.setProvider(provider);
-
     const program = new anchor.Program(idl, provider);
 
-    // Derive proof PDA
-    const userPublicKey = new PublicKey(walletAddress);
+    const ownerPublicKey = new PublicKey(walletAddress);
+
+    // Generate a new mint keypair for the NFT
+    const mintKeypair = Keypair.generate();
+
+    // Derive PDAs matching the IDL seeds exactly
+    // proof PDA seeds: ["proof", owner, mint]
     const [proofPda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('proof'),
-        userPublicKey.toBuffer(),
-        Buffer.from(proofId),
+        ownerPublicKey.toBuffer(),
+        mintKeypair.publicKey.toBuffer(),
       ],
       programId
     );
 
-    console.log('[server] Proof PDA:', proofPda.toString());
+    // mint_authority PDA seeds: ["authority"]
+    const [mintAuthorityPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('authority')],
+      programId
+    );
 
-    // Submit to blockchain
+    // program_authority PDA seeds: ["program_authority"]
+    const [programAuthorityPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('program_authority')],
+      programId
+    );
+
+    // Derive associated token account
+    const { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } = require('@solana/spl-token');
+    const tokenAccount = getAssociatedTokenAddressSync(
+      mintKeypair.publicKey,
+      ownerPublicKey
+    );
+
+    // Metadata account (Metaplex)
+    const METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+    const [metadataPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('metadata'),
+        METADATA_PROGRAM_ID.toBuffer(),
+        mintKeypair.publicKey.toBuffer(),
+      ],
+      METADATA_PROGRAM_ID
+    );
+
+    // You need a collection mint — if you don't have one yet use backendKeypair.publicKey as placeholder
+    // Replace COLLECTION_MINT_ADDRESS in .env with your actual collection mint once initialized
+    const collectionMint = process.env.COLLECTION_MINT_ADDRESS
+      ? new PublicKey(process.env.COLLECTION_MINT_ADDRESS)
+      : backendKeypair.publicKey;
+
+    console.log('[server] Proof PDA:', proofPda.toString());
+    console.log('[server] Mint:', mintKeypair.publicKey.toString());
+
+    // Call mint_proof instruction
     const tx = await program.methods
-      .submitProof(proofId, title, description, proofType, ipfsUri)
+      .mintProof(proofId, title, ipfsUri, description, proofType)
       .accounts({
+        owner: ownerPublicKey,
         proof: proofPda,
-        user: userPublicKey,
-        payer: backendKeypair.publicKey,
+        mint: mintKeypair.publicKey,
+        tokenAccount: tokenAccount,
+        mintAuthority: mintAuthorityPda,
+        programAuthority: programAuthorityPda,
+        collectionMint: collectionMint,
+        admin: backendKeypair.publicKey,
+        metadata: metadataPda,
+        metadataProgram: METADATA_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       })
-      .signers([backendKeypair])
+      .signers([backendKeypair, mintKeypair])
       .rpc();
 
-    console.log('[server] Blockchain tx successful:', tx);
+    console.log('[server] mint_proof tx successful:', tx);
 
     res.json({
       success: true,
       tx,
       proofPda: proofPda.toString(),
-      mint: null, // populate if your program mints an NFT
+      mint: mintKeypair.publicKey.toString(),
     });
   } catch (error) {
     console.error('[server] Blockchain submission error:', error);
@@ -106,32 +160,18 @@ app.post('/api/submit-proof', async (req, res) => {
 // MESSAGES
 // ─────────────────────────────────────────────
 
-// Send message
 app.post('/api/messages', async (req, res) => {
   try {
     const { sender_id, receiver_id, portfolio_id, message, sender_name, sender_email, type } = req.body;
-
     if (!sender_id || !receiver_id || !portfolio_id || !message) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-
     const { data, error } = await supabase
       .from('messages')
-      .insert([{
-        sender_id,
-        receiver_id,
-        portfolio_id,
-        message,
-        sender_name,
-        sender_email,
-        type,
-        created_at: new Date().toISOString()
-      }])
+      .insert([{ sender_id, receiver_id, portfolio_id, message, sender_name, sender_email, type, created_at: new Date().toISOString() }])
       .select()
       .single();
-
     if (error) throw error;
-
     res.status(201).json({ success: true, data });
   } catch (error) {
     console.error('Error sending message:', error);
@@ -139,84 +179,56 @@ app.post('/api/messages', async (req, res) => {
   }
 });
 
-// Get messages for a user
 app.get('/api/messages/:userId', async (req, res) => {
   try {
-    const { userId } = req.params;
-
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .eq('receiver_id', userId)
+      .eq('receiver_id', req.params.userId)
       .order('created_at', { ascending: false });
-
     if (error) throw error;
-
     res.json({ success: true, data });
   } catch (error) {
-    console.error('Error fetching messages:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Mark message as read
 app.patch('/api/messages/:messageId/read', async (req, res) => {
   try {
-    const { messageId } = req.params;
-
     const { data, error } = await supabase
       .from('messages')
       .update({ read: true })
-      .eq('id', messageId)
+      .eq('id', req.params.messageId)
       .select()
       .single();
-
     if (error) throw error;
-
     res.json({ success: true, data });
   } catch (error) {
-    console.error('Error marking message as read:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Delete message
 app.delete('/api/messages/:messageId', async (req, res) => {
   try {
-    const { messageId } = req.params;
-
-    const { error } = await supabase
-      .from('messages')
-      .delete()
-      .eq('id', messageId);
-
+    const { error } = await supabase.from('messages').delete().eq('id', req.params.messageId);
     if (error) throw error;
-
     res.json({ success: true, message: 'Message deleted' });
   } catch (error) {
-    console.error('Error deleting message:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Respond to profile request
 app.patch('/api/messages/:messageId/respond', async (req, res) => {
   try {
-    const { messageId } = req.params;
-    const { status } = req.body;
-
     const { data, error } = await supabase
       .from('messages')
-      .update({ status, read: true })
-      .eq('id', messageId)
+      .update({ status: req.body.status, read: true })
+      .eq('id', req.params.messageId)
       .select()
       .single();
-
     if (error) throw error;
-
     res.json({ success: true, data });
   } catch (error) {
-    console.error('Error responding to request:', error);
     res.status(500).json({ error: error.message });
   }
 });
