@@ -10,7 +10,7 @@
  */
 const validatePinataConfig = () => {
   const jwt = process.env.REACT_APP_PINATA_JWT;
-  
+
   if (!jwt) {
     console.error('[v0] Pinata JWT not configured! Add REACT_APP_PINATA_JWT to .env');
     throw new Error(
@@ -18,12 +18,12 @@ const validatePinataConfig = () => {
       'Get your JWT from https://dashboard.pinata.cloud'
     );
   }
-  
+
   return jwt;
 };
 
 /**
- * Upload document metadata to Pinata IPFS
+ * Upload JSON metadata object to Pinata IPFS
  * @param {Object} documentData - The document extraction data to upload
  * @param {string} fileName - Optional file name for the upload
  * @returns {Promise<{hash: string, url: string}>} IPFS hash and gateway URL
@@ -32,17 +32,14 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
   try {
     const pinataJwt = validatePinataConfig();
 
-    console.log('[v0] Uploading to Pinata IPFS:', fileName);
+    console.log('[v0] Uploading metadata JSON to Pinata IPFS:', fileName);
 
-    // Prepare the metadata as JSON
     const jsonData = JSON.stringify(documentData);
     const blob = new Blob([jsonData], { type: 'application/json' });
 
-    // Create FormData for multipart upload
     const formData = new FormData();
     formData.append('file', blob, `${fileName}.json`);
 
-    // Optional: Add metadata about the upload
     const metadata = {
       name: fileName,
       keyvalues: {
@@ -52,14 +49,8 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
       },
     };
     formData.append('pinataMetadata', JSON.stringify(metadata));
+    formData.append('pinataOptions', JSON.stringify({ cidVersion: 0 }));
 
-    // Optional: Set file options (how long to keep the file)
-    const options = {
-      cidVersion: 0, // Use CIDv0 for compatibility
-    };
-    formData.append('pinataOptions', JSON.stringify(options));
-
-    // Make the API request to Pinata
     const response = await fetch('https://uploads.pinata.cloud/pinning/pinFileToIPFS', {
       method: 'POST',
       headers: {
@@ -70,23 +61,19 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('[v0] Pinata upload error:', {
+      console.error('[v0] Pinata metadata upload error:', {
         status: response.status,
         error: errorData,
       });
-      
       throw new Error(
-        `Pinata upload failed: ${
-          errorData.error?.reason ||
-          errorData.message ||
-          response.statusText
+        `Pinata upload failed: ${errorData.error?.reason || errorData.message || response.statusText
         }`
       );
     }
 
     const result = await response.json();
 
-    console.log('[v0] Pinata upload successful:', {
+    console.log('[v0] Pinata metadata upload successful:', {
       hash: result.IpfsHash,
       url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
     });
@@ -103,21 +90,125 @@ export const uploadToPinata = async (documentData, fileName = 'document-proof') 
 };
 
 /**
- * Upload document with additional metadata
- * @param {Object} documentData - The document data
- * @param {Object} metadata - Additional metadata (userId, walletAddress, etc.)
+ * FIX: Upload the actual File object (PDF/image/doc) to Pinata IPFS.
+ * Previously missing — the old code only ever uploaded JSON, never the real file.
+ *
+ * @param {File} file - The actual File object from the user's file input
+ * @param {Object} keyvalues - Optional key-value pairs to tag the pin with
  * @returns {Promise<{hash: string, url: string}>}
  */
-export const uploadDocumentWithMetadata = async (documentData, metadata = {}) => {
+export const uploadFileToPinata = async (file, keyvalues = {}) => {
+  try {
+    const pinataJwt = validatePinataConfig();
+
+    console.log('[v0] Uploading actual file to Pinata IPFS:', file.name);
+
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    const metadata = {
+      name: file.name,
+      keyvalues: {
+        uploadedAt: new Date().toISOString(),
+        type: 'document-proof-file',
+        appName: 'ghonsi-proof',
+        fileType: file.type,
+        fileSize: String(file.size),
+        ...keyvalues,
+      },
+    };
+    formData.append('pinataMetadata', JSON.stringify(metadata));
+    formData.append('pinataOptions', JSON.stringify({ cidVersion: 0 }));
+
+    const response = await fetch('https://uploads.pinata.cloud/pinning/pinFileToIPFS', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${pinataJwt}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[v0] Pinata file upload error:', {
+        status: response.status,
+        error: errorData,
+      });
+      throw new Error(
+        `Pinata file upload failed: ${errorData.error?.reason || errorData.message || response.statusText
+        }`
+      );
+    }
+
+    const result = await response.json();
+
+    console.log('[v0] Pinata file upload successful:', {
+      hash: result.IpfsHash,
+      url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
+    });
+
+    return {
+      hash: result.IpfsHash,
+      url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
+      timestamp: result.Timestamp,
+    };
+  } catch (error) {
+    console.error('[v0] Pinata file upload error:', error);
+    throw error;
+  }
+};
+
+/**
+ * FIX: Upload both the actual document file AND its metadata JSON to Pinata IPFS.
+ *
+ * Old signature: uploadDocumentWithMetadata(documentData, metadata)
+ *   → only uploaded a JSON blob, never the real file
+ *
+ * New signature: uploadDocumentWithMetadata(file, documentData, metadata)
+ *   → uploads real file first, then metadata JSON that references the file's hash
+ *
+ * Returns hashes/URLs for both so the database can store both references.
+ *
+ * @param {File} file - The actual File object from the user's file input
+ * @param {Object} documentData - Structured proof info (proofType, summary, walletAddress, etc.)
+ * @param {Object} metadata - Transaction/session metadata (txHash, walletAddress, timestamp, etc.)
+ * @returns {Promise<{hash, url, fileHash, fileUrl}>}
+ */
+export const uploadDocumentWithMetadata = async (file, documentData, metadata = {}) => {
+  console.log('[v0] Starting dual Pinata upload: actual file + metadata JSON');
+
+  // Step 1: Upload the real document file
+  const fileResult = await uploadFileToPinata(file, {
+    walletAddress: metadata.walletAddress || '',
+    transactionHash: metadata.transactionHash || '',
+  });
+
+  // Step 2: Upload metadata JSON that embeds a reference to the file's IPFS hash
   const enrichedData = {
     ...documentData,
+    fileIpfsHash: fileResult.hash,
+    fileIpfsUrl: fileResult.url,
     metadata: {
       uploadedAt: new Date().toISOString(),
       ...metadata,
     },
   };
 
-  return uploadToPinata(enrichedData, `document-${Date.now()}`);
+  const metadataResult = await uploadToPinata(enrichedData, `metadata-${Date.now()}`);
+
+  console.log('[v0] Dual Pinata upload complete:', {
+    fileHash: fileResult.hash,
+    metadataHash: metadataResult.hash,
+  });
+
+  return {
+    // Primary reference (metadata JSON) — use this for blockchain URI
+    hash: metadataResult.hash,
+    url: metadataResult.url,
+    // Raw file reference — store in DB separately
+    fileHash: fileResult.hash,
+    fileUrl: fileResult.url,
+  };
 };
 
 /**
@@ -128,11 +219,9 @@ export const uploadDocumentWithMetadata = async (documentData, metadata = {}) =>
 export const retrieveFromPinata = async (ipfsHash) => {
   try {
     const url = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
-
     console.log('[v0] Retrieving from Pinata:', url);
 
     const response = await fetch(url);
-
     if (!response.ok) {
       throw new Error(`Failed to retrieve from Pinata: ${response.statusText}`);
     }
@@ -176,14 +265,12 @@ export const getAlternativeGatewayUrls = (ipfsHash) => {
  */
 export const fetchFromPinataWithFallback = async (ipfsHash) => {
   const urls = [getPinataGatewayUrl(ipfsHash), ...getAlternativeGatewayUrls(ipfsHash)];
-
   let lastError;
 
   for (const url of urls) {
     try {
       const response = await fetch(url);
       if (!response.ok) continue;
-
       const data = await response.json();
       console.log('[v0] Successfully fetched from:', url);
       return data;
@@ -195,4 +282,3 @@ export const fetchFromPinataWithFallback = async (ipfsHash) => {
 
   throw lastError || new Error('Failed to retrieve data from any IPFS gateway');
 };
-

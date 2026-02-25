@@ -75,7 +75,6 @@ function Upload() {
 
   /**
    * Proof type requirements and validation rules
-   * Defines placeholder text, valid evidence types, and restricted content for each proof category
    */
   const proofRequirements = {
     certificates: {
@@ -153,10 +152,6 @@ function Upload() {
 
   /**
    * Extracts proof data from uploaded document using the extraction API
-   * Automatically fills in summary and proof name if not already set
-   * @param {File} file - The file to extract data from
-   * @param {string} selectedProofType - The proof type for extraction
-   * @returns {Promise<Object|null>} - Extracted data or null if extraction fails
    */
   const extractProofData = async (file, selectedProofType) => {
     if (!supportsExtraction(selectedProofType)) {
@@ -182,11 +177,9 @@ function Upload() {
   };
 
   /**
-   * Setup click-outside listener for dropdown
-   * Closes the dropdown when user clicks anywhere outside of it
+   * Setup click-outside listener for dropdown + restore saved form data on mount
    */
   useEffect(() => {
-    // Restore form data on mount
     const savedData = getFormData('uploadProof');
     if (savedData) {
       console.log('[v0] Restoring upload form data');
@@ -205,7 +198,7 @@ function Upload() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Auto-save upload form data
+  // Auto-save upload form data (debounced 1s)
   useEffect(() => {
     const saveTimeout = setTimeout(() => {
       saveFormData('uploadProof', {
@@ -214,15 +207,12 @@ function Upload() {
         summary,
         referenceLink,
       });
-    }, 1000); // Debounce saves by 1 second
-
+    }, 1000);
     return () => clearTimeout(saveTimeout);
   }, [proofType, proofName, summary, referenceLink]);
 
   /**
    * Handles proof type selection from dropdown
-   * Triggers extraction if a file has already been uploaded
-   * @param {string} value - Selected proof type value
    */
   const handleProofTypeSelect = async (value) => {
     setProofType(value);
@@ -239,8 +229,6 @@ function Upload() {
 
   /**
    * Validates uploaded file against type and size constraints
-   * @param {File} file - File object to validate
-   * @returns {string|null} Error message if validation fails, null if valid
    */
   const validateFile = (file) => {
     if (!ACCEPTED_TYPES.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|pdf|doc|docx)$/i)) {
@@ -253,10 +241,8 @@ function Upload() {
   };
 
   /**
-   * Handles reference file selection and validation
-   * Only allows a single file to be uploaded at a time
-   * Triggers extraction API when file is selected and proof type is chosen
-   * @param {File[]} files - Array of files from input or drop event
+   * Handles reference file selection, validation, and extraction trigger.
+   * FIX: use local startTime variable (not state) to avoid stale closure in setInterval
    */
   const handleReferenceFiles = async (files) => {
     setSupportingError('');
@@ -269,32 +255,34 @@ function Upload() {
       setTimeout(() => setSupportingError(''), 5000);
       return;
     }
-    
-    // Start progress tracking
-    setUploadStartTime(Date.now());
+
+    // FIX: capture start time as local variable — state is async and would be stale in the interval
+    const startTime = Date.now();
+    setUploadStartTime(startTime);
     setUploadProgress(0);
-    
-    // Simulate file reading progress
+
     const fileSize = file.size;
     const progressInterval = setInterval(() => {
-      setUploadProgress(prev => {
+      setUploadProgress((prev) => {
         if (prev >= 90) {
           clearInterval(progressInterval);
-          return 90; // Don't reach 100 until actual upload completes
+          return 90;
         }
-        // Speed up progress for smaller files
         const increment = fileSize > 10000000 ? 2 : 5;
         return prev + increment;
       });
-      
-      // Calculate speed (bytes per second)
-      const elapsed = (Date.now() - uploadStartTime) / 1000;
-      const speed = fileSize / elapsed;
-      const speedMB = (speed / (1024 * 1024)).toFixed(2);
-      setUploadSpeed(`${speedMB} MB/s`);
+
+      // FIX: use local startTime, not uploadStartTime state (would be null/stale)
+      const elapsed = (Date.now() - startTime) / 1000;
+      if (elapsed > 0) {
+        const speed = fileSize / elapsed;
+        const speedMB = (speed / (1024 * 1024)).toFixed(2);
+        setUploadSpeed(`${speedMB} MB/s`);
+      }
     }, 100);
-    
+
     setReferenceFiles([file]);
+
     if (proofType) {
       const extracted = await extractProofData(file, proofType);
       clearInterval(progressInterval);
@@ -308,12 +296,19 @@ function Upload() {
         setUploadProgress(0);
         setUploadSpeed('');
       }, 2000);
+    } else {
+      // No proof type selected yet — clear interval and progress
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setTimeout(() => {
+        setUploadProgress(0);
+        setUploadSpeed('');
+      }, 2000);
     }
   };
 
   /**
    * Prevents default browser behavior for drag events
-   * Required for custom drag-and-drop functionality
    */
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -321,15 +316,13 @@ function Upload() {
   };
 
   /**
-   * Handles form submission and proof upload
-   * Now shows transaction signer modal after validation
-   * After transaction is signed, uploads to Pinata and saves proof to database
-   * @param {Event} e - Form submit event
+   * Handles form submission — validates fields then shows transaction modal
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploadError('');
     let hasError = false;
+
     if (!proofName.trim() || !summary.trim() || !proofType) {
       setUploadError('Please fill in all required fields.');
       hasError = true;
@@ -348,23 +341,21 @@ function Upload() {
       const user = await getCurrentUser();
       if (!user) throw new Error('You must be logged in to upload proofs');
 
-      // Prepare the document data for IPFS storage
       const documentData = {
-        proofType: proofType,
-        proofName: proofName,
-        summary: summary,
+        proofType,
+        proofName,
+        summary,
         referenceLink: referenceLink || null,
         walletAddress: publicKey?.toString() || null,
         userId: user.id,
         uploadedAt: new Date().toISOString(),
       };
 
-      // Store data and show transaction modal
       setExtractedDocumentData(documentData);
       setPendingProofData({
-        proofType: proofType,
-        proofName: proofName,
-        summary: summary,
+        proofType,
+        proofName,
+        summary,
         referenceLink: referenceLink || null,
       });
       setShowTransactionModal(true);
@@ -377,9 +368,15 @@ function Upload() {
   };
 
   /**
-   * Handles successful transaction
-   * Uploads document to Pinata IPFS, saves proof to database, and submits to blockchain
-   * @param {Object} txData - Transaction data from modal (txHash, amount, documentData)
+   * Handles successful transaction.
+   *
+   * FIX: uploadDocumentWithMetadata now receives 3 args:
+   *   1. referenceFiles[0]     — the actual File object (PDF/image/doc)
+   *   2. extractedDocumentData — structured proof metadata
+   *   3. metadata              — transaction hash, wallet, etc.
+   *
+   * Old code only passed 2 args and the real file was NEVER uploaded to IPFS.
+   * FIX: also stores fileIpfsHash + fileIpfsUrl separately in the DB record.
    */
   const handleTransactionSuccess = async (txData) => {
     setShowTransactionModal(false);
@@ -388,7 +385,6 @@ function Upload() {
     try {
       console.log('[v0] Transaction successful, uploading to Pinata:', txData.txHash);
 
-      // Prepare metadata with transaction hash
       const metadata = {
         transactionHash: txData.txHash,
         walletAddress: publicKey?.toString() || null,
@@ -396,15 +392,22 @@ function Upload() {
         timestamp: new Date().toISOString(),
       };
 
-      // Upload to Pinata IPFS
-      const ipfsResult = await uploadDocumentWithMetadata(extractedDocumentData, metadata);
-      console.log('[v0] Pinata upload successful:', ipfsResult);
+      // FIX: pass actual file as first arg — was missing before, causing only JSON to be uploaded
+      const ipfsResult = await uploadDocumentWithMetadata(
+        referenceFiles[0],     // actual File object (PDF/image/doc)
+        extractedDocumentData, // proof metadata JSON
+        metadata               // transaction/wallet metadata
+      );
 
-      // Upload proof to database with IPFS hash
+      console.log('[v0] Pinata dual upload successful:', ipfsResult);
+
+      // FIX: store both metadata hash and raw file hash in the database
       const proofDataWithIPFS = {
         ...pendingProofData,
-        ipfsHash: ipfsResult.hash,
-        ipfsUrl: ipfsResult.url,
+        ipfsHash: ipfsResult.hash,         // metadata JSON IPFS hash (primary)
+        ipfsUrl: ipfsResult.url,           // metadata JSON IPFS URL
+        fileIpfsHash: ipfsResult.fileHash, // raw document file IPFS hash
+        fileIpfsUrl: ipfsResult.fileUrl,   // raw document file IPFS URL
         transactionHash: txData.txHash,
       };
 
@@ -413,11 +416,10 @@ function Upload() {
 
       console.log('[v0] Proof saved to database:', proofId);
 
-      // Now submit to blockchain
       console.log('[v0] Submitting proof to blockchain...');
       const blockchainResult = await submitProofToBlockchain(
         {
-          proofId: proofId,
+          proofId,
           title: pendingProofData.proofName,
           description: pendingProofData.summary,
           proofType: pendingProofData.proofType,
@@ -428,19 +430,20 @@ function Upload() {
 
       console.log('[v0] Blockchain submission successful:', blockchainResult);
 
-      // Update proof with blockchain data
       await updateProofWithBlockchainData(proofId, blockchainResult);
 
-      console.log('[v0] Proof fully submitted: database + IPFS + blockchain');
+      console.log('[v0] Proof fully submitted: file + metadata on IPFS + database + blockchain');
 
       setTimeout(() => {
-        clearFormData('uploadProof'); // Clear saved form data after successful submission
+        clearFormData('uploadProof');
         setShowPendingModal(false);
         setTimeout(() => setShowSubmittedModal(true), 300);
       }, 1500);
     } catch (error) {
       console.error('[v0] Error completing proof submission:', error);
-      const errorMsg = error.message || 'Failed to complete proof submission. IPFS upload may have succeeded but blockchain submission failed.';
+      const errorMsg =
+        error.message ||
+        'Failed to complete proof submission. IPFS upload may have succeeded but blockchain submission failed.';
       addToast(errorMsg, 'error');
       setShowPendingModal(false);
       setIsUploading(false);
@@ -451,8 +454,7 @@ function Upload() {
   };
 
   /**
-   * Handles transaction modal close
-   * Resets modal state without completing upload
+   * Handles transaction modal close without completing upload
    */
   const handleTransactionModalClose = () => {
     setShowTransactionModal(false);
@@ -462,7 +464,6 @@ function Upload() {
 
   /**
    * Resets all form fields and state to initial values
-   * Used after successful submission or when user cancels
    */
   const resetAll = () => {
     setProofType('');
@@ -482,8 +483,6 @@ function Upload() {
 
   /**
    * Returns appropriate Font Awesome icon class based on file type
-   * @param {File} file - File object to get icon for
-   * @returns {string} Font Awesome icon class name
    */
   const getFileIcon = (file) => {
     if (file.type.includes('pdf')) return 'fa-file-pdf';
@@ -492,7 +491,6 @@ function Upload() {
     return 'fa-file';
   };
 
-  // Get requirements for currently selected proof type
   const currentRequirements = proofType ? proofRequirements[proofType] : null;
 
   return (
@@ -501,7 +499,7 @@ function Upload() {
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      {/* Background Elements – matches Home & Portfolio */}
+      {/* Background Elements */}
       <div className="fixed inset-0 opacity-30 pointer-events-none z-0">
         <div className="absolute top-0 -left-40 w-96 h-96 bg-[#C19A4A] rounded-full mix-blend-multiply filter blur-[128px] animate-blob" />
         <div className="absolute top-0 -right-40 w-96 h-96 bg-[#d9b563] rounded-full mix-blend-multiply filter blur-[128px] animate-blob animation-delay-2000" />
@@ -534,10 +532,11 @@ function Upload() {
             Upload Your Proof
           </h1>
           <p className="text-gray-400 text-sm md:text-base max-w-md mx-auto leading-relaxed">
-            Add a new proof to your on-chain portfolio<br /></p>
+            Add a new proof to your on-chain portfolio<br />
+          </p>
         </motion.div>
 
-        {/* Main Form Container – gradient border card */}
+        {/* Main Form Container */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -546,7 +545,6 @@ function Upload() {
         >
           <div className="bg-[#111625] rounded-[14px] p-6 md:p-8 relative overflow-hidden">
 
-            {/* Subtle inner glow */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/5 via-transparent to-blue-500/5 pointer-events-none" />
 
             {/* Error Alert */}
@@ -566,7 +564,7 @@ function Upload() {
 
             <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
 
-              {/* Proof Name Field */}
+              {/* Proof Name */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
                   Proof Name *
@@ -596,9 +594,8 @@ function Upload() {
                         : 'Select proof type'}
                     </span>
                     <i
-                      className={`fa-solid ${
-                        isDropdownOpen ? 'fa-chevron-up' : 'fa-chevron-down'
-                      } text-[#aa8944] text-xs transition-transform duration-300`}
+                      className={`fa-solid ${isDropdownOpen ? 'fa-chevron-up' : 'fa-chevron-down'
+                        } text-[#aa8944] text-xs transition-transform duration-300`}
                     ></i>
                   </div>
 
@@ -622,7 +619,7 @@ function Upload() {
                 </div>
               </div>
 
-              {/* Summary Field */}
+              {/* Summary */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
                   Summary *
@@ -640,16 +637,15 @@ function Upload() {
                     }
                   />
                   <div
-                    className={`absolute bottom-3 right-4 text-[10px] font-mono tracking-wider ${
-                      summary.length >= 500 ? 'text-red-400' : 'text-gray-500'
-                    }`}
+                    className={`absolute bottom-3 right-4 text-[10px] font-mono tracking-wider ${summary.length >= 500 ? 'text-red-400' : 'text-gray-500'
+                      }`}
                   >
                     {summary.length}/500 characters
                   </div>
                 </div>
               </div>
 
-              {/* Dynamic Instructions Panel – shows required evidence based on proof type */}
+              {/* Dynamic Instructions Panel */}
               <AnimatePresence>
                 {showInstructions && currentRequirements && (
                   <motion.div
@@ -686,7 +682,7 @@ function Upload() {
                 )}
               </AnimatePresence>
 
-              {/* Reference Link Field (Optional) */}
+              {/* Reference Link */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
                   Reference Link{' '}
@@ -704,7 +700,7 @@ function Upload() {
                 </p>
               </div>
 
-              {/* File Upload Area with Drag & Drop */}
+              {/* File Upload Area */}
               <div className="space-y-3 pt-4 border-t border-white/5">
                 <label className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
                   <span>Reference Document *</span>
@@ -743,8 +739,8 @@ function Upload() {
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-4 p-4 bg-gray-800/50 rounded-xl border border-[#C19A4A]/20"
                   >
-                    <ProgressBar 
-                      progress={uploadProgress} 
+                    <ProgressBar
+                      progress={uploadProgress}
                       label="Processing document..."
                       speed={uploadSpeed}
                       showSpeed={true}
@@ -797,7 +793,7 @@ function Upload() {
                   )}
                 </AnimatePresence>
 
-                {/* File Error Display */}
+                {/* File Error */}
                 <AnimatePresence>
                   {supportingError && (
                     <motion.p
@@ -812,7 +808,7 @@ function Upload() {
                 </AnimatePresence>
               </div>
 
-              {/* Upload Requirements Info Box */}
+              {/* Upload Requirements */}
               <div className="relative p-[1px] rounded-xl bg-gradient-to-br from-[#C19A4A]/60 to-[#C19A4A]/10">
                 <div className="rounded-xl p-5 bg-[#0d1020]">
                   <h4 className="text-[#C19A4A] text-sm font-semibold mb-3 flex items-center gap-2">
@@ -866,7 +862,7 @@ function Upload() {
         </motion.div>
       </main>
 
-      {/* Pending Upload Modal */}
+      {/* Pending Modal */}
       <AnimatePresence>
         {showPendingModal && (
           <motion.div
@@ -896,7 +892,7 @@ function Upload() {
         )}
       </AnimatePresence>
 
-      {/* Success Modal – Shown after instant verification */}
+      {/* Success Modal */}
       <AnimatePresence>
         {showSubmittedModal && (
           <motion.div
@@ -912,7 +908,6 @@ function Upload() {
             >
               <div className="bg-[#111625] rounded-[14px] p-8 text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.1)_0%,transparent_70%)]" />
-
                 <button
                   onClick={() => {
                     setShowSubmittedModal(false);
@@ -924,7 +919,6 @@ function Upload() {
                 >
                   <i className="fa-solid fa-xmark"></i>
                 </button>
-
                 <div className="mb-6 relative z-10">
                   <motion.div
                     initial={{ scale: 0 }}
@@ -939,7 +933,6 @@ function Upload() {
                     Your proof has been successfully submitted!
                   </p>
                 </div>
-
                 <div className="flex gap-3 mt-8 relative z-10">
                   <button
                     onClick={() => {

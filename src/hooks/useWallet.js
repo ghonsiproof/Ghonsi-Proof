@@ -21,17 +21,16 @@ export const useWallet = () => {
         disconnect,
         wallet,
         signMessage,
+        signTransaction, // FIX: was missing, caused "signTransaction is not a function"
     } = solanaWallet;
 
     // Connect wallet and open modal if needed
     const connectWallet = useCallback(async () => {
         try {
             if (!connected) {
-                // Open wallet modal if no wallet is selected
                 if (!wallet) {
                     setWalletModalVisible(true);
                 } else {
-                    // Connect to the selected wallet
                     await connect();
                 }
             }
@@ -65,7 +64,6 @@ export const useWallet = () => {
                 if (!signMessage) {
                     throw new Error('Wallet does not support message signing');
                 }
-
                 const messageBuffer = new TextEncoder().encode(message);
                 const signature = await signMessage(messageBuffer);
                 return {
@@ -87,6 +85,7 @@ export const useWallet = () => {
         disconnecting,
         publicKey,
         wallet,
+        signTransaction, // FIX: now exposed to consumers like TransactionSignerModal
 
         // Methods
         connectWallet,
