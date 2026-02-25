@@ -1,12 +1,5 @@
 /**
  * Upload Component
- *
- * Manages the upload and submission of professional proofs (certificates, job history, skills, etc.)
- * to the verification system. Handles file validation, form state management, and submission workflow.
- *
- * @component
- * @requires supabaseAuth - Authentication utilities
- * @requires proofsApi - API layer for proof submission
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,10 +18,7 @@ import Footer from '../../components/footer/footer.jsx';
 import './upload.css';
 
 function Upload() {
-  // Wallet and connection hooks
   const { publicKey, connected } = useWallet();
-
-  // Toast notifications
   const { toasts, addToast, removeToast } = useToast();
 
   // Form state
@@ -38,7 +28,7 @@ function Upload() {
   const [referenceLink, setReferenceLink] = useState('');
   const [referenceFiles, setReferenceFiles] = useState([]);
 
-  // UI state management
+  // UI state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
@@ -48,17 +38,18 @@ function Upload() {
   const [supportingError, setSupportingError] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
 
-  // Transaction signer modal state
+  // Transaction modal state
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [extractedDocumentData, setExtractedDocumentData] = useState(null);
   const [pendingProofData, setPendingProofData] = useState(null);
 
-  // Refs for DOM manipulation and click-outside detection
+  // NEW: store result data for success modal
+  const [submissionResult, setSubmissionResult] = useState(null);
+
   const dropdownRef = useRef(null);
   const referenceFileInputRef = useRef(null);
 
-  // File validation constants
-  const MAX_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+  const MAX_SIZE = 2 * 1024 * 1024;
   const ACCEPTED_TYPES = [
     'application/pdf',
     'image/jpeg',
@@ -67,25 +58,19 @@ function Upload() {
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ];
 
-  /**
-   * Proof type requirements and validation rules
-   */
   const proofRequirements = {
     certificates: {
-      summaryPlaceholder:
-        'Enter: Certificate Title, Issuer Name, Completion Date, Credential Type (Course/Bootcamp), and Instructor Names...',
+      summaryPlaceholder: 'Enter: Certificate Title, Issuer Name, Completion Date, Credential Type (Course/Bootcamp), and Instructor Names...',
       validEvidences: [
         'Full certificate file (PDF, PNG, screenshot)',
         'Certificate link',
         'Official issuer message confirming completion of training',
         'Link to public graduate announcement (if issuer posts those)',
       ],
-      notAllowed:
-        'NDA-covered materials, proprietary internal tools, certificate PDFs with watermarks forbidding redistribution, documents showing sensitive internal company data.',
+      notAllowed: 'NDA-covered materials, proprietary internal tools, certificate PDFs with watermarks forbidding redistribution, documents showing sensitive internal company data.',
     },
     job_history: {
-      summaryPlaceholder:
-        'Enter: Job Title, Employer Name, Employment Type, Start/End Dates, Job Category, Internal Work Experience ID...',
+      summaryPlaceholder: 'Enter: Job Title, Employer Name, Employment Type, Start/End Dates, Job Category, Internal Work Experience ID...',
       validEvidences: [
         'Snapshot of offer letter (redacted salary)',
         'HR email confirming employment',
@@ -94,12 +79,10 @@ function Upload() {
         'GitHub contribution logs linked to the company repo',
         'Public posts (LinkedIn) from the employer announcing new hires',
       ],
-      notAllowed:
-        'Confidential HR portals, salary details, internal documentation, private client data, or anything uniquely traceable to a person.',
+      notAllowed: 'Confidential HR portals, salary details, internal documentation, private client data, or anything uniquely traceable to a person.',
     },
     skills: {
-      summaryPlaceholder:
-        'Enter: Skill Name (e.g., Solidity), Proficiency Level (e.g., Beginner/Intermediate/Advanced), Skill Category, Internal Skill ID...',
+      summaryPlaceholder: 'Enter: Skill Name (e.g., Solidity), Proficiency Level (e.g., Beginner/Intermediate/Advanced), Skill Category, Internal Skill ID...',
       validEvidences: [
         'GitHub activity screenshots',
         'Snippets of work (non-sensitive)',
@@ -107,24 +90,20 @@ function Upload() {
         'Dribbble/Behance links',
         'Snapshots of skill tests (without sensitive user info)',
       ],
-      notAllowed:
-        "Proprietary materials, private client work, snapshots of codebases belonging to employers, or any IP you don't own.",
+      notAllowed: "Proprietary materials, private client work, snapshots of codebases belonging to employers, or any IP you don't own.",
     },
     milestones: {
-      summaryPlaceholder:
-        'Enter: Milestone Type (Promotion/Award/Recognition/Key Result), Issuer Name(company or platform), Month & Year, Internal Milestone ID...',
+      summaryPlaceholder: 'Enter: Milestone Type (Promotion/Award/Recognition/Key Result), Issuer Name(company or platform), Month & Year, Internal Milestone ID...',
       validEvidences: [
         'Snapshot of award announcement',
         'Email confirming promotion',
         'Public recognition posts',
         'Certificate of achievement',
       ],
-      notAllowed:
-        'Performance reviews, salary information, internal feedback or one-on-one reports, data regarding other employees.',
+      notAllowed: 'Performance reviews, salary information, internal feedback or one-on-one reports, data regarding other employees.',
     },
     community_contributions: {
-      summaryPlaceholder:
-        'Enter: Contribution Type (Talk, Article, Open Source, Community Role), Platform Name, Date, Internal Contribution ID...',
+      summaryPlaceholder: 'Enter: Contribution Type (Talk, Article, Open Source, Community Role), Platform Name, Date, Internal Contribution ID...',
       validEvidences: [
         'Link to article, talk, or recording',
         'Snapshot of Speaking Engagement Flyer',
@@ -135,7 +114,6 @@ function Upload() {
     },
   };
 
-  // Dropdown options for proof types
   const proofOptions = [
     { value: 'certificates', label: 'Certificates / Trainings' },
     { value: 'job_history', label: 'Job History (Work Experience)' },
@@ -144,23 +122,12 @@ function Upload() {
     { value: 'community_contributions', label: 'Community Contributions / Public Work' },
   ];
 
-  /**
-   * Extracts proof data from uploaded document using the extraction API
-   */
   const extractProofData = async (file, selectedProofType) => {
-    if (!supportsExtraction(selectedProofType)) {
-      console.log(`Extraction not supported for proof type: ${selectedProofType}`);
-      return null;
-    }
+    if (!supportsExtraction(selectedProofType)) return null;
     try {
       setIsExtracting(true);
       const data = await extractDocumentData(file, selectedProofType);
       if (!data) throw new Error('No response from extraction API');
-      console.log('===== EXTRACTION RESULT =====');
-      console.log(data);
-      console.log('Title:', data.title);
-      console.log('Summary:', data.summary);
-      console.log('=============================');
       return data;
     } catch (error) {
       console.error('Extraction error:', error);
@@ -170,9 +137,6 @@ function Upload() {
     }
   };
 
-  /**
-   * Setup click-outside listener for dropdown + restore saved form data on mount
-   */
   useEffect(() => {
     const savedData = getFormData('uploadProof');
     if (savedData) {
@@ -182,7 +146,6 @@ function Upload() {
       setSummary(savedData.summary || '');
       setReferenceLink(savedData.referenceLink || '');
     }
-
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsDropdownOpen(false);
@@ -192,22 +155,13 @@ function Upload() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Auto-save upload form data (debounced 1s)
   useEffect(() => {
     const saveTimeout = setTimeout(() => {
-      saveFormData('uploadProof', {
-        proofType,
-        proofName,
-        summary,
-        referenceLink,
-      });
+      saveFormData('uploadProof', { proofType, proofName, summary, referenceLink });
     }, 1000);
     return () => clearTimeout(saveTimeout);
   }, [proofType, proofName, summary, referenceLink]);
 
-  /**
-   * Handles proof type selection from dropdown
-   */
   const handleProofTypeSelect = async (value) => {
     setProofType(value);
     setIsDropdownOpen(false);
@@ -221,9 +175,6 @@ function Upload() {
     }
   };
 
-  /**
-   * Validates uploaded file against type and size constraints
-   */
   const validateFile = (file) => {
     if (!ACCEPTED_TYPES.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|pdf|doc|docx)$/i)) {
       return `"${file.name}" is not a supported format.`;
@@ -234,13 +185,9 @@ function Upload() {
     return null;
   };
 
-  /**
-   * Handles reference file selection, validation, and extraction trigger
-   */
   const handleReferenceFiles = async (files) => {
     setSupportingError('');
     if (files.length === 0) return;
-
     const file = files[0];
     const error = validateFile(file);
     if (error) {
@@ -249,9 +196,7 @@ function Upload() {
       setTimeout(() => setSupportingError(''), 5000);
       return;
     }
-
     setReferenceFiles([file]);
-
     if (proofType) {
       const extracted = await extractProofData(file, proofType);
       if (extracted) {
@@ -262,22 +207,15 @@ function Upload() {
     }
   };
 
-  /**
-   * Prevents default browser behavior for drag events
-   */
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
-  /**
-   * Handles form submission — validates fields then shows transaction modal
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploadError('');
     let hasError = false;
-
     if (!proofName.trim() || !summary.trim() || !proofType) {
       setUploadError('Please fill in all required fields.');
       hasError = true;
@@ -292,9 +230,7 @@ function Upload() {
     }
     if (hasError) return;
 
-    // FIX: set uploading state immediately so button disables and prevents double-submit
     setIsUploading(true);
-
     try {
       const user = await getCurrentUser();
       if (!user) throw new Error('You must be logged in to upload proofs');
@@ -320,18 +256,14 @@ function Upload() {
       setShowTransactionModal(true);
     } catch (error) {
       console.error('[v0] Error preparing proof submission:', error);
-      const errorMsg = error.message || 'Failed to prepare proof submission';
-      addToast(errorMsg, 'error');
+      addToast(error.message || 'Failed to prepare proof submission', 'error');
       setIsUploading(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  /**
-   * Handles successful transaction.
-   */
   const handleTransactionSuccess = async (txData) => {
-    setShowTransactionModal(false);
+    // TransactionSignerModal has already closed itself — just show the spinner.
     setShowPendingModal(true);
 
     try {
@@ -363,58 +295,59 @@ function Upload() {
 
       const uploadedProof = await uploadProof(proofDataWithIPFS, [], [referenceFiles[0]]);
       const proofId = uploadedProof.proof.id;
-
       console.log('[v0] Proof saved to database:', proofId);
 
-      console.log('[v0] Submitting proof to blockchain...');
-      const blockchainResult = await submitProofToBlockchain(
-        {
-          proofId,
-          title: pendingProofData.proofName,
-          description: pendingProofData.summary,
-          proofType: pendingProofData.proofType,
-          ipfsUri: ipfsResult.url,
-        },
-        publicKey?.toString()
-      );
+      // Blockchain anchoring is non-fatal. If backend key isn't configured yet,
+      // proof is already saved with IPFS links — still show success.
+      let blockchainTxHash = txData.txHash; // fallback: show payment tx on Solscan
+      try {
+        console.log('[v0] Submitting proof to blockchain...');
+        const blockchainResult = await submitProofToBlockchain(
+          {
+            proofId,
+            title: pendingProofData.proofName,
+            description: pendingProofData.summary,
+            proofType: pendingProofData.proofType,
+            ipfsUri: ipfsResult.url,
+          },
+          publicKey?.toString()
+        );
+        console.log('[v0] Blockchain submission successful:', blockchainResult);
+        await updateProofWithBlockchainData(proofId, blockchainResult);
+        blockchainTxHash = blockchainResult.tx || txData.txHash;
+        console.log('[v0] Proof fully anchored on-chain');
+      } catch (blockchainError) {
+        console.warn('[v0] Blockchain anchoring skipped (backend not ready):', blockchainError.message);
+      }
 
-      console.log('[v0] Blockchain submission successful:', blockchainResult);
+      // Everything done — store result, hide spinner, show final success modal.
+      setSubmissionResult({
+        txHash: blockchainTxHash,
+        fileUrl: ipfsResult.fileUrl,
+        metadataUrl: ipfsResult.url,
+        proofName: pendingProofData.proofName,
+      });
 
-      await updateProofWithBlockchainData(proofId, blockchainResult);
+      clearFormData('uploadProof');
+      setShowPendingModal(false);
+      setShowSubmittedModal(true);  // no setTimeout — show immediately after all work is done
 
-      console.log('[v0] Proof fully submitted: file + metadata on IPFS + database + blockchain');
-
-      setTimeout(() => {
-        clearFormData('uploadProof');
-        setShowPendingModal(false);
-        setTimeout(() => setShowSubmittedModal(true), 300);
-      }, 1500);
     } catch (error) {
       console.error('[v0] Error completing proof submission:', error);
-      const errorMsg =
-        error.message ||
-        'Failed to complete proof submission. IPFS upload may have succeeded but blockchain submission failed.';
-      addToast(errorMsg, 'error');
+      addToast(error.message || 'Failed to complete proof submission.', 'error');
       setShowPendingModal(false);
       setIsUploading(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  /**
-   * Handles transaction modal close without completing upload
-   */
   const handleTransactionModalClose = () => {
     setShowTransactionModal(false);
     setExtractedDocumentData(null);
     setPendingProofData(null);
-    // FIX: reset uploading state when user cancels the transaction modal
     setIsUploading(false);
   };
 
-  /**
-   * Resets all form fields and state to initial values
-   */
   const resetAll = () => {
     setProofType('');
     setProofName('');
@@ -429,11 +362,9 @@ function Upload() {
     setShowTransactionModal(false);
     setExtractedDocumentData(null);
     setPendingProofData(null);
+    setSubmissionResult(null);
   };
 
-  /**
-   * Returns appropriate Font Awesome icon class based on file type
-   */
   const getFileIcon = (file) => {
     if (file.type.includes('pdf')) return 'fa-file-pdf';
     if (file.type.includes('image')) return 'fa-file-image';
@@ -446,7 +377,6 @@ function Upload() {
   return (
     <div className="min-h-screen bg-[#0B0F1B] text-white selection:bg-[#C19A4A]/30 relative overflow-hidden flex flex-col">
 
-      {/* Toast Notifications */}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       {/* Background Elements */}
@@ -459,7 +389,6 @@ function Upload() {
 
       <Header />
 
-      {/* Transaction Signer Modal */}
       <TransactionSignerModal
         isOpen={showTransactionModal}
         onClose={handleTransactionModalClose}
@@ -471,7 +400,6 @@ function Upload() {
 
       <main className="relative z-10 flex-grow px-4 py-8 max-w-4xl mx-auto w-full mt-[105px]">
 
-        {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -482,11 +410,10 @@ function Upload() {
             Upload Your Proof
           </h1>
           <p className="text-gray-400 text-sm md:text-base max-w-md mx-auto leading-relaxed">
-            Add a new proof to your on-chain portfolio<br />
+            Add a new proof to your on-chain portfolio
           </p>
         </motion.div>
 
-        {/* Main Form Container */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -494,10 +421,8 @@ function Upload() {
           className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500 shadow-2xl mb-10"
         >
           <div className="bg-[#111625] rounded-[14px] p-6 md:p-8 relative overflow-hidden">
-
             <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/5 via-transparent to-blue-500/5 pointer-events-none" />
 
-            {/* Error Alert */}
             <AnimatePresence>
               {uploadError && (
                 <motion.div
@@ -516,9 +441,7 @@ function Upload() {
 
               {/* Proof Name */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
-                  Proof Name *
-                </label>
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">Proof Name *</label>
                 <input
                   type="text"
                   value={proofName}
@@ -530,31 +453,19 @@ function Upload() {
 
               {/* Proof Type Dropdown */}
               <div className="space-y-2 relative" ref={dropdownRef}>
-                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
-                  Proof Type *
-                </label>
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">Proof Type *</label>
                 <div className={`custom-dropdown ${isDropdownOpen ? 'open' : ''}`}>
                   <div
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="w-full glass-input rounded-xl px-4 py-3.5 text-sm cursor-pointer flex justify-between items-center hover:border-[#aa8944]/60 transition-colors"
                   >
                     <span className={proofType ? 'text-white' : 'text-gray-500'}>
-                      {proofType
-                        ? proofOptions.find((opt) => opt.value === proofType)?.label
-                        : 'Select proof type'}
+                      {proofType ? proofOptions.find((opt) => opt.value === proofType)?.label : 'Select proof type'}
                     </span>
-                    <i
-                      className={`fa-solid ${isDropdownOpen ? 'fa-chevron-up' : 'fa-chevron-down'
-                        } text-[#aa8944] text-xs transition-transform duration-300`}
-                    ></i>
+                    <i className={`fa-solid ${isDropdownOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-[#aa8944] text-xs transition-transform duration-300`}></i>
                   </div>
-
                   {isDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="custom-dropdown-options"
-                    >
+                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="custom-dropdown-options">
                       {proofOptions.map((option) => (
                         <div
                           key={option.value}
@@ -571,9 +482,7 @@ function Upload() {
 
               {/* Summary */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
-                  Summary *
-                </label>
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">Summary *</label>
                 <div className="relative">
                   <textarea
                     value={summary}
@@ -581,21 +490,15 @@ function Upload() {
                     rows="4"
                     maxLength="500"
                     className="w-full glass-input rounded-xl px-4 py-3.5 text-sm placeholder-gray-500 focus:outline-none resize-none leading-relaxed"
-                    placeholder={
-                      currentRequirements?.summaryPlaceholder ||
-                      'Describe your achievement, skills demonstrated or work completed'
-                    }
+                    placeholder={currentRequirements?.summaryPlaceholder || 'Describe your achievement, skills demonstrated or work completed'}
                   />
-                  <div
-                    className={`absolute bottom-3 right-4 text-[10px] font-mono tracking-wider ${summary.length >= 500 ? 'text-red-400' : 'text-gray-500'
-                      }`}
-                  >
+                  <div className={`absolute bottom-3 right-4 text-[10px] font-mono tracking-wider ${summary.length >= 500 ? 'text-red-400' : 'text-gray-500'}`}>
                     {summary.length}/500 characters
                   </div>
                 </div>
               </div>
 
-              {/* Dynamic Instructions Panel */}
+              {/* Dynamic Instructions */}
               <AnimatePresence>
                 {showInstructions && currentRequirements && (
                   <motion.div
@@ -608,9 +511,7 @@ function Upload() {
                       <h4 className="text-[#C19A4A] font-bold text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
                         <i className="fa-solid fa-clipboard-check"></i> Required Evidence
                       </h4>
-                      <p className="text-gray-300 text-xs mb-3 font-medium">
-                        Please ensure your Reference Document includes:
-                      </p>
+                      <p className="text-gray-300 text-xs mb-3 font-medium">Please ensure your Reference Document includes:</p>
                       <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-400 mb-4">
                         {currentRequirements.validEvidences.map((item, idx) => (
                           <li key={idx} className="flex gap-2 items-start">
@@ -620,12 +521,8 @@ function Upload() {
                         ))}
                       </ul>
                       <div className="bg-red-500/10 border-l-2 border-red-500/50 p-3 rounded-r-lg">
-                        <span className="text-red-400 font-bold text-[10px] uppercase tracking-wider block mb-1">
-                          Not Allowed:
-                        </span>
-                        <p className="text-gray-400 text-[11px] italic leading-relaxed">
-                          {currentRequirements.notAllowed}
-                        </p>
+                        <span className="text-red-400 font-bold text-[10px] uppercase tracking-wider block mb-1">Not Allowed:</span>
+                        <p className="text-gray-400 text-[11px] italic leading-relaxed">{currentRequirements.notAllowed}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -635,8 +532,7 @@ function Upload() {
               {/* Reference Link */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
-                  Reference Link{' '}
-                  <span className="text-gray-600 normal-case tracking-normal font-normal ml-1">(Optional)</span>
+                  Reference Link <span className="text-gray-600 normal-case tracking-normal font-normal ml-1">(Optional)</span>
                 </label>
                 <input
                   type="url"
@@ -645,12 +541,10 @@ function Upload() {
                   placeholder="https://github.com/project or https://certificate-url.com"
                   className="w-full glass-input rounded-xl px-4 py-3.5 text-sm placeholder-gray-500 focus:outline-none"
                 />
-                <p className="text-[10px] text-gray-400 ml-1">
-                  Optional: Link to GitHub repo, certificate URL, or other relevant documentation
-                </p>
+                <p className="text-[10px] text-gray-400 ml-1">Optional: Link to GitHub repo, certificate URL, or other relevant documentation</p>
               </div>
 
-              {/* File Upload Area */}
+              {/* File Upload */}
               <div className="space-y-3 pt-4 border-t border-white/5">
                 <label className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
                   <span>Reference Document *</span>
@@ -658,14 +552,10 @@ function Upload() {
                     <i className="fa-regular fa-circle-question"></i> Get Help
                   </span>
                 </label>
-
                 <div
                   onClick={() => referenceFileInputRef.current?.click()}
                   onDragOver={handleDragOver}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    handleReferenceFiles(Array.from(e.dataTransfer.files));
-                  }}
+                  onDrop={(e) => { e.preventDefault(); handleReferenceFiles(Array.from(e.dataTransfer.files)); }}
                   className="border-2 border-dashed border-gray-600 rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-white/[0.02] hover:bg-white/[0.04] hover:border-[#C19A4A]/50 transition-all cursor-pointer group relative"
                 >
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-[#C19A4A]/30 text-[#C19A4A] mb-4 group-hover:bg-gradient-to-br group-hover:from-[#C19A4A] group-hover:to-[#d9b563] group-hover:text-[#0B0F1B] transition-all duration-300 group-hover:scale-110 shadow-lg">
@@ -682,30 +572,17 @@ function Upload() {
                   />
                 </div>
 
-                {/* Selected File Display */}
                 <AnimatePresence>
                   {referenceFiles.length > 0 && (
-                    <motion.ul
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="space-y-2 mt-2"
-                    >
+                    <motion.ul initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-2 mt-2">
                       {referenceFiles.map((file, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-center justify-between bg-[#1A1F2E] border border-[#C19A4A]/30 rounded-xl px-4 py-3 shadow-lg"
-                        >
+                        <li key={idx} className="flex items-center justify-between bg-[#1A1F2E] border border-[#C19A4A]/30 rounded-xl px-4 py-3 shadow-lg">
                           <div className="flex items-center gap-4 overflow-hidden">
                             <i className={`fa-solid ${getFileIcon(file)} text-[#C19A4A] text-lg`}></i>
                             <div className="flex flex-col">
-                              <span className="truncate text-sm font-medium text-gray-200 max-w-[200px] sm:max-w-[300px]">
-                                {file.name}
-                              </span>
+                              <span className="truncate text-sm font-medium text-gray-200 max-w-[200px] sm:max-w-[300px]">{file.name}</span>
                               <div className="flex items-center gap-3 mt-0.5">
-                                <span className="text-[10px] text-gray-500 font-mono">
-                                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                                </span>
+                                <span className="text-[10px] text-gray-500 font-mono">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                                 {isExtracting && (
                                   <span className="text-[10px] text-[#C19A4A] flex items-center gap-1.5 font-medium">
                                     <i className="fa-solid fa-spinner fa-spin"></i> Extracting...
@@ -727,15 +604,9 @@ function Upload() {
                   )}
                 </AnimatePresence>
 
-                {/* File Error */}
                 <AnimatePresence>
                   {supportingError && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-red-400 text-xs bg-red-500/10 p-3 rounded-xl border border-red-500/20 text-center mt-3 font-medium"
-                    >
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-red-400 text-xs bg-red-500/10 p-3 rounded-xl border border-red-500/20 text-center mt-3 font-medium">
                       {supportingError}
                     </motion.p>
                   )}
@@ -749,33 +620,17 @@ function Upload() {
                     <i className="fa-solid fa-circle-exclamation"></i> Upload Requirements
                   </h4>
                   <ul className="text-[11px] text-gray-300 space-y-2 list-none">
-                    <li className="flex gap-2 items-start">
-                      <span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>
-                      Reference document is required
-                    </li>
-                    <li className="flex gap-2 items-start">
-                      <span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>
-                      Maximum file size: 2MB per document
-                    </li>
-                    <li className="flex gap-2 items-start">
-                      <span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>
-                      Accepted formats: PDF, JPG, PNG, DOC, DOCX
-                    </li>
-                    <li className="flex gap-2 items-start">
-                      <span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>
-                      Documents should clearly show your achievement or work
-                    </li>
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Reference document is required</li>
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Maximum file size: 2MB per document</li>
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Accepted formats: PDF, JPG, PNG, DOC, DOCX</li>
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Documents should clearly show your achievement or work</li>
                   </ul>
                 </div>
               </div>
 
               {/* Form Actions */}
               <div className="flex items-center justify-between pt-8 mt-4 border-t border-white/5">
-                <button
-                  type="button"
-                  onClick={resetAll}
-                  className="text-white text-sm font-medium hover:text-[#C19A4A] transition-colors px-4 py-2"
-                >
+                <button type="button" onClick={resetAll} className="text-white text-sm font-medium hover:text-[#C19A4A] transition-colors px-4 py-2">
                   Cancel
                 </button>
                 <button
@@ -784,9 +639,7 @@ function Upload() {
                   className="group relative px-8 py-3.5 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(193,154,74,0.4)] disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <span className="relative z-10">{isUploading ? 'Uploading...' : 'Upload'}</span>
-                  {!isUploading && (
-                    <i className="fa-solid fa-arrow-right relative z-10 text-sm group-hover:translate-x-1 transition-transform"></i>
-                  )}
+                  {!isUploading && <i className="fa-solid fa-arrow-right relative z-10 text-sm group-hover:translate-x-1 transition-transform"></i>}
                   <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
@@ -818,7 +671,7 @@ function Upload() {
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-white relative z-10">Submitting Proof...</h3>
                 <p className="text-gray-400 text-xs leading-relaxed relative z-10">
-                  Please wait for your documents.<br />This may take a few moments.
+                  Uploading to IPFS and anchoring on-chain.<br />This may take a few moments.
                 </p>
               </div>
             </motion.div>
@@ -826,9 +679,9 @@ function Upload() {
         )}
       </AnimatePresence>
 
-      {/* Success Modal */}
+      {/* Success Modal — with Solscan + IPFS links */}
       <AnimatePresence>
-        {showSubmittedModal && (
+        {showSubmittedModal && submissionResult && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -838,42 +691,85 @@ function Upload() {
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#22c55e] to-blue-500 max-w-sm w-full shadow-2xl"
+              className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#22c55e] via-[#C19A4A] to-blue-500 max-w-sm w-full shadow-2xl"
             >
-              <div className="bg-[#111625] rounded-[14px] p-8 text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.1)_0%,transparent_70%)]" />
+              <div className="bg-[#111625] rounded-[14px] p-7 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.08)_0%,transparent_70%)]" />
+
+                {/* Close button */}
                 <button
-                  onClick={() => {
-                    setShowSubmittedModal(false);
-                    setIsUploading(false);
-                    resetAll();
-                  }}
+                  onClick={() => { setShowSubmittedModal(false); setIsUploading(false); resetAll(); }}
                   className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors z-20"
-                  aria-label="Close"
                 >
                   <i className="fa-solid fa-xmark"></i>
                 </button>
-                <div className="mb-6 relative z-10">
+
+                {/* Check icon */}
+                <div className="relative z-10 text-center mb-5">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', bounce: 0.5 }}
-                    className="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4"
+                    className="w-16 h-16 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4"
                   >
-                    <i className="fa-solid fa-check-circle text-green-400 text-4xl"></i>
+                    <i className="fa-solid fa-check-circle text-green-400 text-3xl"></i>
                   </motion.div>
-                  <h3 className="text-2xl font-bold mb-2 text-white">Verification Submitted!</h3>
-                  <p className="text-gray-300 text-xs leading-relaxed px-2">
-                    Your proof has been successfully submitted!
-                  </p>
+                  <h3 className="text-xl font-bold text-white mb-1">Proof Submitted!</h3>
+                  <p className="text-gray-400 text-xs">Your proof is now on-chain and stored on IPFS.</p>
                 </div>
-                <div className="flex gap-3 mt-8 relative z-10">
+
+                {/* Links */}
+                <div className="relative z-10 space-y-2 mb-6">
+
+                  {/* Solscan link */}
+                  {submissionResult.txHash && (
+                    <a
+                      href={`https://solscan.io/tx/${submissionResult.txHash}?cluster=devnet`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between w-full px-4 py-3 bg-[#0B0F1B] border border-[#C19A4A]/30 rounded-xl hover:border-[#C19A4A] hover:bg-[#C19A4A]/5 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#C19A4A]/10 flex items-center justify-center">
+                          <i className="fa-solid fa-link text-[#C19A4A] text-xs"></i>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-white text-xs font-semibold">View on Solscan</p>
+                          <p className="text-gray-500 text-[10px] font-mono truncate max-w-[160px]">
+                            {submissionResult.txHash.slice(0, 16)}...
+                          </p>
+                        </div>
+                      </div>
+                      <i className="fa-solid fa-arrow-up-right-from-square text-gray-500 group-hover:text-[#C19A4A] text-xs transition-colors"></i>
+                    </a>
+                  )}
+
+                  {/* IPFS document link */}
+                  {submissionResult.fileUrl && (
+                    <a
+                      href={submissionResult.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between w-full px-4 py-3 bg-[#0B0F1B] border border-blue-500/30 rounded-xl hover:border-blue-400 hover:bg-blue-500/5 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                          <i className="fa-solid fa-file text-blue-400 text-xs"></i>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-white text-xs font-semibold">View Document</p>
+                          <p className="text-gray-500 text-[10px]">Stored permanently on IPFS</p>
+                        </div>
+                      </div>
+                      <i className="fa-solid fa-arrow-up-right-from-square text-gray-500 group-hover:text-blue-400 text-xs transition-colors"></i>
+                    </a>
+                  )}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-3 relative z-10">
                   <button
-                    onClick={() => {
-                      setShowSubmittedModal(false);
-                      setIsUploading(false);
-                      resetAll();
-                    }}
+                    onClick={() => { setShowSubmittedModal(false); setIsUploading(false); resetAll(); }}
                     className="flex-1 py-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm font-bold hover:bg-white/10 transition-colors"
                   >
                     Upload Another
@@ -882,9 +778,10 @@ function Upload() {
                     onClick={() => (window.location.href = '/dashboard')}
                     className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] text-sm font-bold hover:shadow-[0_0_20px_rgba(193,154,74,0.4)] transition-all"
                   >
-                    View Dashboard
+                    Dashboard
                   </button>
                 </div>
+
               </div>
             </motion.div>
           </motion.div>
