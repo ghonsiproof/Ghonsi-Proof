@@ -13,12 +13,41 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL and Key are required. Check your .env file.');
 }
 
-// Create Supabase client
+// Custom fetch with timeout to prevent hanging on network issues
+const fetchWithTimeout = (url, options = {}, timeout = 30000) => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Request timeout after ${timeout}ms`));
+    }, timeout);
+    
+    fetch(url, {
+      ...options,
+      // Ensure we don't use cached results for auth requests
+      cache: 'no-store',
+    })
+      .then((response) => {
+        clearTimeout(timer);
+        resolve(response);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+};
+
+// Create Supabase client with lock-safe configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+    // Add flow type to reduce lock conflicts
+    flowType: 'pkce',
+  },
+  // Use global fetch with timeout for all Supabase requests
+  global: {
+    fetch: (url, options) => fetchWithTimeout(url, options, 30000),
   },
 });
 

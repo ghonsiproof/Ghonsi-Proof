@@ -2,7 +2,54 @@ import { supabase } from '../config/supabaseClient';
 
 /**
  * Authentication Utilities using Supabase Auth
+ * Includes promise guard to prevent concurrent auth calls causing Navigator Lock timeout
  */
+
+// Promise guard to prevent concurrent auth calls
+// This is the key fix for Navigator Lock timeout - only one auth operation at a time
+let authPromise = null;
+let authPromiseResolve = null;
+
+/**
+ * Execute auth operation with promise guard to prevent concurrent calls
+ * This prevents Navigator Lock timeout by serializing auth operations
+ */
+const executeWithAuthGuard = async (operation, operationName = 'auth operation') => {
+  // If there's already an auth operation in progress, wait for it
+  if (authPromise) {
+    console.log(`Waiting for existing ${operationName} to complete...`);
+    try {
+      await authPromise;
+    } catch (error) {
+      // Ignore errors from waiting, proceed with our operation
+      console.log(`Previous ${operationName} completed/errored, proceeding`);
+    }
+  }
+  
+  // Create new promise for this operation
+  authPromise = new Promise((resolve) => {
+    authPromiseResolve = resolve;
+  });
+  
+  try {
+    const result = await operation();
+    // Clear the guard
+    if (authPromiseResolve) {
+      authPromiseResolve(result);
+    }
+    authPromise = null;
+    authPromiseResolve = null;
+    return result;
+  } catch (error) {
+    // Clear the guard on error too
+    if (authPromiseResolve) {
+      authPromiseResolve(null);
+    }
+    authPromise = null;
+    authPromiseResolve = null;
+    throw error;
+  }
+};
 
 // Generate a UUID (compatible with Supabase's uuid_generate_v4)
 const generateUUID = () => {
@@ -446,11 +493,13 @@ export const logout = async () => {
   }
 };
 
-// Get current session
+// Get current session - wrapped with auth guard to prevent concurrent calls
 export const getSession = async () => {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  return session;
+  return executeWithAuthGuard(async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return session;
+  }, 'getSession');
 };
 
 // Get current user - Supports both Supabase session and wallet session
@@ -521,38 +570,41 @@ export const getCurrentUser = async () => {
 };
 
 // Check if user is authenticated - supports both Supabase session and wallet session
+// Wrapped with auth guard to prevent concurrent calls causing Navigator Lock timeout
 export const isAuthenticated = async () => {
-  try {
-    // Check Supabase session first
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      return true;
-    }
-
-    // Fall back to wallet session check
-    const walletAddress = localStorage.getItem('wallet_address');
-    const sessionToken = localStorage.getItem('session_token');
-    const userId = localStorage.getItem('user_id');
-
-    if (walletAddress && sessionToken && userId) {
-      // Verify user still exists in database
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', userId)
-        .single();
-
-      if (!error && user) {
-        console.log('Valid wallet session found');
+  return executeWithAuthGuard(async () => {
+    try {
+      // Check Supabase session first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
         return true;
       }
-    }
 
-    return false;
-  } catch (error) {
-    console.log('Error checking authentication:', error);
-    return false;
-  }
+      // Fall back to wallet session check
+      const walletAddress = localStorage.getItem('wallet_address');
+      const sessionToken = localStorage.getItem('session_token');
+      const userId = localStorage.getItem('user_id');
+
+      if (walletAddress && sessionToken && userId) {
+        // Verify user still exists in database
+        const { data: user, error } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', userId)
+          .single();
+
+        if (!error && user) {
+          console.log('Valid wallet session found');
+          return true;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.log('Error checking authentication:', error);
+      return false;
+    }
+  }, 'isAuthenticated');
 };
 
 // Get wallet session info

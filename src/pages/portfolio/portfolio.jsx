@@ -73,6 +73,7 @@ export default function Portfolio() {
   const [profile, setProfile] = useState(null);
   const [proofs, setProofs] = useState([]);
   const [portfolioLinkCopied, setPortfolioLinkCopied] = useState(false);
+  const [selectedProof, setSelectedProof] = useState(null);
   const tabsRef = useRef(null);
 
   useEffect(() => {
@@ -426,7 +427,7 @@ export default function Portfolio() {
               <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-white/10 to-transparent h-full">
                 <div className="bg-[#111625] rounded-2xl border border-white/5 hover:border-[#C19A4A]/30 transition-all duration-300 h-full flex flex-col group-hover:shadow-[0_0_30px_rgba(193,154,74,0.15)]">
 
-                  <div className="relative h-32 overflow-hidden shrink-0">
+                  <div className="relative h-32 overflow-hidden shrink-0 cursor-pointer" onClick={() => setSelectedProof(proof.files?.[0])}>
                     <img src={proof.files?.[0]?.file_url || 'https://via.placeholder.com/400x200?text=No+Image'}
                       alt={proof.proof_name}
                       className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" />
@@ -524,6 +525,46 @@ export default function Portfolio() {
           </div>
         </div>
       </motion.div>
+
+      {/* Proof Viewer Modal */}
+      {selectedProof && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setSelectedProof(null)}
+        >
+          <div 
+            className="relative max-w-[90vw] max-h-[80vh] bg-[#111625] rounded-lg overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedProof(null)}
+              className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            {selectedProof.mime_type?.includes('image') ? (
+              <img 
+                src={selectedProof.file_url} 
+                alt="Proof" 
+                className="max-h-[80vh] w-auto object-contain"
+              />
+            ) : selectedProof.mime_type?.includes('pdf') ? (
+              <iframe 
+                src={selectedProof.file_url}
+                className="w-[90vw] h-[80vh] max-w-4xl"
+                title="Proof PDF"
+              />
+            ) : (
+              <div className="p-8 text-center text-gray-400">
+                Preview not available for this file type
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes blob {
