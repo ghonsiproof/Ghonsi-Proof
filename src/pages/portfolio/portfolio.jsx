@@ -185,9 +185,9 @@ export default function Portfolio() {
       count: proofs.filter(p => p.proof_type === 'milestones').length
     },
     {
-      name: 'Achievement',
-      value: 'achievement',
-      count: proofs.length
+      name: 'Community Contributions',
+      value: 'community_contributions',
+      count: proofs.filter(p => p.proof_type === 'community_contributions').length
     },
     {
       name: 'Skills',
@@ -197,7 +197,7 @@ export default function Portfolio() {
   ];
 
   const activeTabValue = tabs.find(t => t.name === activeTab)?.value || 'All Proofs';
-  const filteredProofs = activeTabValue === 'All Proofs' || activeTabValue === 'achievement'
+  const filteredProofs = activeTabValue === 'All Proofs'
     ? proofs
     : proofs.filter(p => p.proof_type === activeTabValue);
 
@@ -442,7 +442,7 @@ export default function Portfolio() {
                         {proof.status === 'verified' && (
                           <div className="flex items-center gap-0.5 text-[#22c55e] bg-[#22c55e]/10 px-1.5 py-0.5 rounded whitespace-nowrap">
                             <CheckCircle2 size={12} />
-                            <span className="font-medium text-[9px]">Verified</span>
+                            <span className="font-medium text-[9px]">Verifiable</span>
                           </div>
                         )}
                       </div>
