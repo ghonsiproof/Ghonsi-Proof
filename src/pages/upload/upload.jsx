@@ -37,10 +37,12 @@ function Upload() {
   const [uploadError, setUploadError] = useState('');
   const [supportingError, setSupportingError] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionProgress, setExtractionProgress] = useState(0);
 
   // Transaction modal state
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [extractedDocumentData, setExtractedDocumentData] = useState(null);
+  const [extractedApiData, setExtractedApiData] = useState(null);
   const [pendingProofData, setPendingProofData] = useState(null);
 
   // NEW: store result data for success modal
@@ -126,11 +128,38 @@ function Upload() {
     if (!supportsExtraction(selectedProofType)) return null;
     try {
       setIsExtracting(true);
+      setExtractionProgress(0);
+      
+      // Simulate progress from 0% to 90% while waiting for API response
+      const progressInterval = setInterval(() => {
+        setExtractionProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          // Random increments to make it feel more natural
+          return prev + Math.random() * 15;
+        });
+      }, 300);
+      
       const data = await extractDocumentData(file, selectedProofType);
+      
+      clearInterval(progressInterval);
+      
       if (!data) throw new Error('No response from extraction API');
+      
+      // Complete the progress to 100%
+      setExtractionProgress(100);
+      
+      // Reset progress after a short delay
+      setTimeout(() => {
+        setExtractionProgress(0);
+      }, 500);
+      
       return data;
     } catch (error) {
       console.error('Extraction error:', error);
+      setExtractionProgress(0);
       return null;
     } finally {
       setIsExtracting(false);
@@ -200,6 +229,8 @@ function Upload() {
     if (proofType) {
       const extracted = await extractProofData(file, proofType);
       if (extracted) {
+        // Store extracted data for saving to database
+        setExtractedApiData(extracted);
         if (!summary.trim() && extracted.summary) setSummary(extracted.summary);
         if (!proofName.trim() && extracted.title) setProofName(extracted.title);
       }
@@ -252,6 +283,7 @@ function Upload() {
         summary,
         referenceLink: referenceLink || null,
         userId: user.id,
+        extractedData: extractedApiData,
       });
       setShowTransactionModal(true);
     } catch (error) {
@@ -361,6 +393,7 @@ function Upload() {
     setIsExtracting(false);
     setShowTransactionModal(false);
     setExtractedDocumentData(null);
+    setExtractedApiData(null);
     setPendingProofData(null);
     setSubmissionResult(null);
   };
@@ -583,7 +616,20 @@ function Upload() {
                               <span className="truncate text-sm font-medium text-gray-200 max-w-[200px] sm:max-w-[300px]">{file.name}</span>
                               <div className="flex items-center gap-3 mt-0.5">
                                 <span className="text-[10px] text-gray-500 font-mono">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                                {isExtracting && (
+                                {isExtracting && extractionProgress > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-gradient-to-r from-[#C19A4A] to-[#d9b563] rounded-full transition-all duration-300 ease-out"
+                                        style={{ width: `${Math.min(extractionProgress, 100)}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-[10px] text-[#C19A4A] font-bold min-w-[32px]">
+                                      {Math.round(extractionProgress)}%
+                                    </span>
+                                  </div>
+                                )}
+                                {isExtracting && extractionProgress === 0 && (
                                   <span className="text-[10px] text-[#C19A4A] flex items-center gap-1.5 font-medium">
                                     <i className="fa-solid fa-spinner fa-spin"></i> Extracting...
                                   </span>
