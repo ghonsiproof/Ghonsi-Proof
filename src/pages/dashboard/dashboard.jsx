@@ -41,7 +41,7 @@ const Badge = ({ status }) => {
   if (status === 'verified') {
     return (
       <span className="text-[10px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap">
-        Verified <CheckCircle2 size={10} strokeWidth={3} />
+        Verifiable <CheckCircle2 size={10} strokeWidth={3} />
       </span>
     );
   }
