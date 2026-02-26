@@ -97,7 +97,8 @@ function Home() {
               id: profile.id,
               userId: profile.user_id,
               initialPos: { top: `${pos.top}%`, left: `${pos.left}%` },
-              delay: index * 0.1
+              delay: index * 0.1,
+              floatDuration: 5 + Math.random() * 5
             });
           });
 
@@ -677,10 +678,10 @@ function Home() {
                     {bubbles.map((bubble) => (
                       <motion.div
                         key={bubble.id}
-                        className="absolute cursor-pointer group bubble-item"
+                        className="absolute cursor-pointer group bubble-item will-change-transform"
                         style={{ top: bubble.initialPos.top, left: bubble.initialPos.left }}
                         animate={{ y: [0, -15, 0] }}
-                        transition={{ duration: 5 + Math.random() * 5, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
+                        transition={{ duration: bubble.floatDuration, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
                         onClick={(e) => handleBubbleInteraction(bubble, e, 'click')}
                         onMouseEnter={(e) => !isMobile && !isPinned && handleBubbleInteraction(bubble, e, 'hover')}
                         onMouseLeave={() => !isMobile && !isPinned && setSelectedBubble(null)}
@@ -817,6 +818,12 @@ function Home() {
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+        }
+
+        /* GPU acceleration for bubble items - prevents iOS Safari flicker */
+        .bubble-item {
+          will-change: transform;
+          transform: translateZ(0);
         }
 
         /* Extra small devices */
