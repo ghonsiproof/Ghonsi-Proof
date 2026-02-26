@@ -75,7 +75,7 @@ function Request() {
           name:   profile.display_name,
           role:   profile.profession || 'Web3 Professional',
           email:  profile.users?.email
-            ? `${profile.users.email.split('@')[0]}***@${profile.users.email.split('@')[1]}`
+            ? `${profile.users.email.substring(0, 8)}***`
             : '',
           wallet: profile.users?.wallet_address || '',
           bio:    profile.bio || 'No bio available.',
@@ -202,7 +202,7 @@ function Request() {
   const shortWallet  = profileData.wallet
     ? `${profileData.wallet.substring(0, 4)}...${profileData.wallet.substring(profileData.wallet.length - 4)}`
     : 'Not connected';
-  const proofsToShow = showMore ? profileData.proofs : profileData.proofs.slice(0, 3);
+  const proofsToShow = profileData.proofs.slice(0, 3);
 
   return (
     <div
@@ -324,7 +324,7 @@ function Request() {
 
             <button
               onClick={() => setShowRequestModal(true)}
-              className={`bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#0B0F1B] px-6 py-2.5 rounded-xl text-sm font-bold hover:from-[#d9b563] hover:to-[#C19A4A] hover:shadow-[0_0_24px_rgba(193,154,74,0.4)] transition-all active:scale-[0.98] w-full sm:w-auto ${showMore ? 'animate-[pulse_1.5s_ease-in-out_infinite]' : ''}`}
+              className={`bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#0B0F1B] px-6 py-2.5 rounded-xl text-sm font-bold hover:from-[#d9b563] hover:to-[#C19A4A] hover:shadow-[0_0_24px_rgba(193,154,74,0.4)] transition-all active:scale-[0.98] w-full sm:w-auto ${showMore && profileData.proofs.length > 3 ? 'animate-[pulse_1.5s_ease-in-out_infinite]' : ''}`}
             >
               Request Portfolio
             </button>
@@ -449,7 +449,12 @@ function Request() {
 
           {profileData.proofs.length > 3 && !showMore && (
             <button
-              onClick={() => setShowMore(true)}
+              onClick={() => {
+                setShowMore(true);
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGS57OihUBELTKXh8bllHAU2jdXvzn0pBSh+zPDajzsKElyx6OyrWBQLSKHe8sFuIwUrgc7y2Yk2CBhkuezooVARC0yl4fG5ZRwFNo3V7859KQUofsz');
+                audio.play().catch(e => console.log('Audio play failed:', e));
+                setTimeout(() => audio.pause(), 10000);
+              }}
               className="w-full text-center text-sm text-[#C19A4A] font-semibold py-3 rounded-xl border border-[#C19A4A]/20 hover:bg-[#C19A4A]/5 transition-colors"
             >
               Show {profileData.proofs.length - 3} More
@@ -467,7 +472,7 @@ function Request() {
             </p>
             <button
               onClick={() => setShowRequestModal(true)}
-              className={`px-4 py-2 rounded-lg bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#0B0F1B] text-xs font-bold hover:shadow-[0_0_16px_rgba(193,154,74,0.5)] transition-all active:scale-[0.97] whitespace-nowrap shrink-0 ${showMore ? 'animate-[pulse_1.5s_ease-in-out_infinite]' : ''}`}
+              className={`px-4 py-2 rounded-lg bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#0B0F1B] text-xs font-bold hover:shadow-[0_0_16px_rgba(193,154,74,0.5)] transition-all active:scale-[0.97] whitespace-nowrap shrink-0 ${showMore && profileData.proofs.length > 3 ? 'animate-[pulse_1.5s_ease-in-out_infinite]' : ''}`}
             >
               Request Portfolio
             </button>
@@ -540,7 +545,7 @@ function Request() {
                       <ol className="text-xs text-gray-400 space-y-1.5 list-decimal pl-4 leading-relaxed">
                         <li>We'll notify the portfolio owner of your request</li>
                         <li>They can approve and export their portfolio</li>
-                        <li>You'll receive it directly via email</li>
+                        <li>You'll receive the link directly via the app</li>
                       </ol>
                     </div>
                   </div>
@@ -577,7 +582,7 @@ function Request() {
 
           <div className="relative w-full max-w-sm animate-[scaleIn_0.2s_ease-out]">
             <GradientCard variant="gold" innerClassName="relative overflow-hidden p-8 text-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/8 to-transparent rounded-2xl pointer-events-none" />
+              <div className="absolute inset-0 bg-[#000000] rounded-2xl pointer-events-none" />
 
               <div className="relative z-10">
                 <button
@@ -589,8 +594,8 @@ function Request() {
 
                 {/* Gold glow check icon */}
                 <div className="relative w-16 h-16 mx-auto mb-6">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#C19A4A] to-[#d9b563] blur-lg opacity-40" />
-                  <div className="relative w-16 h-16 rounded-full border-2 border-[#C19A4A] text-[#C19A4A] flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-green-400 to-green-500 blur-lg opacity-40" />
+                  <div className="relative w-16 h-16 rounded-full border-2 border-green-400 text-green-400 flex items-center justify-center">
                     <Check className="w-8 h-8" />
                   </div>
                 </div>
