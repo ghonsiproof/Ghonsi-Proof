@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, FileText, FileCheck, X, Loader2, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; ``
+import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, FileText, FileCheck, X, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getProofStats, getUserProofs } from '../../utils/proofsApi';
 import { getCurrentUser } from '../../utils/supabaseAuth';
@@ -748,8 +748,8 @@ export default function Portfolio() {
                       <button
                         onClick={() => setSelectedProof(proof)}
                         className={`flex items-center gap-1 px-2 py-1.5 rounded transition-colors shrink-0 ${proof.metadata_ipfs_url || proof.extracted_data
-                            ? 'text-[#C19A4A] bg-[#C19A4A]/10 border border-[#C19A4A]/20 hover:bg-[#C19A4A]/20'
-                            : 'text-gray-600 bg-white/5 cursor-default'
+                          ? 'text-[#C19A4A] bg-[#C19A4A]/10 border border-[#C19A4A]/20 hover:bg-[#C19A4A]/20'
+                          : 'text-gray-600 bg-white/5 cursor-default'
                           }`}
                         title="View metadata JSON"
                         disabled={!proof.metadata_ipfs_url && !proof.extracted_data}
