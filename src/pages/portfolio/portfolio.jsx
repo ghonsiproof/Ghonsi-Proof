@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom'; ``
-import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, FileText, FileCheck, X, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, FileText, FileCheck, X, Loader2, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getProofStats, getUserProofs } from '../../utils/proofsApi';
 import { getCurrentUser } from '../../utils/supabaseAuth';
