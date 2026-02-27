@@ -18,7 +18,7 @@ import Footer from '../../components/footer/footer.jsx';
 import './upload.css';
 
 function Upload() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, connectWallet } = useWallet();
   const { toasts, addToast, removeToast } = useToast();
 
   // Form state
@@ -45,7 +45,7 @@ function Upload() {
   const [extractedApiData, setExtractedApiData] = useState(null);
   const [pendingProofData, setPendingProofData] = useState(null);
 
-  // NEW: store result data for success modal
+  // Store result data for success modal
   const [submissionResult, setSubmissionResult] = useState(null);
 
   const dropdownRef = useRef(null);
@@ -129,33 +129,29 @@ function Upload() {
     try {
       setIsExtracting(true);
       setExtractionProgress(0);
-      
-      // Simulate progress from 0% to 90% while waiting for API response
+
       const progressInterval = setInterval(() => {
         setExtractionProgress(prev => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return 90;
           }
-          // Random increments to make it feel more natural
           return prev + Math.random() * 15;
         });
       }, 300);
-      
+
       const data = await extractDocumentData(file, selectedProofType);
-      
+
       clearInterval(progressInterval);
-      
+
       if (!data) throw new Error('No response from extraction API');
-      
-      // Complete the progress to 100%
+
       setExtractionProgress(100);
-      
-      // Reset progress after a short delay
+
       setTimeout(() => {
         setExtractionProgress(0);
       }, 500);
-      
+
       return data;
     } catch (error) {
       console.error('Extraction error:', error);
@@ -229,7 +225,6 @@ function Upload() {
     if (proofType) {
       const extracted = await extractProofData(file, proofType);
       if (extracted) {
-        // Store extracted data for saving to database
         setExtractedApiData(extracted);
         if (!summary.trim() && extracted.summary) setSummary(extracted.summary);
         if (!proofName.trim() && extracted.title) setProofName(extracted.title);
@@ -247,6 +242,8 @@ function Upload() {
     e.preventDefault();
     setUploadError('');
     let hasError = false;
+
+    // Validate form fields only — wallet check is deferred to transaction signing step
     if (!proofName.trim() || !summary.trim() || !proofType) {
       setUploadError('Please fill in all required fields.');
       hasError = true;
@@ -255,11 +252,20 @@ function Upload() {
       setSupportingError('A Reference Document is required.');
       hasError = true;
     }
-    if (!connected) {
-      setUploadError('Please connect your wallet to upload proofs.');
-      hasError = true;
-    }
     if (hasError) return;
+
+    // If wallet not connected, prompt connection now (before opening transaction modal).
+    // connectWallet() opens the wallet adapter modal. After connecting the user
+    // can click Upload again and we proceed immediately since connected will be true.
+    if (!connected) {
+      setUploadError('Please connect your wallet to sign the upload transaction.');
+      try {
+        await connectWallet();
+      } catch {
+        // user dismissed wallet modal — leave the error message visible
+      }
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -295,7 +301,6 @@ function Upload() {
   };
 
   const handleTransactionSuccess = async (txData) => {
-    // TransactionSignerModal has already closed itself — just show the spinner.
     setShowPendingModal(true);
 
     try {
@@ -329,9 +334,7 @@ function Upload() {
       const proofId = uploadedProof.proof.id;
       console.log('[v0] Proof saved to database:', proofId);
 
-      // Blockchain anchoring is non-fatal. If backend key isn't configured yet,
-      // proof is already saved with IPFS links — still show success.
-      let blockchainTxHash = txData.txHash; // fallback: show payment tx on Solscan
+      let blockchainTxHash = txData.txHash;
       try {
         console.log('[v0] Submitting proof to blockchain...');
         const blockchainResult = await submitProofToBlockchain(
@@ -352,7 +355,6 @@ function Upload() {
         console.warn('[v0] Blockchain anchoring skipped (backend not ready):', blockchainError.message);
       }
 
-      // Everything done — store result, hide spinner, show final success modal.
       setSubmissionResult({
         txHash: blockchainTxHash,
         fileUrl: ipfsResult.fileUrl,
@@ -362,7 +364,7 @@ function Upload() {
 
       clearFormData('uploadProof');
       setShowPendingModal(false);
-      setShowSubmittedModal(true);  // no setTimeout — show immediately after all work is done
+      setShowSubmittedModal(true);
 
     } catch (error) {
       console.error('[v0] Error completing proof submission:', error);
@@ -446,6 +448,30 @@ function Upload() {
             Add a new proof to your on-chain portfolio
           </p>
         </motion.div>
+
+        {/* Wallet connection banner — shown to email users who haven't connected a wallet yet */}
+        <AnimatePresence>
+          {!connected && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="mb-6 p-4 rounded-xl text-sm bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <i className="fa-solid fa-wallet text-lg text-yellow-400"></i>
+                <span>Connect a wallet — you'll need it to sign the upload transaction.</span>
+              </div>
+              <button
+                type="button"
+                onClick={connectWallet}
+                className="shrink-0 px-4 py-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 font-semibold text-xs transition-colors border border-yellow-500/30"
+              >
+                Connect Wallet
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -619,7 +645,7 @@ function Upload() {
                                 {isExtracting && extractionProgress > 0 && (
                                   <div className="flex items-center gap-2">
                                     <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                      <div 
+                                      <div
                                         className="h-full bg-gradient-to-r from-[#C19A4A] to-[#d9b563] rounded-full transition-all duration-300 ease-out"
                                         style={{ width: `${Math.min(extractionProgress, 100)}%` }}
                                       />
@@ -670,6 +696,7 @@ function Upload() {
                     <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Maximum file size: 2MB per document</li>
                     <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Accepted formats: PDF, JPG, PNG, DOC, DOCX</li>
                     <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Documents should clearly show your achievement or work</li>
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>A connected wallet is required to sign the upload transaction</li>
                   </ul>
                 </div>
               </div>
@@ -684,7 +711,9 @@ function Upload() {
                   disabled={isUploading}
                   className="group relative px-8 py-3.5 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(193,154,74,0.4)] disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  <span className="relative z-10">{isUploading ? 'Uploading...' : 'Upload'}</span>
+                  <span className="relative z-10">
+                    {isUploading ? 'Uploading...' : connected ? 'Upload' : 'Connect Wallet & Upload'}
+                  </span>
                   {!isUploading && <i className="fa-solid fa-arrow-right relative z-10 text-sm group-hover:translate-x-1 transition-transform"></i>}
                   <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
@@ -725,7 +754,7 @@ function Upload() {
         )}
       </AnimatePresence>
 
-      {/* Success Modal — with Solscan + IPFS links */}
+      {/* Success Modal */}
       <AnimatePresence>
         {showSubmittedModal && submissionResult && (
           <motion.div
@@ -766,8 +795,6 @@ function Upload() {
 
                 {/* Links */}
                 <div className="relative z-10 space-y-2 mb-6">
-
-                  {/* Solscan link */}
                   {submissionResult.txHash && (
                     <a
                       href={`https://solscan.io/tx/${submissionResult.txHash}?cluster=devnet`}
@@ -790,7 +817,6 @@ function Upload() {
                     </a>
                   )}
 
-                  {/* IPFS document link */}
                   {submissionResult.fileUrl && (
                     <a
                       href={submissionResult.fileUrl}
