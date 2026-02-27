@@ -13,52 +13,7 @@ const truncateWalletAddress = (address) => {
   return `${address.slice(0, 5)}...${address.slice(-4)}`;
 };
 
-// Auto-skill extraction
-const PROOF_TYPE_LABELS = {
-  job_history: 'Work Experience',
-  certificates: 'Certified',
-  milestones: 'Milestones',
-  community: 'Community',
-  skills: 'Skills',
-  Project: 'Projects',
-  Certificate: 'Certifications',
-  Milestone: 'Milestones',
-  Achievement: 'Achievements',
-};
-
-const KEYWORD_MAP = [
-  'React', 'Vue', 'Angular', 'Next.js', 'TypeScript', 'JavaScript', 'CSS', 'HTML',
-  'Node', 'Python', 'Rust', 'Go', 'Java', 'PHP', 'GraphQL', 'REST',
-  'Solana', 'Ethereum', 'Smart Contract', 'DeFi', 'NFT', 'Web3', 'Blockchain', 'Solidity', 'dApp',
-  'Machine Learning', 'AI', 'Data Science', 'SQL', 'Analytics',
-  'UI/UX', 'Figma', 'Design',
-  'AWS', 'Docker', 'CI/CD', 'DevOps', 'Linux',
-];
-
-function deriveSkillsFromProofs(proofs) {
-  const skillSet = new Set();
-  proofs.forEach(proof => {
-    // 1. Add the proof title itself as a skill (e.g. "Field Content Creator", "Content Marketer")
-    if (proof.proof_name && proof.proof_name.trim()) {
-      skillSet.add(proof.proof_name.trim());
-    }
-
-    // 2. Map proof_type → readable category label
-    const label = PROOF_TYPE_LABELS[proof.proof_type];
-    if (label) skillSet.add(label);
-
-    // 3. Scan name + summary for known tech/domain keywords
-    const text = `${proof.proof_name || ''} ${proof.summary || ''}`.toLowerCase();
-    KEYWORD_MAP.forEach(kw => {
-      if (text.includes(kw.toLowerCase())) skillSet.add(kw);
-    });
-
-    // 4. Use any explicit tags/skills arrays if the API returns them
-    if (Array.isArray(proof.tags)) proof.tags.forEach(t => skillSet.add(t));
-    if (Array.isArray(proof.skills)) proof.skills.forEach(s => skillSet.add(s));
-  });
-  return Array.from(skillSet);
-}
+// Auto-skill extraction - skills derived from extracted_data with confidence threshold
 
 export default function Portfolio() {
   const navigate = useNavigate();
@@ -107,9 +62,28 @@ export default function Portfolio() {
     loadProfileData();
   }, []);
 
-  // Auto-generate skills from proofs; fall back to profile.skills if no proofs yet
+  // Auto-generate skills from proofs extracted_data; fall back to profile.skills if no extracted skills
   const autoSkills = useMemo(() => {
-    const fromProofs = deriveSkillsFromProofs(proofs);
+    // Filter proofs with valid extracted_data containing skills and confidence >= 0.7
+    const validProofs = proofs.filter(proof => {
+      const extracted = proof?.extracted_data;
+      return (
+        extracted &&
+        Array.isArray(extracted.skills) &&
+        extracted.skills.length > 0 &&
+        typeof extracted.confidence === 'number' &&
+        extracted.confidence >= 0.7
+      );
+    });
+
+    // Extract up to 2 skills per proof, flatten, and deduplicate
+    const skillSet = new Set();
+    validProofs.forEach(proof => {
+      const skills = proof.extracted_data.skills.slice(0, 2);
+      skills.forEach(skill => skillSet.add(skill));
+    });
+
+    const fromProofs = Array.from(skillSet);
     if (fromProofs.length > 0) return fromProofs;
     return profile?.skills || [];
   }, [proofs, profile]);
@@ -484,6 +458,15 @@ export default function Portfolio() {
                           {proof.blockchain_tx || 'Pending...'}
                         </span>
                       </a>
+                      {proof.metadata_ipfs_url ? (
+                        <a href={proof.metadata_ipfs_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-1.5 rounded hover:bg-blue-500/20 transition-colors">
+                          <FileText size={12} />
+                        </a>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-gray-600 bg-white/5 px-2 py-1.5 rounded">
+                          <FileText size={12} />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
