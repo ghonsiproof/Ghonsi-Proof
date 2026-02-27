@@ -6,7 +6,7 @@ import { getProfile, updateProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import {
-  CheckCircle2, ExternalLink, Award, Plus, Briefcase,
+  CheckCircle2, ExternalLink, FileText, Award, Plus, Briefcase,
   Share2, Settings, Copy, User, Clock, Wallet, Mail, X, Loader2,
   Link, FileCheck, ChevronRight
 } from 'lucide-react';
@@ -41,7 +41,7 @@ const Badge = ({ status }) => {
   if (status === 'verified') {
     return (
       <span className="text-[10px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap">
-        Verifiable <CheckCircle2 size={10} strokeWidth={3} />
+        Verified <CheckCircle2 size={10} strokeWidth={3} />
       </span>
     );
   }
@@ -60,6 +60,9 @@ const ProofDetailModal = ({ proof, onClose }) => {
     ? `https://solscan.io/tx/${proof.blockchain_tx}?cluster=devnet`
     : null;
   const documentUrl = proof.file_ipfs_url || null;
+  const metadataUrl = proof.file_ipfs_hash
+    ? `https://gateway.pinata.cloud/ipfs/${proof.file_ipfs_hash}`
+    : null;
 
   return (
     <div
@@ -231,22 +234,34 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
   const handleLinkWallet = async () => {
     setIsLinkingWallet(true);
     try {
-      if (typeof window.ethereum !== 'undefined') {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const address = accounts[0];
-        if (user && address) {
-          const { error } = await linkWalletToUser(user.id, address);
-          if (error) throw error;
-          await updateProfile(user.id, { wallet_address: address });
-          onProfileUpdate();
-          alert('Wallet linked successfully!');
-        }
-      } else {
-        alert('Please install Phantom or any Solana powered wallet extension.');
+      // Use Phantom (Solana) — not window.ethereum which is EVM/MetaMask
+      const provider = window.phantom?.solana ?? window.solana;
+
+      if (!provider?.isPhantom && !provider) {
+        alert('Phantom wallet not found. Please install Phantom at phantom.app');
+        return;
       }
+
+      // Connect and get Solana public key
+      const resp = await provider.connect();
+      const address = resp.publicKey.toString();
+
+      if (!address) throw new Error('No wallet address returned');
+
+      // Save to users table + profile
+      const { error } = await linkWalletToUser(user.id, address);
+      if (error) throw error;
+      await updateProfile(user.id, { wallet_address: address });
+
+      onProfileUpdate();
+      alert('Solana wallet linked successfully!');
     } catch (error) {
       console.error('Wallet linking failed:', error);
-      alert('Failed to link wallet: ' + error.message);
+      if (error.code === 4001) {
+        alert('Connection cancelled. Please try again.');
+      } else {
+        alert('Failed to link wallet: ' + error.message);
+      }
     } finally {
       setIsLinkingWallet(false);
     }
@@ -464,7 +479,7 @@ const ProofItem = ({ proof, onClick }) => {
             </span>
           )}
 
-          {hasDocument && (
+          {hasDocument ? (
             <a
               href={proof.file_ipfs_url}
               target="_blank"
@@ -472,8 +487,12 @@ const ProofItem = ({ proof, onClick }) => {
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1.5 text-[10px] text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-full hover:bg-blue-500/20 transition-colors"
             >
-              <i className="fa-solid fa-file text-[8px]"></i> Doc
+              <FileText size={10} /> Document
             </a>
+          ) : (
+            <span className="flex items-center gap-1.5 text-[10px] text-gray-600 bg-white/5 px-2.5 py-1 rounded-full">
+              <FileText size={10} /> No doc
+            </span>
           )}
 
           <span className="ml-auto text-[10px] text-gray-500 group-hover:text-[#C19A4A] transition-colors">View details →</span>
