@@ -569,7 +569,7 @@ const QuickActions = () => {
           <div className="grid grid-cols-2 gap-3">
             <ActionButton icon={Plus} label="Upload New Proof" onClick={() => navigate('/upload')} />
             <ActionButton icon={Briefcase} label="View Portfolio" onClick={() => navigate('/portfolio')} />
-            <ActionButton icon={Share2} label="Share Profile" onClick={() => navigate('/publicProfile')} />
+            <ActionButton icon={Share2} label="Share Profile" onClick={() => navigate('/portfolio')} />
             <ActionButton icon={Settings} label="Profile Settings" onClick={() => navigate('/settingsPage')} />
           </div>
         </div>
