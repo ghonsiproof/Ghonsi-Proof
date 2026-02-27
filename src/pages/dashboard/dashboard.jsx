@@ -613,6 +613,11 @@ function Dashboard() {
     }
   }, [navigate]);
 
+  // Warmup: Call health endpoint once on mount to prevent cold start on first upload
+  useEffect(() => {
+    fetch('https://extraction-api-e54a.onrender.com/health').catch(() => {});
+  }, []);
+
   useEffect(() => { loadDashboardData(); }, [loadDashboardData]);
 
   if (loading) {

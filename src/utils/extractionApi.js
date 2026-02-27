@@ -115,16 +115,16 @@ export const extractDocumentData = async (file, proofType) => {
   formData.append('file', file);
   formData.append('proof_type', apiProofType);
 
-  // Abort after 35 seconds — Render free tier cold start can take ~30s
+  // Abort after 60 seconds — Render cold start + OCR + LLM can easily cross 40s
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 35000);
+  const timeout = setTimeout(() => controller.abort(), 60000);
 
   try {
-    const response = await fetch(`${API_URL}/api/extract/`, {
-      method: 'POST',
-      body: formData,
-      signal: controller.signal,
-    });
+    const response = await fetch(API_URL, {
+method: 'POST',
+body: formData,
+signal: controller.signal,
+});
 
     clearTimeout(timeout);
 
@@ -145,19 +145,14 @@ export const extractDocumentData = async (file, proofType) => {
       flaggedFields: envelope.flagged_fields,
       validationHash: envelope.validation_hash,
       cached: envelope.cached,
-    };
-
+    };    
   } catch (error) {
-    clearTimeout(timeout);
-
     if (error.name === 'AbortError') {
-      console.warn(
-        'Extraction API timed out (cold start?). Continuing without auto-fill.'
-      );
+      console.error('Extraction request timed out');
+      // Return null instead of throwing to allow proof creation to continue without extracted data
       return null;
     }
-
-    console.error('Extraction API error:', error);
+    console.error('Extraction error:', error);
     throw error;
   }
 };
