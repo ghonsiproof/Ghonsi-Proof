@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, FileText, X, Loader2, ChevronRight } from 'lucide-react';
+import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, FileText, FileCheck, X, Loader2, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getProofStats, getUserProofs } from '../../utils/proofsApi';
 import { getCurrentUser } from '../../utils/supabaseAuth';
@@ -228,6 +228,7 @@ export default function Portfolio() {
   const [proofs, setProofs] = useState([]);
   const [portfolioLinkCopied, setPortfolioLinkCopied] = useState(false);
   const [selectedProof, setSelectedProof] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null); // for PDF/image viewer
   const tabsRef = useRef(null);
 
   useEffect(() => {
@@ -384,6 +385,73 @@ export default function Portfolio() {
       {/* Metadata JSON Modal */}
       {selectedProof && (
         <MetadataModal proof={selectedProof} onClose={() => setSelectedProof(null)} />
+      )}
+
+      {/* File Viewer Modal (PDF / image) */}
+      {selectedFile && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setSelectedFile(null)}
+        >
+          <div
+            className="relative max-w-[90vw] max-h-[85vh] bg-[#111625] rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#0d1020]">
+              <div className="flex items-center gap-2">
+                <FileCheck size={14} className="text-blue-400" />
+                <span className="text-sm font-semibold text-white truncate max-w-[200px]">
+                  {selectedFile.filename || 'Document'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={selectedFile.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold hover:bg-blue-500/20 transition-colors"
+                >
+                  <ExternalLink size={11} /> Open
+                </a>
+                <button
+                  onClick={() => setSelectedFile(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            {selectedFile.mime_type?.includes('image') ? (
+              <img
+                src={selectedFile.file_url}
+                alt="Proof document"
+                className="max-h-[75vh] w-auto object-contain"
+              />
+            ) : selectedFile.mime_type?.includes('pdf') ? (
+              <iframe
+                src={selectedFile.file_url}
+                className="w-[85vw] h-[75vh] max-w-4xl"
+                title="Proof PDF"
+              />
+            ) : (
+              <div className="p-12 text-center text-gray-400 flex flex-col items-center gap-3">
+                <FileCheck size={32} className="text-gray-600" />
+                <p className="text-sm">Preview not available for this file type.</p>
+                <a
+                  href={selectedFile.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 text-xs hover:underline flex items-center gap-1"
+                >
+                  <ExternalLink size={11} /> Open file directly
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Navigation Bar */}
@@ -569,37 +637,28 @@ export default function Portfolio() {
               <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-white/10 to-transparent h-full">
                 <div className="bg-[#111625] rounded-2xl border border-white/5 hover:border-[#C19A4A]/30 transition-all duration-300 h-full flex flex-col group-hover:shadow-[0_0_30px_rgba(193,154,74,0.15)]">
 
-                  {/* ── Card preview: JSON metadata badge instead of image ── */}
+                  {/* ── Card thumbnail: file preview (original behaviour) ── */}
                   <div
-                    className="relative h-32 overflow-hidden shrink-0 cursor-pointer bg-[#0d1020] rounded-t-2xl border-b border-white/5 flex items-center justify-center"
-                    onClick={() => setSelectedProof(proof)}
+                    className="relative h-32 overflow-hidden shrink-0 cursor-pointer rounded-t-2xl"
+                    onClick={() => setSelectedFile(proof.files?.[0])}
                   >
-                    {/* Subtle grid bg */}
-                    <div className="absolute inset-0 opacity-20" style={{
-                      backgroundImage: `linear-gradient(90deg,rgba(193,154,74,0.15) 1px,transparent 1px),linear-gradient(0deg,rgba(193,154,74,0.15) 1px,transparent 1px)`,
-                      backgroundSize: '24px 24px'
-                    }} />
+                    <img
+                      src={proof.files?.[0]?.file_url || 'https://via.placeholder.com/400x200?text=No+Preview'}
+                      alt={proof.proof_name}
+                      className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#111625] to-transparent" />
 
-                    {/* Glowing center icon */}
-                    <div className="relative flex flex-col items-center gap-2 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-12 h-12 rounded-xl bg-[#C19A4A]/10 border border-[#C19A4A]/30 flex items-center justify-center shadow-[0_0_24px_rgba(193,154,74,0.2)]">
-                        <FileText size={22} className="text-[#C19A4A]" />
-                      </div>
-                      <span className="text-[10px] text-[#C19A4A]/70 font-mono font-semibold uppercase tracking-wider">
-                        {proof.metadata_ipfs_url ? 'IPFS Metadata' : proof.extracted_data ? 'Extracted Data' : 'No Metadata'}
-                      </span>
-                    </div>
-
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-[#C19A4A]/0 group-hover:bg-[#C19A4A]/5 transition-colors duration-300 flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[11px] text-[#C19A4A] font-semibold bg-[#0d1020]/80 px-3 py-1.5 rounded-full border border-[#C19A4A]/30 flex items-center gap-1.5">
-                        <ChevronRight size={12} /> View JSON
+                    {/* Hover "View File" badge */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[11px] text-white font-semibold bg-black/60 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                        <FileCheck size={12} /> View File
                       </span>
                     </div>
 
                     {/* Top-right: proof type pill */}
                     <div className="absolute top-2 right-2">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#C19A4A] bg-[#C19A4A]/10 border border-[#C19A4A]/20 px-2 py-0.5 rounded-full">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#C19A4A] bg-[#0B0F1B]/80 border border-[#C19A4A]/30 px-2 py-0.5 rounded-full">
                         {proof.proof_type?.replace(/_/g, ' ')}
                       </span>
                     </div>
@@ -644,36 +703,53 @@ export default function Portfolio() {
                       </span>
                     </div>
 
-                    {/* ── On-chain row ─────────────────────────────────── */}
-                    <div className="border-t border-white/10 pt-3 flex items-center gap-3 mt-auto">
-                      <div className="flex items-center gap-1 text-gray-400 text-xs">
+                    {/* ── On-chain row: [tx hash] [PDF] [JSON] ── */}
+                    <div className="border-t border-white/10 pt-3 flex items-center gap-2 mt-auto">
+                      <div className="flex items-center gap-1 text-gray-400 text-xs shrink-0">
                         <Link size={12} />
                         <span>On-chain:</span>
                       </div>
 
+                      {/* Tx hash — links to Solscan */}
                       {proof.blockchain_tx ? (
                         <a
                           href={`https://solscan.io/tx/${proof.blockchain_tx}?cluster=devnet`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center hover:border-[#C19A4A]/30 transition-colors"
+                          className="flex-1 min-w-0 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center hover:border-[#C19A4A]/30 transition-colors"
                         >
-                          <span className="font-mono text-[#C19A4A] text-xs truncate max-w-[120px]">
+                          <span className="font-mono text-[#C19A4A] text-xs truncate">
                             {proof.blockchain_tx.slice(0, 8)}...{proof.blockchain_tx.slice(-6)}
                           </span>
                         </a>
                       ) : (
-                        <div className="flex-1 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center">
+                        <div className="flex-1 min-w-0 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center">
                           <span className="font-mono text-gray-600 text-xs">Pending...</span>
                         </div>
                       )}
 
-                      {/* ── JSON button replaces the old IPFS doc icon ── */}
+                      {/* PDF / file viewer button */}
+                      {proof.files?.[0]?.file_url ? (
+                        <button
+                          onClick={() => setSelectedFile(proof.files[0])}
+                          className="flex items-center gap-1 px-2 py-1.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-colors shrink-0"
+                          title="View uploaded document"
+                        >
+                          <FileCheck size={12} />
+                          <span className="text-[10px] font-semibold hidden sm:inline">PDF</span>
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1 px-2 py-1.5 rounded bg-white/5 text-gray-600 shrink-0" title="No document">
+                          <FileCheck size={12} />
+                        </div>
+                      )}
+
+                      {/* JSON metadata button */}
                       <button
                         onClick={() => setSelectedProof(proof)}
-                        className={`flex items-center gap-1.5 px-2 py-1.5 rounded transition-colors ${proof.metadata_ipfs_url || proof.extracted_data
-                          ? 'text-[#C19A4A] bg-[#C19A4A]/10 border border-[#C19A4A]/20 hover:bg-[#C19A4A]/20'
-                          : 'text-gray-600 bg-white/5 cursor-default'
+                        className={`flex items-center gap-1 px-2 py-1.5 rounded transition-colors shrink-0 ${proof.metadata_ipfs_url || proof.extracted_data
+                            ? 'text-[#C19A4A] bg-[#C19A4A]/10 border border-[#C19A4A]/20 hover:bg-[#C19A4A]/20'
+                            : 'text-gray-600 bg-white/5 cursor-default'
                           }`}
                         title="View metadata JSON"
                         disabled={!proof.metadata_ipfs_url && !proof.extracted_data}
