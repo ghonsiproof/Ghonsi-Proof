@@ -464,6 +464,18 @@ const ProofItem = ({ proof, onClick }) => {
             </span>
           )}
 
+          {hasDocument && (
+            <a
+              href={proof.file_ipfs_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 text-[10px] text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-full hover:bg-blue-500/20 transition-colors"
+            >
+              <i className="fa-solid fa-file text-[8px]"></i> Doc
+            </a>
+          )}
+
           <span className="ml-auto text-[10px] text-gray-500 group-hover:text-[#C19A4A] transition-colors">View details →</span>
         </div>
 
