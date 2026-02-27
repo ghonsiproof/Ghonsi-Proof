@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Shield, Moon, Download, Lock, Eye, Globe } from 'lucide-react';
+import { Bell, Shield, Moon, Download, Lock, Eye, Globe, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext.jsx';
 import { getCurrentUser, logout } from '../../utils/supabaseAuth';
@@ -69,6 +69,11 @@ function SettingsPage() {
       <Header />
       
       <div className="max-w-full mx-auto px-4 py-8 mt-[115px]">
+        <button onClick={() => navigate('/dashboard')} className="inline-flex items-center text-[#C19A4A] text-sm mb-6 hover:underline gap-1">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </button>
+        
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Settings</h1>
           <p className="text-gray-400 text-sm">Manage your account preferences<br />and application settings</p>
