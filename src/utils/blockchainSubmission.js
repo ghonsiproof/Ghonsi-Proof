@@ -7,7 +7,7 @@ import { supabase } from '../config/supabaseClient';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 // FIX: use full backend URL, not a relative path (which 404s on Vercel)
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3000';
 
 /**
  * Submit proof to blockchain via backend

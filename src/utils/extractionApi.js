@@ -3,7 +3,7 @@
  * Handles communication with the document extraction service
  */
 
-const API_URL = 'https://extraction-api-e54a.onrender.com';
+const API_URL = 'https://extraction-api-e54a.onrender.com/api/extract/'; // FIX: full URL so this works in production on Vercel
 
 /**
  * Map UI proof types to API proof types
