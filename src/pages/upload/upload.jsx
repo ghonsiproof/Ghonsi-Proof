@@ -144,7 +144,12 @@ function Upload() {
 
       clearInterval(progressInterval);
 
-      if (!data) throw new Error('No response from extraction API');
+      // FIX: extractDocumentData returns null on timeout/cold-start — treat as
+      // soft failure so the user can still fill in fields manually.
+      if (!data) {
+        setExtractionProgress(0);
+        return null;
+      }
 
       setExtractionProgress(100);
 
@@ -225,11 +230,19 @@ function Upload() {
     if (proofType) {
       const extracted = await extractProofData(file, proofType);
       if (extracted) {
-        setExtractedApiData(extracted);
+        // FIX: store extracted.raw (the extracted_data object) not the whole
+        // normalized wrapper — raw is what gets saved to the DB and IPFS payload.
+        setExtractedApiData(extracted.raw);
         if (!summary.trim() && extracted.summary) setSummary(extracted.summary);
         if (!proofName.trim() && extracted.title) setProofName(extracted.title);
+        if (extracted.needsReview) {
+          addToast('Document processed — some fields may need review', 'warning');
+        } else {
+          addToast('Document processed successfully', 'success');
+        }
+      } else {
+        addToast('Auto-fill unavailable — fill in the fields manually', 'info');
       }
-      addToast('Document processed successfully', 'success');
     }
   };
 
@@ -301,6 +314,7 @@ function Upload() {
   };
 
   const handleTransactionSuccess = async (txData) => {
+    setShowTransactionModal(false);
     setShowPendingModal(true);
 
     try {

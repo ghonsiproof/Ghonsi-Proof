@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useWallet } from '../hooks/useWallet';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { createTransferTransaction } from '../utils/transactionSigner';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, ChevronDown, ChevronUp, FileJson } from 'lucide-react';
 import '../pages/upload/upload.css';
 
 /**
@@ -27,18 +27,18 @@ const TransactionSignerModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [transactionDetails, setTransactionDetails] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Hard guard — prevents double-submission on re-render
   const isSubmittingRef = useRef(false);
 
   // Reset every time modal opens so there is never stale state.
-  // amount, publicKey, and treasuryAddress are included so the displayed
-  // transaction details always reflect the latest prop values on open.
   useEffect(() => {
     if (!isOpen) return;
     isSubmittingRef.current = false;
     setError(null);
     setIsLoading(false);
+    setShowPreview(false);
 
     if (!publicKey || !treasuryAddress) return;
     setTransactionDetails({
@@ -67,8 +67,6 @@ const TransactionSignerModal = ({
     try {
       console.log('[v0] Starting transaction signing process');
 
-      // Always build a FRESH transaction with a fresh blockhash right before
-      // signing — never reuse a previously created or signed transaction.
       const transaction = await createTransferTransaction(
         publicKey,
         amount,
@@ -94,14 +92,11 @@ const TransactionSignerModal = ({
 
       console.log('[v0] Transaction successful:', signature);
 
-      // Close this modal IMMEDIATELY then hand off to parent.
-      // Parent shows "Submitting Proof..." spinner then the final success modal.
-      // No success screen here — this prevents the two-modal race condition.
       onSuccess({ txHash: signature, amount, documentData });
 
     } catch (err) {
       console.error('[v0] Transaction error:', err);
-      isSubmittingRef.current = false; // allow retry
+      isSubmittingRef.current = false;
 
       if (
         err.message?.includes('4001') ||
@@ -121,11 +116,45 @@ const TransactionSignerModal = ({
     }
   };
 
+  // Build a clean preview object from documentData — strip internal fields
+  // the user doesn't need to see (userId, uploadedAt, walletAddress already shown above)
+  const buildPreviewData = () => {
+    if (!documentData) return null;
+    const {
+      userId,        // internal — omit
+      uploadedAt,    // internal — omit
+      walletAddress, // already shown as "From" above
+      ...visible
+    } = documentData;
+    return visible;
+  };
+
+  const previewData = buildPreviewData();
+
+  // Syntax-colour a JSON string: strings gold, keys white, numbers/booleans/null blue
+  const renderSyntaxJson = (obj) => {
+    const json = JSON.stringify(obj, null, 2);
+    return json.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      (match) => {
+        let cls = 'text-blue-300'; // numbers, booleans, null
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'text-gray-300'; // keys
+          } else {
+            cls = 'text-[#C19A4A]'; // string values — gold
+          }
+        }
+        return `<span class="${cls}">${match}</span>`;
+      }
+    );
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gradient-to-br from-[#0B0F1B] to-[#1a1f2e] border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6">
+      <div className="bg-gradient-to-br from-[#0B0F1B] to-[#1a1f2e] border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -170,7 +199,7 @@ const TransactionSignerModal = ({
               </div>
               <div className="border-t border-white/5" />
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">To (Treasury)</span>
+                <span className="text-sm text-gray-400">To (Ghonsi Verification)</span>
                 <span className="text-xs font-mono text-white">
                   {transactionDetails.to.slice(0, 8)}...{transactionDetails.to.slice(-8)}
                 </span>
@@ -192,6 +221,39 @@ const TransactionSignerModal = ({
                 This transaction pays for document verification and permanent storage on IPFS.
               </p>
             </div>
+
+            {/* ── JSON Preview toggle ─────────────────────────────────── */}
+            {previewData && (
+              <div className="border border-white/10 rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowPreview((v) => !v)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+                >
+                  <div className="flex items-center gap-2 text-sm text-gray-300">
+                    <FileJson size={15} className="text-[#C19A4A]" />
+                    <span>Preview data being uploaded</span>
+                  </div>
+                  {showPreview
+                    ? <ChevronUp size={15} className="text-gray-500" />
+                    : <ChevronDown size={15} className="text-gray-500" />
+                  }
+                </button>
+
+                {showPreview && (
+                  <div className="px-4 py-3 bg-[#0d1020] border-t border-white/5">
+                    <p className="text-[10px] text-gray-500 mb-2 uppercase tracking-wider">
+                      This JSON will be stored permanently on IPFS
+                    </p>
+                    <pre
+                      className="text-[11px] font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap break-words max-h-56 overflow-y-auto"
+                      dangerouslySetInnerHTML={{ __html: renderSyntaxJson(previewData) }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            {/* ────────────────────────────────────────────────────────── */}
           </div>
         )}
 

@@ -152,6 +152,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # CORS (if you need frontend access)
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:3001",
     "https://ghonsi-proof.vercel.app/",
     "https://ghonsiproof.com/",
 ]
