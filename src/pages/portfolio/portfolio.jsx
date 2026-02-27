@@ -642,11 +642,26 @@ export default function Portfolio() {
                     className="relative h-32 overflow-hidden shrink-0 cursor-pointer rounded-t-2xl"
                     onClick={() => setSelectedFile(proof.files?.[0])}
                   >
-                    <img
-                      src={proof.files?.[0]?.file_url || 'https://via.placeholder.com/400x200?text=No+Preview'}
-                      alt={proof.proof_name}
-                      className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500"
-                    />
+                    {proof.files?.[0]?.mime_type?.includes('image') ? (
+                      <img
+                        src={proof.files[0].file_url}
+                        alt={proof.proof_name}
+                        className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500"
+                      />
+                    ) : proof.files?.[0]?.mime_type?.includes('pdf') ? (
+                      <iframe
+                        src={`${proof.files[0].file_url}#toolbar=0&navpanes=0&scrollbar=0&page=1&view=FitH`}
+                        className="w-full h-full pointer-events-none"
+                        title="PDF preview"
+                        style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#1A1F2E] flex flex-col items-center justify-center gap-2">
+                        <FileCheck size={28} className="text-gray-600" />
+                        <span className="text-[10px] text-gray-500">No preview</span>
+                      </div>
+                    )}
+
                     <div className="absolute inset-0 bg-gradient-to-t from-[#111625] to-transparent" />
 
                     {/* Hover "View File" badge */}
