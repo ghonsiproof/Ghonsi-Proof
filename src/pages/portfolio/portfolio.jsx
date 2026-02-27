@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, FileText } from 'lucide-react';
+import { Share2, Mail, Copy, Wallet, ExternalLink, CheckCircle2, Calendar, Link, Download, Plus, FolderGit2, Award, Flag, Trophy, FileText, X, Loader2, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getProofStats, getUserProofs } from '../../utils/proofsApi';
 import { getCurrentUser } from '../../utils/supabaseAuth';
@@ -13,8 +13,207 @@ const truncateWalletAddress = (address) => {
   return `${address.slice(0, 5)}...${address.slice(-4)}`;
 };
 
-// Auto-skill extraction - skills derived from extracted_data with confidence threshold
+// ─── JSON Metadata Modal ──────────────────────────────────────────────────────
+const MetadataModal = ({ proof, onClose }) => {
+  const [metadataJson, setMetadataJson] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (!proof) return;
+
+    console.log('[MetadataModal] proof keys:', Object.keys(proof));
+    console.log('[MetadataModal] metadata_ipfs_url:', proof.metadata_ipfs_url);
+    console.log('[MetadataModal] file_ipfs_url:', proof.file_ipfs_url);
+    console.log('[MetadataModal] extracted_data:', proof.extracted_data);
+    console.log('[MetadataModal] files:', proof.files);
+
+    // Priority 1: metadata_ipfs_url (the JSON metadata file on Pinata)
+    if (proof.metadata_ipfs_url) {
+      setIsLoading(true);
+      setFetchError(false);
+      fetch(proof.metadata_ipfs_url)
+        .then((r) => {
+          if (!r.ok) throw new Error('Failed to fetch');
+          return r.json();
+        })
+        .then((data) => {
+          console.log('[MetadataModal] fetched IPFS JSON:', data);
+          setMetadataJson(data);
+        })
+        .catch((err) => {
+          console.warn('[MetadataModal] IPFS fetch failed, falling back to extracted_data:', err);
+          setFetchError(true);
+          setMetadataJson(proof.extracted_data || null);
+        })
+        .finally(() => setIsLoading(false));
+      return;
+    }
+
+    // Priority 2: extracted_data column in DB
+    if (proof.extracted_data) {
+      console.log('[MetadataModal] using extracted_data from DB');
+      setMetadataJson(proof.extracted_data);
+      return;
+    }
+
+    // Priority 3: build a summary object from the proof row itself
+    // so the modal always shows *something* useful
+    console.log('[MetadataModal] no metadata/extracted_data — building from proof row');
+    setMetadataJson({
+      proof_id: proof.id,
+      proof_name: proof.proof_name,
+      proof_type: proof.proof_type,
+      summary: proof.summary,
+      status: proof.status,
+      reference_link: proof.reference_link || null,
+      blockchain_tx: proof.blockchain_tx || null,
+      file_ipfs_url: proof.file_ipfs_url || null,
+      created_at: proof.created_at,
+      note: 'No extracted metadata available — showing proof record data',
+    });
+  }, [proof]);
+
+  const handleCopy = () => {
+    if (!metadataJson) return;
+    navigator.clipboard.writeText(JSON.stringify(metadataJson, null, 2)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  // Syntax-colour JSON: strings gold, keys white, numbers/booleans/null blue
+  const renderSyntaxJson = (obj) => {
+    const json = JSON.stringify(obj, null, 2);
+    return json.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
+      (match) => {
+        let cls = 'text-blue-300';
+        if (/^"/.test(match)) {
+          cls = /:$/.test(match) ? 'text-gray-300' : 'text-[#C19A4A]';
+        }
+        return `<span class="${cls}">${match}</span>`;
+      }
+    );
+  };
+
+  if (!proof) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: 0.2 }}
+        className="relative w-full max-w-2xl max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Gradient border */}
+        <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500 shadow-2xl flex flex-col max-h-[85vh]">
+          <div className="bg-[#0d1020] rounded-[14px] flex flex-col overflow-hidden max-h-[85vh]">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-[#C19A4A]/15 border border-[#C19A4A]/30 flex items-center justify-center shrink-0">
+                  <FileText size={14} className="text-[#C19A4A]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm truncate">{proof.proof_name}</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+                    {fetchError ? 'Extracted Data (IPFS unavailable)' : proof.metadata_ipfs_url ? 'IPFS Metadata JSON' : 'Extracted Data'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {metadataJson && (
+                  <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C19A4A]/10 border border-[#C19A4A]/20 text-[#C19A4A] text-[11px] font-semibold hover:bg-[#C19A4A]/20 transition-colors"
+                  >
+                    {copied ? <CheckCircle2 size={12} className="text-green-400" /> : <Copy size={12} />}
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                )}
+                {proof.metadata_ipfs_url && (
+                  <a
+                    href={proof.metadata_ipfs_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold hover:bg-blue-500/20 transition-colors"
+                  >
+                    <ExternalLink size={12} /> IPFS
+                  </a>
+                )}
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Proof meta strip */}
+            <div className="flex items-center gap-4 px-5 py-3 bg-[#C19A4A]/5 border-b border-white/5 shrink-0 flex-wrap">
+              <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+                <Award size={12} className="text-[#C19A4A]" />
+                <span className="capitalize">{proof.proof_type?.replace(/_/g, ' ')}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+                <Calendar size={12} />
+                {new Date(proof.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+              </div>
+              {proof.blockchain_tx && (
+                <a
+                  href={`https://solscan.io/tx/${proof.blockchain_tx}?cluster=devnet`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-[11px] text-[#C19A4A] hover:underline ml-auto"
+                >
+                  <Link size={11} />
+                  {proof.blockchain_tx.slice(0, 8)}...{proof.blockchain_tx.slice(-6)}
+                  <ExternalLink size={10} />
+                </a>
+              )}
+            </div>
+
+            {/* JSON Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-4">
+                  <Loader2 size={28} className="text-[#C19A4A] animate-spin" />
+                  <p className="text-gray-400 text-sm">Fetching metadata from IPFS...</p>
+                </div>
+              ) : metadataJson ? (
+                <pre
+                  className="text-[12px] font-mono leading-relaxed whitespace-pre-wrap break-words"
+                  dangerouslySetInnerHTML={{ __html: renderSyntaxJson(metadataJson) }}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+                    <FileText size={22} className="text-gray-600" />
+                  </div>
+                  <p className="text-gray-400 text-sm">No metadata available for this proof.</p>
+                  <p className="text-gray-600 text-xs">Upload a document to generate extracted metadata.</p>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Auto-skill extraction - skills derived from extracted_data with confidence threshold
 export default function Portfolio() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All Proofs');
@@ -181,6 +380,11 @@ export default function Portfolio() {
           backgroundSize: '80px 80px'
         }} />
       </div>
+
+      {/* Metadata JSON Modal */}
+      {selectedProof && (
+        <MetadataModal proof={selectedProof} onClose={() => setSelectedProof(null)} />
+      )}
 
       {/* Navigation Bar */}
       <div className="flex items-center justify-between px-4 md:px-8 py-3 sticky top-0 z-50 bg-[#0B0F1B]/95 backdrop-blur-sm border-b border-white/5">
@@ -365,14 +569,43 @@ export default function Portfolio() {
               <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-white/10 to-transparent h-full">
                 <div className="bg-[#111625] rounded-2xl border border-white/5 hover:border-[#C19A4A]/30 transition-all duration-300 h-full flex flex-col group-hover:shadow-[0_0_30px_rgba(193,154,74,0.15)]">
 
-                  <div className="relative h-32 overflow-hidden shrink-0 cursor-pointer" onClick={() => setSelectedProof(proof.files?.[0])}>
-                    <img src={proof.files?.[0]?.file_url || 'https://via.placeholder.com/400x200?text=No+Image'}
-                      alt={proof.proof_name}
-                      className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111625] to-transparent" />
+                  {/* ── Card preview: JSON metadata badge instead of image ── */}
+                  <div
+                    className="relative h-32 overflow-hidden shrink-0 cursor-pointer bg-[#0d1020] rounded-t-2xl border-b border-white/5 flex items-center justify-center"
+                    onClick={() => setSelectedProof(proof)}
+                  >
+                    {/* Subtle grid bg */}
+                    <div className="absolute inset-0 opacity-20" style={{
+                      backgroundImage: `linear-gradient(90deg,rgba(193,154,74,0.15) 1px,transparent 1px),linear-gradient(0deg,rgba(193,154,74,0.15) 1px,transparent 1px)`,
+                      backgroundSize: '24px 24px'
+                    }} />
+
+                    {/* Glowing center icon */}
+                    <div className="relative flex flex-col items-center gap-2 group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-12 h-12 rounded-xl bg-[#C19A4A]/10 border border-[#C19A4A]/30 flex items-center justify-center shadow-[0_0_24px_rgba(193,154,74,0.2)]">
+                        <FileText size={22} className="text-[#C19A4A]" />
+                      </div>
+                      <span className="text-[10px] text-[#C19A4A]/70 font-mono font-semibold uppercase tracking-wider">
+                        {proof.metadata_ipfs_url ? 'IPFS Metadata' : proof.extracted_data ? 'Extracted Data' : 'No Metadata'}
+                      </span>
+                    </div>
+
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-[#C19A4A]/0 group-hover:bg-[#C19A4A]/5 transition-colors duration-300 flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[11px] text-[#C19A4A] font-semibold bg-[#0d1020]/80 px-3 py-1.5 rounded-full border border-[#C19A4A]/30 flex items-center gap-1.5">
+                        <ChevronRight size={12} /> View JSON
+                      </span>
+                    </div>
+
+                    {/* Top-right: proof type pill */}
+                    <div className="absolute top-2 right-2">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#C19A4A] bg-[#C19A4A]/10 border border-[#C19A4A]/20 px-2 py-0.5 rounded-full">
+                        {proof.proof_type?.replace(/_/g, ' ')}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="p-4 -mt-6 relative z-10 flex-1 flex flex-col">
+                  <div className="p-4 relative z-10 flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2 max-w-[calc(100%-40px)]">
                         <h3 className={`text-white font-semibold truncate ${proof.proof_name?.length > 30 ? 'text-[11px]' : 'text-[13px]'}`}
@@ -435,16 +668,19 @@ export default function Portfolio() {
                         </div>
                       )}
 
-                      {proof.metadata_ipfs_url ? (
-                        <a href={proof.metadata_ipfs_url} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-1.5 rounded hover:bg-blue-500/20 transition-colors">
-                          <FileText size={12} />
-                        </a>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-gray-600 bg-white/5 px-2 py-1.5 rounded">
-                          <FileText size={12} />
-                        </div>
-                      )}
+                      {/* ── JSON button replaces the old IPFS doc icon ── */}
+                      <button
+                        onClick={() => setSelectedProof(proof)}
+                        className={`flex items-center gap-1.5 px-2 py-1.5 rounded transition-colors ${proof.metadata_ipfs_url || proof.extracted_data
+                          ? 'text-[#C19A4A] bg-[#C19A4A]/10 border border-[#C19A4A]/20 hover:bg-[#C19A4A]/20'
+                          : 'text-gray-600 bg-white/5 cursor-default'
+                          }`}
+                        title="View metadata JSON"
+                        disabled={!proof.metadata_ipfs_url && !proof.extracted_data}
+                      >
+                        <FileText size={12} />
+                        <span className="text-[10px] font-semibold hidden sm:inline">JSON</span>
+                      </button>
                     </div>
                     {/* ─────────────────────────────────────────────────── */}
                   </div>
@@ -488,47 +724,7 @@ export default function Portfolio() {
         </div>
       </motion.div>
 
-      {/* Proof Viewer Modal */}
-      {selectedProof && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={() => setSelectedProof(null)}
-        >
-          <div
-            className="relative max-w-[90vw] max-h-[80vh] bg-[#111625] rounded-lg overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSelectedProof(null)}
-              className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-            {selectedProof.mime_type?.includes('image') ? (
-              <img
-                src={selectedProof.file_url}
-                alt="Proof"
-                className="max-h-[80vh] w-auto object-contain"
-              />
-            ) : selectedProof.mime_type?.includes('pdf') ? (
-              <iframe
-                src={selectedProof.file_url}
-                className="w-[90vw] h-[80vh] max-w-4xl"
-                title="Proof PDF"
-              />
-            ) : (
-              <div className="p-8 text-center text-gray-400">
-                Preview not available for this file type
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <style jsx>{`
+      <style>{`
         @keyframes blob {
           0%, 100% { transform: translate(0, 0) scale(1); }
           25%       { transform: translate(20px, -50px) scale(1.1); }
