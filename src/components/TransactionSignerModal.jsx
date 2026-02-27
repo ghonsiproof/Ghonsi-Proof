@@ -135,7 +135,7 @@ const TransactionSignerModal = ({
   const renderSyntaxJson = (obj) => {
     const json = JSON.stringify(obj, null, 2);
     return json.replace(
-      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
       (match) => {
         let cls = 'text-blue-300'; // numbers, booleans, null
         if (/^"/.test(match)) {
