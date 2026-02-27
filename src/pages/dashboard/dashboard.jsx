@@ -6,7 +6,7 @@ import { getProfile, updateProfile } from '../../utils/profileApi';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import {
-  CheckCircle2, ExternalLink, FileText, Award, Plus, Briefcase,
+  CheckCircle2, ExternalLink, Award, Plus, Briefcase,
   Share2, Settings, Copy, User, Clock, Wallet, Mail, X, Loader2,
   Link, FileCheck, ChevronRight
 } from 'lucide-react';
@@ -231,8 +231,6 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
   const handleLinkWallet = async () => {
     setIsLinkingWallet(true);
     try {
-      // Use Phantom (Solana) — window.phantom.solana is Phantom's dedicated
-      // namespace; window.solana is the legacy fallback
       const provider = window.phantom?.solana ?? window.solana;
 
       if (!provider) {
@@ -240,39 +238,25 @@ const ProfileSection = ({ user, profile, onProfileUpdate }) => {
         return;
       }
 
-      // Prompt Phantom popup — user approves connection
       const resp = await provider.connect();
       const address = resp.publicKey.toString();
       if (!address) throw new Error('No wallet address returned from Phantom');
 
-      // 1. Update users table (wallet_address column) — this is the source of truth
-      //    linkWalletToUser throws if wallet is already linked to another account
       await linkWalletToUser(user.id, address);
-
-      // 2. Mirror to profiles table so getProfile() returns it without needing the join
       await updateProfile(user.id, { wallet_address: address });
 
-      // 3. If this is an email-session user, also persist wallet to localStorage
-      //    so wallet-based auth checks work on next visit
       localStorage.setItem('wallet_address', address);
       localStorage.setItem('user_id', user.id);
 
-      // 4. Reload dashboard data so the wallet address appears immediately.
-      //    onProfileUpdate re-runs loadDashboardData which calls getProfile —
-      //    getProfile now prefers users.wallet_address from the join, which
-      //    was just written by linkWalletToUser above.
       await onProfileUpdate();
 
       alert('Solana wallet linked successfully!');
     } catch (error) {
       console.error('Wallet linking failed:', error);
-      // Phantom rejection
       if (error.code === 4001 || error.message?.toLowerCase().includes('user rejected')) {
         alert('Connection cancelled. Please try again.');
-        // Already linked to another account (from linkWalletToUser)
       } else if (error.message?.includes('already linked')) {
         alert(error.message);
-        // Supabase unique constraint violation
       } else if (error.message?.includes('duplicate') || error.code === '23505') {
         alert('This wallet is already linked to another account. Please use a different wallet.');
       } else {
@@ -447,7 +431,6 @@ const StatsRow = ({ stats }) => (
 // ─── Proof Item Card ──────────────────────────────────────────────────────────
 const ProofItem = ({ proof, onClick }) => {
   const hasSolscan = !!proof.blockchain_tx;
-  const hasDocument = !!proof.file_ipfs_url;
 
   return (
     <div
@@ -477,7 +460,7 @@ const ProofItem = ({ proof, onClick }) => {
           </div>
         </div>
 
-        {/* Preview links — always visible on card */}
+        {/* Preview links */}
         <div className="flex items-center gap-2 pt-1 border-t border-white/5">
           {hasSolscan ? (
             <a
@@ -599,7 +582,7 @@ function Dashboard() {
 
   // Warmup: Call health endpoint once on mount to prevent cold start on first upload
   useEffect(() => {
-    fetch('https://extraction-api-e54a.onrender.com/health').catch(() => {});
+    fetch('https://extraction-api-e54a.onrender.com/health').catch(() => { });
   }, []);
 
   useEffect(() => { loadDashboardData(); }, [loadDashboardData]);
@@ -656,7 +639,7 @@ function Dashboard() {
           </main>
         </div>
 
-        <style jsx>{`
+        <style>{`
           @keyframes blob {
             0%, 100% { transform: translate(0, 0) scale(1); }
             25%       { transform: translate(20px, -50px) scale(1.1); }
