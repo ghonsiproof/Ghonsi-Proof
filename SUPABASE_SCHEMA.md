@@ -125,6 +125,7 @@ CREATE TABLE proofs (
   status proof_status DEFAULT 'pending',
   verifier_id UUID REFERENCES users(id),
   blockchain_tx TEXT,
+  extracted_data JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   verified_at TIMESTAMPTZ

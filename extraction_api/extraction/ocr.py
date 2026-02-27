@@ -71,11 +71,13 @@ Rules:
 Return ONLY a valid JSON object with exactly these fields:
 
 {
+  "skills": ["Skill1", "Skill2", "Skill3"],
+  "confidence": 0.85,
   "skill_name":       "...",
   "skill_category":   "...",
   "proficiency_level": "...",
   "evidence_type":    "...",
-  "confidence": {
+  "confidence_breakdown": {
     "skill_name":       0.0,
     "skill_category":   0.0,
     "proficiency_level": 0.0,
@@ -83,11 +85,13 @@ Return ONLY a valid JSON object with exactly these fields:
   }
 }
 Rules:
+- skills: Array of skill names (strings). Extract ALL skills mentioned in the document.
+- confidence: Overall confidence score from 0.0 to 1.0 (average of breakdown scores)
 - skill_category examples: Programming, Design, Management, Communication, Technical Writing
 - proficiency_level must be one of: Beginner, Intermediate, Advanced, Expert (use null if not clear)
 - evidence_type examples: GitHub Activity, Portfolio, Test Result, Certificate, Work Sample
 - Use null for any field you cannot find
-- confidence is a float from 0.0 (uncertain) to 1.0 (certain) per field
+- confidence_breakdown is a float from 0.0 (uncertain) to 1.0 (certain) per field
 - No markdown, no explanation, no extra keys — raw JSON only""",
 
     "milestone": """Extract career milestone details from this document image.
@@ -240,8 +244,34 @@ def _parse_response(raw):
 
 def _low_confidence_fields(result, threshold=0.5):
     """Return field names whose confidence is below threshold."""
-    scores = result.get("confidence") or {}
+    # For skill type, confidence is in confidence_breakdown
+    if result.get("proof_type") == "skill":
+        scores = result.get("confidence_breakdown") or {}
+    else:
+        scores = result.get("confidence") or {}
     return [field for field, score in scores.items() if (score or 0) < threshold]
+
+
+def _calculate_skill_confidence(result):
+    """
+    Calculate overall confidence for skill extraction.
+    If confidence is not provided by AI, compute it from confidence_breakdown.
+    """
+    if result.get("proof_type") != "skill":
+        return result
+    
+    # If confidence is already provided, use it
+    if "confidence" in result and isinstance(result["confidence"], (int, float)):
+        return result
+    
+    # Calculate from breakdown
+    breakdown = result.get("confidence_breakdown") or {}
+    if breakdown:
+        scores = [s for s in breakdown.values() if s is not None]
+        if scores:
+            result["confidence"] = round(sum(scores) / len(scores), 2)
+    
+    return result
 
 
 # ── Main extraction function ────────────────────────────────────────────────
@@ -330,10 +360,15 @@ def extract_proof(file_bytes, proof_type, mime_type="image/jpeg", filename=""):
     raw_text = api_response["content"][0]["text"]
     result   = _parse_response(raw_text)
 
+    # Set proof_type before calling helpers that need it
+    result["proof_type"] = proof_type
+    
+    # Calculate overall confidence for skill type
+    result = _calculate_skill_confidence(result)
+    
     low_fields                      = _low_confidence_fields(result)
     result["needs_review"]          = len(low_fields) > 0
     result["low_confidence_fields"] = low_fields
-    result["proof_type"]            = proof_type
 
     return result
 
