@@ -288,7 +288,7 @@ function Login() {
             <button
               onClick={handleEmailSignIn}
               disabled={isLoading}
-              className="w-full py-3 px-5 bg-[#C19A4A] text-[#0B0F1B] border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 px-5 bg-[#C19A4A] text-[#0B0F1B] border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-black hover:text-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Verifying...' : 'Sign In'}
             </button>
