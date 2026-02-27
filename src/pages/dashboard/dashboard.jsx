@@ -570,7 +570,7 @@ const QuickActions = () => {
             <ActionButton icon={Plus} label="Upload New Proof" onClick={() => navigate('/upload')} />
             <ActionButton icon={Briefcase} label="View Portfolio" onClick={() => navigate('/portfolio')} />
             <ActionButton icon={Share2} label="Share Profile" onClick={() => navigate('/publicProfile')} />
-            <ActionButton icon={Settings} label="Edit Profile" onClick={() => navigate('/settingsPage')} />
+            <ActionButton icon={Settings} label="Profile Settings" onClick={() => navigate('/settingsPage')} />
           </div>
         </div>
       </div>

@@ -1,15 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, Shield, Moon, Download, Lock, Eye, Globe } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext.jsx';
+import { getCurrentUser, logout } from '../../utils/supabaseAuth';
+import { getProfile } from '../../utils/profileApi';
+import { supabase } from '../../config/supabaseClient';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 
 function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [profileVisibility, setProfileVisibility] = useState('Public');
+  const navigate = useNavigate();
+  const [emailNotifications] = useState(true);
+  const [pushNotifications] = useState(true);
+  const [profileVisibility] = useState('Public');
   const [language, setLanguage] = useState('English');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showConfirmInput, setShowConfirmInput] = useState(false);
+  const [deleteInput, setDeleteInput] = useState('');
+  const [userName, setUserName] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
+
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          const profile = await getProfile(user.id);
+          setUserName(profile?.display_name || 'User');
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      }
+    };
+    fetchUserName();
+  }, []);
+
+  const handleDeleteAccount = async () => {
+    if (deleteInput !== `delete ${userName} account`) return;
+    
+    setIsDeleting(true);
+    try {
+      const user = await getCurrentUser();
+      if (!user) throw new Error('User not found');
+
+      await supabase.from('proofs').delete().eq('user_id', user.id);
+      await supabase.from('profiles').delete().eq('user_id', user.id);
+      await supabase.from('users').delete().eq('id', user.id);
+      
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Failed to delete account. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const showComingSoonPopup = () => {
+    setShowComingSoon(true);
+    setTimeout(() => setShowComingSoon(false), 2000);
+  };
 
   return (
     <div className={`min-h-screen ${theme === 'Dark' ? 'bg-[#0B0F1B] text-white' : 'bg-white text-black'}`}>
@@ -35,7 +88,7 @@ function SettingsPage() {
                 <p className={`text-xs ${theme === 'Dark' ? 'text-gray-400' : 'text-gray-600'}`}>Receive updates including proof verifications and portfolio request via email</p>
               </div>
               <button
-                onClick={() => setEmailNotifications(!emailNotifications)}
+                onClick={(e) => { e.preventDefault(); showComingSoonPopup(); }}
                 className={`flex-shrink-0 w-12 h-6 rounded-full transition-colors ${emailNotifications ? 'bg-[#C19A4A]' : 'bg-gray-600'}`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full transition-transform ${emailNotifications ? 'translate-x-6' : 'translate-x-1'}`}></div>
@@ -48,7 +101,7 @@ function SettingsPage() {
                 <p className={`text-xs ${theme === 'Dark' ? 'text-gray-400' : 'text-gray-600'}`}>Receive browser push notifications</p>
               </div>
               <button
-                onClick={() => setPushNotifications(!pushNotifications)}
+                onClick={(e) => { e.preventDefault(); showComingSoonPopup(); }}
                 className={`flex-shrink-0 w-12 h-6 rounded-full transition-colors ${pushNotifications ? 'bg-[#C19A4A]' : 'bg-gray-600'}`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full transition-transform ${pushNotifications ? 'translate-x-6' : 'translate-x-1'}`}></div>
@@ -75,7 +128,7 @@ function SettingsPage() {
               </div>
               <select
                 value={profileVisibility}
-                onChange={(e) => setProfileVisibility(e.target.value)}
+                onChange={(e) => { e.preventDefault(); showComingSoonPopup(); }}
                 className={`text-sm px-3 py-1.5 rounded border outline-none ${theme === 'Dark' ? 'bg-[#0B0F1B] text-white border-white/10' : 'bg-white text-black border-gray-300'}`}
               >
                 <option>Public</option>
@@ -92,7 +145,10 @@ function SettingsPage() {
                   <p className={`text-xs ${theme === 'Dark' ? 'text-gray-400' : 'text-gray-600'}`}>Add an extra layer of security</p>
                 </div>
               </div>
-              <button className={`text-xs px-3 py-1.5 rounded border transition-colors ${theme === 'Dark' ? 'bg-[#0B0F1B] text-white border-white/10 hover:bg-[#1A1F2E]' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}>
+              <button 
+                onClick={showComingSoonPopup}
+                className={`text-xs px-3 py-1.5 rounded border transition-colors ${theme === 'Dark' ? 'bg-[#0B0F1B] text-white border-white/10 hover:bg-[#1A1F2E]' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
+              >
                 Enable 2FA
               </button>
             </div>
@@ -117,7 +173,15 @@ function SettingsPage() {
               </div>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => { 
+                  if (e.target.value === 'Other') {
+                    e.preventDefault();
+                    showComingSoonPopup();
+                    setLanguage('English');
+                  } else {
+                    setLanguage(e.target.value);
+                  }
+                }}
                 className={`text-sm px-3 py-1.5 rounded border outline-none ${theme === 'Dark' ? 'bg-[#0B0F1B] text-white border-white/10' : 'bg-white text-black border-gray-300'}`}
               >
                 <option>English</option>
@@ -162,7 +226,10 @@ function SettingsPage() {
                   <p className={`text-xs ${theme === 'Dark' ? 'text-gray-400' : 'text-gray-600'}`}>Download a copy of all your data</p>
                 </div>
               </div>
-              <button className={`text-xs px-3 py-1.5 rounded border transition-colors flex items-center gap-1 ${theme === 'Dark' ? 'bg-[#0B0F1B] text-white border-white/10 hover:bg-[#1A1F2E]' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}>
+              <button 
+                onClick={showComingSoonPopup}
+                className={`text-xs px-3 py-1.5 rounded border transition-colors flex items-center gap-1 ${theme === 'Dark' ? 'bg-[#0B0F1B] text-white border-white/10 hover:bg-[#1A1F2E]' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
+              >
                 <Download size={14} />
                 Export
               </button>
@@ -176,13 +243,87 @@ function SettingsPage() {
                   <p className={`text-xs ${theme === 'Dark' ? 'text-gray-400' : 'text-gray-600'}`}>Permanently delete your account and all data</p>
                 </div>
               </div>
-              <button className="bg-red-600 text-white text-xs px-3 py-1.5 rounded hover:bg-red-700 transition-colors">
+              <button 
+                onClick={() => setShowDeleteModal(true)}
+                className="bg-red-600 text-white text-xs px-3 py-1.5 rounded hover:bg-red-700 transition-colors"
+              >
                 Delete
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {showComingSoon && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className={`px-8 py-4 rounded-xl ${theme === 'Dark' ? 'bg-[#111625]' : 'bg-white'} shadow-2xl`}>
+            <p className="text-lg font-semibold">Coming soon!</p>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className={`max-w-md w-full rounded-xl p-6 ${theme === 'Dark' ? 'bg-[#111625]' : 'bg-white'}`}>
+            {!showConfirmInput ? (
+              <>
+                <h3 className="text-xl font-bold mb-4 text-red-500">Delete Account</h3>
+                <p className={`mb-6 text-sm ${theme === 'Dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Are you sure you want to delete your account? This step cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowConfirmInput(true)}
+                    className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors font-semibold"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className={`flex-1 py-2 rounded-lg transition-colors font-semibold ${theme === 'Dark' ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold mb-4 text-red-500">Final Confirmation</h3>
+                <p className={`mb-4 text-sm ${theme === 'Dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Type the following to confirm: <span className="font-bold">delete {userName} account</span>
+                </p>
+                <input
+                  type="text"
+                  value={deleteInput}
+                  onChange={(e) => setDeleteInput(e.target.value)}
+                  placeholder={`delete ${userName} account`}
+                  className={`w-full px-4 py-2 rounded-lg mb-4 outline-none ${theme === 'Dark' ? 'bg-[#0B0F1B] text-white border border-white/10' : 'bg-gray-100 text-black border border-gray-300'}`}
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleteInput !== `delete ${userName} account` || isDeleting}
+                    className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete Account'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowConfirmInput(false);
+                      setShowDeleteModal(false);
+                      setDeleteInput('');
+                    }}
+                    disabled={isDeleting}
+                    className={`flex-1 py-2 rounded-lg transition-colors font-semibold ${theme === 'Dark' ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-200 hover:bg-gray-300'} disabled:opacity-50`}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       
       <Footer />
     </div>
