@@ -445,6 +445,8 @@ function Upload() {
         amount={0.01}
         treasuryAddress={process.env.REACT_APP_TREASURY_WALLET || 'EKGNwqNBUBtH5Fnmcjjoj4Tci6dCXdcCrxcjTaWm5bLf'}
         documentData={extractedDocumentData}
+      extractedPreview={extractedApiData}
+
       />
 
       <main className="relative z-10 flex-grow px-4 py-8 max-w-4xl mx-auto w-full mt-[105px]">

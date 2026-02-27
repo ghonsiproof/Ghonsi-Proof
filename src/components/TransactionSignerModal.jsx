@@ -20,6 +20,7 @@ const TransactionSignerModal = ({
   amount = 0.01,
   treasuryAddress,
   documentData,
+  extractedPreview,
 }) => {
   const { publicKey, signTransaction, connected } = useWallet();
   const { connection } = useConnection();
@@ -119,6 +120,7 @@ const TransactionSignerModal = ({
   // Build a clean preview object from documentData — strip internal fields
   // the user doesn't need to see (userId, uploadedAt, walletAddress already shown above)
   const buildPreviewData = () => {
+    if (extractedPreview) return extractedPreview;   // ← prefer extracted doc data from extraction API if available, as it's more user-friendly than raw documentData
     if (!documentData) return null;
     const {
       userId,        // internal — omit
