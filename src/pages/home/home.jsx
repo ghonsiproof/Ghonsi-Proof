@@ -21,7 +21,6 @@ function Home() {
   const [cardPos, setCardPos] = useState({ top: 0, left: 0 });
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const isOpeningRef = React.useRef(false);
 
   const scrollToBubbleSection = () => {
     const element = document.getElementById('bubble-section');
@@ -39,37 +38,19 @@ function Home() {
   // Global listener to close popups when clicking/tapping blank areas
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Don't close if the popup was just opened (within the last 100ms)
-      if (isOpeningRef.current) {
-        return;
-      }
-      
       if (!event.target.closest('.bubble-item') && !event.target.closest('.profile-popup-card')) {
         setSelectedBubble(null);
         setIsPinned(false);
       }
     };
-    
     // mousedown for desktop, touchstart for mobile (iOS Safari doesn't reliably fire mousedown on non-interactive elements)
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchstart', handleClickOutside, { passive: true });
-    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
   }, []);
-
-  // Reset the opening flag after a short delay when a bubble is selected
-  useEffect(() => {
-    if (selectedBubble) {
-      isOpeningRef.current = true;
-      const timer = setTimeout(() => {
-        isOpeningRef.current = false;
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedBubble]);
 
   useEffect(() => {
     const loadProfiles = async () => {
@@ -116,7 +97,8 @@ function Home() {
               id: profile.id,
               userId: profile.user_id,
               initialPos: { top: `${pos.top}%`, left: `${pos.left}%` },
-              delay: index * 0.1
+              delay: index * 0.1,
+              floatDuration: 5 + Math.random() * 5
             });
           });
 
@@ -290,7 +272,7 @@ function Home() {
                         </div>
                       </div>
                       <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center">
-                        <div className="text-3xl font-bold text-white mb-1">9</div>
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
                         <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
                           Verifiable
                         </div>
@@ -371,7 +353,7 @@ function Home() {
                         </div>
                       </div>
                       <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center">
-                        <div className="text-3xl font-bold text-white mb-1">9</div>
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
                         <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
                           Verifiable
                         </div>
@@ -547,7 +529,7 @@ function Home() {
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center min-h-[80px]">
-                    <div className="text-3xl font-bold text-white mb-2">9</div>
+                    <div className="text-3xl font-bold text-white mb-2">12</div>
                     <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
                       Verifiable
                     </div>
@@ -598,12 +580,12 @@ function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="w-full max-w-2xl lg:-ml-16"
+                className="w-full max-w-2xl lg:-ml-8"
               >
                 <p className="text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed">
                   Your reputation should be easy to prove and accessible anytime.
                 </p>
-                <p className="text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed lg:whitespace-nowrap">
+                <p className="text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed">
                   Ghonsi Proof bridges the gap between doing the work and getting the credit you deserve.
                 </p>
               </motion.div>
@@ -696,10 +678,10 @@ function Home() {
                     {bubbles.map((bubble) => (
                       <motion.div
                         key={bubble.id}
-                        className="absolute cursor-pointer group bubble-item"
+                        className="absolute cursor-pointer group bubble-item will-change-transform"
                         style={{ top: bubble.initialPos.top, left: bubble.initialPos.left }}
                         animate={{ y: [0, -15, 0] }}
-                        transition={{ duration: 5 + Math.random() * 5, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
+                        transition={{ duration: bubble.floatDuration, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
                         onClick={(e) => handleBubbleInteraction(bubble, e, 'click')}
                         onMouseEnter={(e) => !isMobile && !isPinned && handleBubbleInteraction(bubble, e, 'hover')}
                         onMouseLeave={() => !isMobile && !isPinned && setSelectedBubble(null)}
@@ -836,6 +818,12 @@ function Home() {
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+        }
+
+        /* GPU acceleration for bubble items - prevents iOS Safari flicker */
+        .bubble-item {
+          will-change: transform;
+          transform: translateZ(0);
         }
 
         /* Extra small devices */
