@@ -64,7 +64,6 @@ export default function Portfolio() {
 
   // Auto-generate skills from proofs extracted_data; fall back to profile.skills if no extracted skills
   const autoSkills = useMemo(() => {
-    // Filter proofs with valid extracted_data containing skills and confidence >= 0.7
     const validProofs = proofs.filter(proof => {
       const extracted = proof?.extracted_data;
       return (
@@ -76,7 +75,6 @@ export default function Portfolio() {
       );
     });
 
-    // Extract up to 2 skills per proof, flatten, and deduplicate
     const skillSet = new Set();
     validProofs.forEach(proof => {
       const skills = proof.extracted_data.skills.slice(0, 2);
@@ -138,36 +136,12 @@ export default function Portfolio() {
     : '??';
 
   const tabs = [
-    {
-      name: 'All Proofs',
-      value: 'All Proofs',
-      count: proofs.length
-    },
-    {
-      name: 'Work History',
-      value: 'job_history',
-      count: proofs.filter(p => p.proof_type === 'job_history').length
-    },
-    {
-      name: 'Certificates',
-      value: 'certificates',
-      count: proofs.filter(p => p.proof_type === 'certificates').length
-    },
-    {
-      name: 'Milestones',
-      value: 'milestones',
-      count: proofs.filter(p => p.proof_type === 'milestones').length
-    },
-    {
-      name: 'Community Contributions',
-      value: 'community_contributions',
-      count: proofs.filter(p => p.proof_type === 'community_contributions').length
-    },
-    {
-      name: 'Skills',
-      value: 'skills',
-      count: proofs.filter(p => p.proof_type === 'skills').length
-    },
+    { name: 'All Proofs', value: 'All Proofs', count: proofs.length },
+    { name: 'Work History', value: 'job_history', count: proofs.filter(p => p.proof_type === 'job_history').length },
+    { name: 'Certificates', value: 'certificates', count: proofs.filter(p => p.proof_type === 'certificates').length },
+    { name: 'Milestones', value: 'milestones', count: proofs.filter(p => p.proof_type === 'milestones').length },
+    { name: 'Community Contributions', value: 'community_contributions', count: proofs.filter(p => p.proof_type === 'community_contributions').length },
+    { name: 'Skills', value: 'skills', count: proofs.filter(p => p.proof_type === 'skills').length },
   ];
 
   const activeTabValue = tabs.find(t => t.name === activeTab)?.value || 'All Proofs';
@@ -236,7 +210,7 @@ export default function Portfolio() {
                 <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/5 via-transparent to-[#d9b563]/5 rounded-2xl" />
                 <div className="relative z-10 flex gap-4 items-start">
 
-                  {/* Avatar - circular with gradient border */}
+                  {/* Avatar */}
                   <div className="shrink-0" style={{ width: 72 }}>
                     <div className="relative" style={{ width: 72, height: 72 }}>
                       <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#C19A4A] to-[#d9b563] blur-lg opacity-40" />
@@ -254,25 +228,19 @@ export default function Portfolio() {
                     </div>
                   </div>
 
-                  {/* Profile info panel */}
+                  {/* Profile info */}
                   <div className="flex-1 min-w-0 p-3">
-
-                    {/* User name and profession */}
                     <h1 className="text-lg font-bold text-white leading-tight mb-0.5">
                       {profile?.display_name || 'Anonymous User'}
                     </h1>
                     {profile?.profession && (
                       <p className="text-xs text-[#C19A4A] font-medium mb-2">{profile.profession}</p>
                     )}
-
-                    {/* User biography */}
                     <p className="text-xs text-gray-400 leading-relaxed mb-3">
                       {profile?.bio || 'No bio available'}
                     </p>
 
-                    {/* Email and wallet address */}
                     <div className="grid grid-cols-2 gap-1.5 mb-3">
-                      {/* Email section - always show email icon */}
                       <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                         <Mail size={11} className="text-[#C19A4A] shrink-0" />
                         {(profile?.users?.email || profile?.email) ? (
@@ -293,8 +261,7 @@ export default function Portfolio() {
                           <span className="text-[10px] text-gray-500 truncate flex-1 min-w-0">No email added</span>
                         )}
                       </div>
-                      {/* Wallet section - show if wallet address exists */}
-                      {profile?.users?.wallet_address && (
+                      {profile?.users?.wallet_address ? (
                         <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                           <Wallet size={11} className="text-[#C19A4A] shrink-0" />
                           <code className="text-[10px] text-gray-400 font-mono truncate flex-1 min-w-0">
@@ -309,9 +276,7 @@ export default function Portfolio() {
                             <ExternalLink size={11} />
                           </a>
                         </div>
-                      )}
-                      {/* Show placeholder if no wallet is connected */}
-                      {!profile?.users?.wallet_address && (
+                      ) : (
                         <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0B0F1B]/60 rounded-lg border border-white/5 min-w-0">
                           <Wallet size={11} className="text-[#C19A4A] shrink-0" />
                           <span className="text-[10px] text-gray-400 truncate flex-1 min-w-0">No wallet connected</span>
@@ -319,7 +284,6 @@ export default function Portfolio() {
                       )}
                     </div>
 
-                    {/* Social media links */}
                     {renderSocialLinks()}
                   </div>
                 </div>
@@ -346,7 +310,7 @@ export default function Portfolio() {
               </div>
             </div>
 
-            {/* Skills section - auto-generated from proofs */}
+            {/* Skills */}
             <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-white/10 to-transparent flex-1">
               <div className="bg-[#111625] rounded-xl p-5 h-full">
                 <h2 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
@@ -371,7 +335,7 @@ export default function Portfolio() {
           </motion.div>
         </motion.div>
 
-        {/* Proof type tabs */}
+        {/* Tabs */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}>
           <div ref={tabsRef}
@@ -393,7 +357,7 @@ export default function Portfolio() {
           </div>
         </motion.div>
 
-        {/* Proof cards display */}
+        {/* Proof cards */}
         <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-5">
           {filteredProofs.map((proof, idx) => (
             <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -439,7 +403,6 @@ export default function Portfolio() {
                       </div>
                     </div>
 
-                    {/* Full summary — no line-clamp */}
                     <p className="text-xs text-gray-400 leading-relaxed flex-1">{proof.summary}</p>
 
                     <div className="flex flex-wrap gap-2 mb-4 mt-4">
@@ -448,18 +411,33 @@ export default function Portfolio() {
                       </span>
                     </div>
 
+                    {/* ── On-chain row ─────────────────────────────────── */}
                     <div className="border-t border-white/10 pt-3 flex items-center gap-3 mt-auto">
                       <div className="flex items-center gap-1 text-gray-400 text-xs">
                         <Link size={12} />
                         <span>On-chain:</span>
                       </div>
-                      <a href="/" className="flex-1 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center hover:border-[#C19A4A]/30 transition-colors">
-                        <span className="font-mono text-[#C19A4A] text-xs truncate max-w-[120px]">
-                          {proof.blockchain_tx || 'Pending...'}
-                        </span>
-                      </a>
+
+                      {proof.blockchain_tx ? (
+                        <a
+                          href={`https://solscan.io/tx/${proof.blockchain_tx}?cluster=devnet`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center hover:border-[#C19A4A]/30 transition-colors"
+                        >
+                          <span className="font-mono text-[#C19A4A] text-xs truncate max-w-[120px]">
+                            {proof.blockchain_tx.slice(0, 8)}...{proof.blockchain_tx.slice(-6)}
+                          </span>
+                        </a>
+                      ) : (
+                        <div className="flex-1 bg-[#1A1F2E] border border-white/10 rounded px-2 py-1.5 flex items-center">
+                          <span className="font-mono text-gray-600 text-xs">Pending...</span>
+                        </div>
+                      )}
+
                       {proof.metadata_ipfs_url ? (
-                        <a href={proof.metadata_ipfs_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-1.5 rounded hover:bg-blue-500/20 transition-colors">
+                        <a href={proof.metadata_ipfs_url} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-1.5 rounded hover:bg-blue-500/20 transition-colors">
                           <FileText size={12} />
                         </a>
                       ) : (
@@ -468,6 +446,7 @@ export default function Portfolio() {
                         </div>
                       )}
                     </div>
+                    {/* ─────────────────────────────────────────────────── */}
                   </div>
                 </div>
               </div>
@@ -511,11 +490,11 @@ export default function Portfolio() {
 
       {/* Proof Viewer Modal */}
       {selectedProof && (
-        <div 
+        <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
           onClick={() => setSelectedProof(null)}
         >
-          <div 
+          <div
             className="relative max-w-[90vw] max-h-[80vh] bg-[#111625] rounded-lg overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -529,13 +508,13 @@ export default function Portfolio() {
               </svg>
             </button>
             {selectedProof.mime_type?.includes('image') ? (
-              <img 
-                src={selectedProof.file_url} 
-                alt="Proof" 
+              <img
+                src={selectedProof.file_url}
+                alt="Proof"
                 className="max-h-[80vh] w-auto object-contain"
               />
             ) : selectedProof.mime_type?.includes('pdf') ? (
-              <iframe 
+              <iframe
                 src={selectedProof.file_url}
                 className="w-[90vw] h-[80vh] max-w-4xl"
                 title="Proof PDF"
