@@ -266,22 +266,24 @@ export default function Portfolio() {
   const autoSkills = useMemo(() => {
     const validProofs = proofs.filter(proof => {
       const extracted = proof?.extracted_data;
+      const category = extracted?.program_category;
+      const conf = extracted?.confidence?.program_category;
       return (
-        extracted &&
-        Array.isArray(extracted.skills) &&
-        extracted.skills.length > 0 &&
-        typeof extracted.confidence === 'number' &&
-        extracted.confidence >= 0.7
+        proof?.extracted_data &&
+        typeof category === 'string' &&
+        category.length > 0 &&
+        typeof conf === 'number' &&
+        conf >= 0.7
       );
     });
 
-    const skillSet = new Set();
+    const categorySet = new Set();
     validProofs.forEach(proof => {
-      const skills = proof.extracted_data.skills.slice(0, 2);
-      skills.forEach(skill => skillSet.add(skill));
+      const category = proof.extracted_data.program_category;
+      if (category) categorySet.add(category);
     });
 
-    const fromProofs = Array.from(skillSet);
+    const fromProofs = Array.from(categorySet);
     if (fromProofs.length > 0) return fromProofs;
     return profile?.skills || [];
   }, [proofs, profile]);

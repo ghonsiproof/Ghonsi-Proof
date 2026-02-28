@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Wallet, Upload, X, ArrowRight, Sparkles, Trophy, Share2, Award, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,7 +11,6 @@ import { profileWithfileProofs } from '../../utils/proofsApi.js';
 
 import './home.css';
 
-// Queen Smith profile photo - using imported image from assets/home folder
 const QUEEN_SMITH_PROFILE_IMG = queenSmithProfile;
 
 function Home() {
@@ -21,6 +20,8 @@ function Home() {
   const [cardPos, setCardPos] = useState({ top: 0, left: 0 });
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  const lastInteractionTime = useRef(0);
 
   const scrollToBubbleSection = () => {
     const element = document.getElementById('bubble-section');
@@ -35,15 +36,15 @@ function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Global listener to close popups when clicking/tapping blank areas
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (Date.now() - lastInteractionTime.current < 400) return;
+      
       if (!event.target.closest('.bubble-item') && !event.target.closest('.profile-popup-card')) {
         setSelectedBubble(null);
         setIsPinned(false);
       }
     };
-    // mousedown for desktop, touchstart for mobile (iOS Safari doesn't reliably fire mousedown on non-interactive elements)
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchstart', handleClickOutside, { passive: true });
     return () => {
@@ -114,9 +115,8 @@ function Home() {
   }, []);
 
   const handleBubbleInteraction = (bubble, event, type = 'hover') => {
-    // Stop propagation so the global handleClickOutside doesn't fire
-    // and immediately close the popup we're about to open
     event.stopPropagation();
+    lastInteractionTime.current = Date.now();
 
     if (isMobile) {
       setSelectedBubble(bubble);
@@ -147,7 +147,6 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A]/30 relative overflow-hidden">
-      {/* Background elements */}
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <div className="absolute top-0 -left-40 w-96 h-96 bg-[#C19A4A] rounded-full mix-blend-multiply filter blur-[128px] animate-blob" />
         <div className="absolute top-0 -right-40 w-96 h-96 bg-[#d9b563] rounded-full mix-blend-multiply filter blur-[128px] animate-blob animation-delay-2000" />
@@ -168,19 +167,14 @@ function Home() {
       <NotificationWidget />
 
       <main className="pt-16 md:pt-20 lg:pt-24 relative z-10">
-        
-        {/* HERO SECTION */}
         <section className="relative px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 xl:py-20 max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 items-center">
-            
-            {/* Left Column: Text Content */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="flex flex-col items-start text-left w-full order-1 lg:order-1"
             >
-              {/* Heading - CENTER on mobile, LEFT on desktop */}
               <div className="w-full text-center md:text-left mb-6 sm:mb-8">
                 <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.15] max-w-2xl mx-auto md:mx-0">
                   <span className="block">
@@ -200,7 +194,6 @@ function Home() {
                 </h1>
               </div>
 
-              {/* Description */}
               <div className="w-full max-w-xl space-y-3 sm:space-y-4 mb-6 sm:mb-8 text-left">
                 <p className="text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed">
                   Ghonsi Proof lets you turn your work into a{' '}
@@ -213,7 +206,6 @@ function Home() {
                 </p>
               </div>
 
-              {/* Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto items-stretch sm:items-center">
                 <NavLink
                   to="/dashboard"
@@ -235,12 +227,9 @@ function Home() {
               </div>
             </motion.div>
 
-            {/* Right Column: 3D Card - DESKTOP ONLY */}
             <div className="hidden lg:flex items-center justify-center lg:justify-end order-2 lg:order-2">
               <div className="relative w-full max-w-[420px] xl:max-w-[460px]" style={{ height: '480px' }}>
                 <div className="relative w-full h-full" style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}>
-
-                  {/* Background Ghost Layer */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.15 }}
@@ -279,7 +268,6 @@ function Home() {
                       </div>
                     </div>
 
-                    {/* Three Achievement Cards */}
                     <div className="space-y-2">
                       <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
@@ -316,7 +304,6 @@ function Home() {
                     </div>
                   </motion.div>
 
-                  {/* Main Card (Front Layer) */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -333,7 +320,6 @@ function Home() {
                       boxShadow: '-24px 24px 72px rgba(193,154,74,0.15), 0 24px 48px rgba(0,0,0,0.6)'
                     }}
                   >
-                    {/* Profile Header */}
                     <div className="flex items-center gap-4 mb-3">
                       <div className="relative flex-shrink-0">
                         <img src={QUEEN_SMITH_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
@@ -344,7 +330,6 @@ function Home() {
                       </div>
                     </div>
 
-                    {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-2.5">
                       <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
                         <div className="text-3xl font-bold text-white mb-1">12</div>
@@ -360,9 +345,7 @@ function Home() {
                       </div>
                     </div>
 
-                    {/* Three Achievement Cards */}
                     <div className="space-y-2 flex-1">
-                      {/* Achievement 1 */}
                       <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 hover:border-[#C19A4A]/30 transition-colors">
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
                           <Trophy size={11} className="text-[#C19A4A] flex-shrink-0" /> 
@@ -374,7 +357,6 @@ function Home() {
                         </div>
                       </div>
 
-                      {/* Achievement 2 */}
                       <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 hover:border-blue-400/30 transition-colors">
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
                           <Award size={11} className="text-blue-400 flex-shrink-0" /> 
@@ -386,7 +368,6 @@ function Home() {
                         </div>
                       </div>
 
-                      {/* Achievement 3 */}
                       <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 hover:border-purple-400/30 transition-colors">
                         <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
                           <Star size={11} className="text-purple-400 flex-shrink-0" /> 
@@ -406,7 +387,6 @@ function Home() {
           </div>
         </section>
 
-        {/* HOW IT WORKS SECTION */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -497,7 +477,6 @@ function Home() {
           </motion.div>
         </section>
 
-        {/* QUEEN SMITH PROFILE CARD - MOBILE/TABLET ONLY */}
         <section className="lg:hidden max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -550,7 +529,6 @@ function Home() {
           </motion.div>
         </section>
 
-        {/* TRUST LAYER SECTION */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -563,7 +541,6 @@ function Home() {
             <div className="absolute -bottom-10 sm:-bottom-20 -right-10 sm:-right-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#d9b563] rounded-full opacity-20 blur-[80px] sm:blur-[100px] pointer-events-none" />
 
             <div className="relative flex flex-col items-center gap-4 sm:gap-6">
-              {/* Heading */}
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -574,7 +551,6 @@ function Home() {
                 Building the trust layer for the global workforce.
               </motion.h2>
 
-              {/* Subtext */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -590,7 +566,6 @@ function Home() {
                 </p>
               </motion.div>
 
-              {/* CTAs */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -620,7 +595,6 @@ function Home() {
           </motion.div>
         </section>
 
-        {/* DISCOVER VERIFIED TALENT */}
         <section id="bubble-section" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-14 pb-0">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -635,7 +609,6 @@ function Home() {
           </motion.div>
         </section>
 
-        {/* BUBBLE EXPLORER */}
         <section className="mx-4 sm:mx-6 lg:mx-8 mb-12 sm:mb-16 lg:mb-20">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -702,7 +675,6 @@ function Home() {
                   </div>
                 )}
 
-                {/* PROFILE POPUP */}
                 <AnimatePresence>
                   {selectedBubble && (
                     <>
@@ -711,7 +683,7 @@ function Home() {
                           initial={{ opacity: 0 }} 
                           animate={{ opacity: 1 }} 
                           exit={{ opacity: 0 }} 
-                          onClick={() => setSelectedBubble(null)} 
+                          onClick={() => { if (Date.now() - lastInteractionTime.current > 400) { setSelectedBubble(null); } }} 
                           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1001]" 
                         />
                       )}
@@ -820,13 +792,11 @@ function Home() {
           overflow: hidden;
         }
 
-        /* GPU acceleration for bubble items - prevents iOS Safari flicker */
         .bubble-item {
           will-change: transform;
           transform: translateZ(0);
         }
 
-        /* Extra small devices */
         @media (min-width: 375px) {
           .xs\\:inline {
             display: inline;
