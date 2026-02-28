@@ -595,46 +595,50 @@ function Home() {
           </motion.div>
         </section>
 
-        <section id="bubble-section" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-14 pb-0">
+        {/* DISCOVER VERIFIED TALENT - BUBBLE EXPLORER - Mobile Optimized */}
+        <section id="bubble-section" className="max-w-6xl mx-auto px-4 md:px-6 pb-8 md:pb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-6 sm:mb-10 lg:mb-12"
+            className="text-center mb-8 md:mb-12"
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
               Discover Verified Talent
             </h2>
-            <p className="text-gray-300 text-sm sm:text-base lg:text-lg px-2">Browse on-chain portfolios of proven Web3 builders.</p>
+            <p className="text-gray-300 text-sm md:text-base lg:text-lg px-2">Browse on-chain portfolios of proven Web3 builders.</p>
+            <p className="text-gray-400 text-xs md:text-sm lg:text-base mt-1 md:mt-2 px-2">Explore profiles with verifiable work history and skills you trust.</p>
           </motion.div>
         </section>
 
-        <section className="mx-4 sm:mx-6 lg:mx-8 mb-12 sm:mb-16 lg:mb-20">
+        {/* Premium Bubble Container - Mobile Optimized */}
+        <section className="mx-2 md:mx-4 mb-12 md:mb-20">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative p-[2px] rounded-3xl lg:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
+            className="relative p-[2px] rounded-[2rem] md:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
           >
-            <div className="relative p-[1px] rounded-[22px] lg:rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
-              <div className="relative h-[600px] sm:h-[750px] lg:h-[850px] xl:h-[950px] rounded-[20px] lg:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A15_0%,transparent_70%)] rounded-[20px] lg:rounded-[2.3rem]" />
+            <div className="relative p-[1px] rounded-[1.95rem] md:rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
+              <div className="relative h-[500px] md:h-[600px] lg:h-[700px] rounded-[1.9rem] md:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-visible">
+                {/* Radial gradient overlay */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A15_0%,transparent_70%)] rounded-[1.9rem] md:rounded-[2.3rem]" />
                 
-                <div className="absolute inset-0 opacity-30 rounded-[20px] lg:rounded-[2.3rem]" style={{
+                {/* Animated gradient lines */}
+                <div className="absolute inset-0 opacity-30 rounded-[1.9rem] md:rounded-[2.3rem]" style={{
                   backgroundImage: `
                     radial-gradient(circle at 20% 50%, rgba(193,154,74,0.15) 0%, transparent 50%),
                     radial-gradient(circle at 80% 50%, rgba(147,51,234,0.15) 0%, transparent 50%)
                   `
                 }} />
 
-                <div className="absolute top-4 sm:top-6 lg:top-8 left-1/2 -translate-x-1/2 z-20 px-2">
-                  <div className="relative px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 rounded-full bg-gradient-to-r from-[#C19A4A]/20 to-[#d9b563]/20 border border-[#C19A4A]/30 backdrop-blur-xl">
+                <div className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 z-20">
+                  <div className="relative px-4 md:px-6 py-2 md:py-3 rounded-full bg-gradient-to-r from-[#C19A4A]/20 to-[#d9b563]/20 border border-[#C19A4A]/30 backdrop-blur-xl">
                     <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/10 to-[#d9b563]/10 rounded-full animate-pulse" />
-                    <span className="relative text-[#C19A4A] text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 sm:gap-2">
-                      <Sparkles size={12} className="flex-shrink-0 sm:w-[14px] sm:h-[14px]" />
-                      <span className="hidden xs:inline">Explore Verified Professionals</span>
-                      <span className="xs:hidden">Verified Professionals</span>
+                    <span className="relative text-[#C19A4A] text-[10px] md:text-xs font-bold uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5 md:gap-2">
+                      <Sparkles size={12} className="md:w-[14px] md:h-[14px]" />
+                      Explore Verified Professionals
                     </span>
                   </div>
                 </div>
@@ -642,32 +646,33 @@ function Home() {
                 {loading ? (
                   <div className="flex h-full items-center justify-center">
                     <div className="relative">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-t-[#C19A4A] border-r-[#d9b563] border-b-blue-500 border-l-[#C19A4A]/20 rounded-full animate-spin" />
-                      <div className="absolute inset-0 w-12 h-12 sm:w-16 sm:h-16 border-4 border-[#C19A4A] rounded-full opacity-20 blur-xl animate-pulse" />
+                      <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-t-[#C19A4A] border-r-[#d9b563] border-b-blue-500 border-l-[#C19A4A]/20 rounded-full animate-spin" />
+                      <div className="absolute inset-0 w-12 h-12 md:w-16 md:h-16 border-4 border-[#C19A4A] rounded-full opacity-20 blur-xl animate-pulse" />
                     </div>
                   </div>
                 ) : (
-                  <div className="relative w-full h-full p-4 sm:p-8 lg:p-10">
+                  <div className="relative w-full h-full p-6 md:p-10">
                     {bubbles.map((bubble) => (
                       <motion.div
                         key={bubble.id}
-                        className="absolute cursor-pointer group bubble-item will-change-transform"
+                        className="absolute cursor-pointer group bubble-item"
                         style={{ top: bubble.initialPos.top, left: bubble.initialPos.left }}
-                        animate={{ y: [0, -15, 0] }}
-                        transition={{ duration: bubble.floatDuration, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
+                        animate={{ y: [0, -15, 0], x: [0, 10, 0] }}
+                        transition={{ duration: 5 + Math.random() * 5, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
                         onClick={(e) => handleBubbleInteraction(bubble, e, 'click')}
                         onMouseEnter={(e) => !isMobile && !isPinned && handleBubbleInteraction(bubble, e, 'hover')}
                         onMouseLeave={() => !isMobile && !isPinned && setSelectedBubble(null)}
-                        whileHover={!isMobile ? { scale: 1.1 } : {}}
+                        whileHover={{ scale: 1.1 }}
                       >
                         <div className={`relative p-[2px] rounded-full bg-gradient-to-br ${selectedBubble?.id === bubble.id ? 'from-[#C19A4A] to-[#d9b563]' : 'from-white/20 to-white/5'} transition-all duration-300`}>
                           <div className="relative p-1 rounded-full bg-[#0B0F1B]">
                             <img 
                               src={bubble.img} 
-                              alt={bubble.name} 
-                              className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 rounded-full grayscale group-hover:grayscale-0 transition-all shadow-xl object-cover" 
+                              alt="" 
+                              className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full grayscale group-hover:grayscale-0 transition-all shadow-xl" 
                             />
                           </div>
+                          {/* Glow effect on hover */}
                           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#C19A4A] to-[#d9b563] opacity-0 group-hover:opacity-50 blur-xl transition-opacity" />
                         </div>
                       </motion.div>
@@ -683,7 +688,7 @@ function Home() {
                           initial={{ opacity: 0 }} 
                           animate={{ opacity: 1 }} 
                           exit={{ opacity: 0 }} 
-                          onClick={() => { if (Date.now() - lastInteractionTime.current > 400) { setSelectedBubble(null); } }} 
+                          onClick={() => setSelectedBubble(null)} 
                           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1001]" 
                         />
                       )}
@@ -691,54 +696,52 @@ function Home() {
                         initial={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
                         animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1 }}
                         exit={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className={`z-[1002] profile-popup-card ${isMobile ? 'fixed bottom-0 left-0 right-0 max-w-full' : 'absolute w-[280px] sm:w-[320px]'}`}
+                        className={`z-[1002] profile-popup-card ${isMobile ? 'fixed bottom-0 left-0 right-0' : 'absolute w-[300px] md:w-[320px]'}`}
                         style={!isMobile ? { top: cardPos.top, left: cardPos.left } : {}}
-                        onClick={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
                       >
-                        <div className="relative p-[2px] rounded-t-3xl sm:rounded-3xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500">
-                          <div className="relative rounded-t-[22px] sm:rounded-[22px] bg-[#0B0F1B] backdrop-blur-2xl p-5 sm:p-6 shadow-2xl">
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/10 via-transparent to-[#d9b563]/10 rounded-t-[22px] sm:rounded-[22px]" />
+                        {/* Premium card with gradient border */}
+                        <div className="relative p-[2px] rounded-t-3xl md:rounded-3xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500">
+                          <div className="relative rounded-t-[22px] md:rounded-[22px] bg-[#0B0F1B] backdrop-blur-2xl p-5 md:p-6 shadow-2xl">
+                            {/* Inner glow */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/10 via-transparent to-[#d9b563]/10 rounded-t-[22px] md:rounded-[22px]" />
                             
                             <button 
                               onClick={() => { setSelectedBubble(null); setIsPinned(false); }} 
-                              className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 text-gray-400 hover:text-white transition-colors p-1"
-                              aria-label="Close"
+                              className="absolute top-3 md:top-4 right-3 md:right-4 z-10 text-gray-400 hover:text-white transition-colors"
                             >
-                              <X size={18} className="sm:w-5 sm:h-5" />
+                              <X size={18} className="md:w-5 md:h-5" />
                             </button>
                             
-                            <div className="relative flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5 pr-8">
-                              <div className="relative flex-shrink-0">
+                            <div className="relative flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
+                              <div className="relative">
                                 <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A] to-[#d9b563] rounded-full blur-md opacity-50" />
                                 <img 
                                   src={selectedBubble.img} 
-                                  className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-[#C19A4A] object-cover" 
-                                  alt={selectedBubble.name} 
+                                  className="relative w-14 h-14 md:w-16 md:h-16 rounded-full border-2 border-[#C19A4A]" 
+                                  alt="" 
                                 />
                               </div>
-                              <div className="min-w-0 flex-1">
-                                <h3 className="font-bold text-base sm:text-lg bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent truncate">
+                              <div>
+                                <h3 className="font-bold text-base md:text-lg bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                                   {selectedBubble.name}
                                 </h3>
-                                <p className="text-[#C19A4A] text-xs sm:text-sm uppercase font-bold tracking-tight flex items-center gap-1">
-                                  <Sparkles size={10} className="flex-shrink-0 sm:w-3 sm:h-3" />
+                                <p className="text-[#C19A4A] text-xs md:text-sm uppercase font-bold tracking-tighter flex items-center gap-1">
+                                  <Sparkles size={10} className="md:w-3 md:h-3" />
                                   Verified Member
                                 </p>
                               </div>
                             </div>
                             
-                            <p className="relative text-gray-400 text-xs sm:text-sm mb-5 sm:mb-6 leading-relaxed line-clamp-2">
+                            <p className="relative text-gray-400 text-xs md:text-sm mb-5 md:mb-6 leading-relaxed">
                               {selectedBubble.bio}
                             </p>
                             
                             <NavLink 
                               to={`/request?id=${selectedBubble.userId}`} 
-                              className="relative group flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(193,154,74,0.4)] text-sm sm:text-base"
+                              className="relative group flex items-center justify-center gap-2 w-full py-2.5 md:py-3 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(193,154,74,0.4)] text-sm md:text-base"
                             >
                               <span className="relative z-10">View Full Profile</span>
-                              <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                              <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform md:w-[18px] md:h-[18px]" />
                               <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
                             </NavLink>
                           </div>
