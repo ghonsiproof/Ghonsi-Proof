@@ -45,12 +45,37 @@ function SettingsPage() {
       const user = await getCurrentUser();
       if (!user) throw new Error('User not found');
 
-      await supabase.from('proofs').delete().eq('user_id', user.id);
-      await supabase.from('profiles').delete().eq('user_id', user.id);
-      await supabase.from('users').delete().eq('id', user.id);
-      
+      console.log('Deleting account for user:', user.id);
+
+      // Delete storage files first
+      try {
+        const { data: storageFiles } = await supabase.storage
+          .from('proof-files')
+          .list(user.id);
+        
+        if (storageFiles && storageFiles.length > 0) {
+          const filePaths = storageFiles.map(file => `${user.id}/${file.name}`);
+          await supabase.storage.from('proof-files').remove(filePaths);
+          console.log('Storage files deleted');
+        }
+      } catch (storageError) {
+        console.error('Storage deletion error:', storageError);
+      }
+
+      // Delete user record - CASCADE will handle related records
+      const { error: deleteError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', user.id);
+
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw deleteError;
+      }
+
+      console.log('User deleted successfully');
       await logout();
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error('Error deleting account:', error);
       alert('Failed to delete account. Please try again.');
