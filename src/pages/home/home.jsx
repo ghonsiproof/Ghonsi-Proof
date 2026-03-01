@@ -596,18 +596,17 @@ function Home() {
         </section>
 
         {/* DISCOVER VERIFIED TALENT - BUBBLE EXPLORER - Mobile Optimized */}
-        <section id="bubble-section" className="max-w-6xl mx-auto px-4 md:px-6 pb-8 md:pb-12">
+              <section id="bubble-section" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-14 pb-0">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
+            className="text-center mb-6 sm:mb-10 lg:mb-12"
           >
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
               Discover Verified Talent
             </h2>
-            <p className="text-gray-300 text-sm md:text-base lg:text-lg px-2">Browse on-chain portfolios of proven Web3 builders.</p>
-            <p className="text-gray-400 text-xs md:text-sm lg:text-base mt-1 md:mt-2 px-2">Explore profiles with verifiable work history and skills you trust.</p>
+            <p className="text-gray-300 text-sm sm:text-base lg:text-lg px-2">Browse on-chain portfolios of proven Web3 builders.</p>
           </motion.div>
         </section>
 
@@ -621,7 +620,7 @@ function Home() {
             className="relative p-[2px] rounded-[2rem] md:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
           >
             <div className="relative p-[1px] rounded-[1.95rem] md:rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
-              <div className="relative h-[500px] md:h-[600px] lg:h-[700px] rounded-[1.9rem] md:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-visible">
+              <div className="relative h-[900px] md:h-[1100px] lg:h-[1300px] rounded-[1.9rem] md:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-visible">
                 {/* Radial gradient overlay */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A15_0%,transparent_70%)] rounded-[1.9rem] md:rounded-[2.3rem]" />
                 
