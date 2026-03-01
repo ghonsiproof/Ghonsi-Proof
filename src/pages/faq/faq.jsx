@@ -101,7 +101,7 @@ function FAQ() {
     <span className="text-xs text-[#CCC] leading-[1.5] mb-[15px] text-center">
       Join our active community for real time supports and discussions
     </span>
-    <a href="https://t.me/" target="_blank" rel="noopener noreferrer" className="text-[#C19A4A] text-[13px] font-semibold flex items-center gap-2 hover:text-[#d9b563]">
+    <a href="https://t.me/ghonsiproofhub" target="_blank" rel="noopener noreferrer" className="text-[#C19A4A] text-[13px] font-semibold flex items-center gap-2 hover:text-[#d9b563]">
       Join Telegram <ArrowRight size={15} />
     </a>
   </div>
