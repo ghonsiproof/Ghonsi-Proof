@@ -27,16 +27,32 @@ export const useWallet = () => {
     // Connect wallet and open modal if needed
     const connectWallet = useCallback(async () => {
         try {
+            // Always try to show the modal first - this is the most reliable approach
+            // The modal will handle showing previously selected wallets
             if (!connected) {
-                if (!wallet) {
-                    setWalletModalVisible(true);
-                } else {
-                    await connect();
+                setWalletModalVisible(true);
+                
+                // Also try to connect if a wallet was previously selected
+                // This is a fallback in case the modal doesn't auto-connect
+                if (wallet) {
+                    try {
+                        await connect();
+                    } catch (err) {
+                        // Ignore connection errors - the modal is already shown
+                        // User can select wallet from the modal
+                        console.log('Waiting for wallet selection from modal');
+                    }
                 }
             }
             return true;
         } catch (error) {
             console.error('Error connecting wallet:', error);
+            // Even on error, try to show the modal as a fallback
+            try {
+                setWalletModalVisible(true);
+            } catch (modalError) {
+                console.error('Error showing wallet modal:', modalError);
+            }
             return false;
         }
     }, [connected, wallet, connect, setWalletModalVisible]);

@@ -36,8 +36,7 @@ export const uploadProof = async (
         metadata_ipfs_hash: proofData.metadataIpfsHash || null,
         metadata_ipfs_url: proofData.metadataIpfsUrl || null,
         blockchain_tx: proofData.transactionHash || null,
-        status: "verified",
-        verified_at: new Date().toISOString(),
+        status: "pending", // Start as pending - CRE node will verify after AI evaluation
         extracted_data: proofData.extractedData || null,
       })
       .select()

@@ -22,7 +22,7 @@ const TransactionSignerModal = ({
   documentData,
   extractedPreview,
 }) => {
-  const { publicKey, signTransaction, connected } = useWallet();
+  const { publicKey, signTransaction, connected, connectWallet } = useWallet();
   const { connection } = useConnection();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -52,10 +52,26 @@ const TransactionSignerModal = ({
 
   const handleSignTransaction = async () => {
     if (isSubmittingRef.current) return;
+    
+    // If wallet is not connected, try to connect first
     if (!publicKey || !connected) {
       setError('Wallet not connected. Please connect your wallet first.');
-      return;
+      try {
+        await connectWallet();
+        // Check again after connection attempt - if still not connected, return
+        if (!publicKey || !connected) {
+          isSubmittingRef.current = false;
+          setError('Could not connect to wallet. Please make sure Phantom is installed and unlocked.');
+          return;
+        }
+      } catch (connectErr) {
+        console.error('Wallet connection error:', connectErr);
+        isSubmittingRef.current = false;
+        setError('Could not connect to wallet. Please try again.');
+        return;
+      }
     }
+    
     if (!treasuryAddress) {
       setError('Treasury address not configured.');
       return;
@@ -67,7 +83,10 @@ const TransactionSignerModal = ({
 
     try {
       console.log('[v0] Starting transaction signing process');
+      console.log('[v0] Wallet connected:', connected);
+      console.log('[v0] PublicKey:', publicKey?.toString());
 
+      // Create the transaction
       const transaction = await createTransferTransaction(
         publicKey,
         amount,
@@ -76,8 +95,38 @@ const TransactionSignerModal = ({
       );
 
       console.log('[v0] Requesting wallet signature');
-      const signedTx = await signTransaction(transaction);
-      if (!signedTx) throw new Error('Transaction signing was cancelled or failed.');
+      
+      // Sign the transaction - this should trigger Phantom wallet popup
+      let signedTx;
+      try {
+        signedTx = await signTransaction(transaction);
+      } catch (signErr) {
+        // If signing fails, it might be that Phantom didn't open the popup
+        // This is common when the dApp URL isn't approved yet
+        console.error('[v0] Sign transaction error:', signErr);
+        
+        // Check if it's a connection issue
+        if (signErr.message?.includes('Wallet not connected') || 
+            signErr.message?.includes('null')) {
+          setError('Wallet connection issue. Please make sure Phantom is unlocked and try again.');
+        } else if (signErr.message?.toLowerCase().includes('user rejected') ||
+                   signErr.message?.includes('4001')) {
+          setError('Transaction cancelled. Click "Sign & Send" to try again.');
+        } else {
+          setError('Wallet signing failed: ' + signErr.message);
+        }
+        isSubmittingRef.current = false;
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!signedTx) {
+        // This can happen if Phantom popup was closed without signing
+        setError('No signature received. Please try again and approve the transaction in your wallet.');
+        isSubmittingRef.current = false;
+        setIsLoading(false);
+        return;
+      }
 
       console.log('[v0] Sending signed transaction');
       const signature = await connection.sendRawTransaction(signedTx.serialize(), {

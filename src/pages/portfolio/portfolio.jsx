@@ -13,7 +13,7 @@ const truncateWalletAddress = (address) => {
   return `${address.slice(0, 5)}...${address.slice(-4)}`;
 };
 
-// ─── JSON Metadata Modal ──────────────────────────────────────────────────────
+// JSON Metadata Modal 
 const MetadataModal = ({ proof, onClose }) => {
   const [metadataJson, setMetadataJson] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -578,7 +578,7 @@ export default function Portfolio() {
               </div>
               <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#C19A4A] to-[#d9b563]">
                 <div className="bg-[#1A1F2E] rounded-xl p-4 text-center h-full">
-                  <div className="text-2xl font-bold text-[#C19A4A] mb-1">{stats.total}</div>
+                  <div className="text-2xl font-bold text-[#C19A4A] mb-1">{stats.verified}</div>
                   <div className="text-xs text-white">Verifiable</div>
                 </div>
               </div>
@@ -690,6 +690,18 @@ export default function Portfolio() {
                           <div className="flex items-center gap-0.5 text-[#22c55e] bg-[#22c55e]/10 px-1.5 py-0.5 rounded whitespace-nowrap">
                             <CheckCircle2 size={12} />
                             <span className="font-medium text-[9px]">Verifiable</span>
+                          </div>
+                        )}
+                        {proof.status === 'pending' && (
+                          <div className="flex items-center gap-0.5 text-[#C19A4A] bg-[#C19A4A]/10 px-1.5 py-0.5 rounded whitespace-nowrap">
+                            <Loader2 size={12} className="animate-spin" />
+                            <span className="font-medium text-[9px]">Pending</span>
+                          </div>
+                        )}
+                        {proof.status === 'rejected' && (
+                          <div className="flex items-center gap-0.5 text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded whitespace-nowrap">
+                            <X size={12} />
+                            <span className="font-medium text-[9px]">Rejected</span>
                           </div>
                         )}
                       </div>

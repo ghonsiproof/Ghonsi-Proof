@@ -271,12 +271,19 @@ function Upload() {
     // connectWallet() opens the wallet adapter modal. After connecting the user
     // can click Upload again and we proceed immediately since connected will be true.
     if (!connected) {
-      setUploadError('Please connect your wallet to sign the upload transaction.');
+      // Clear any previous errors and show a more helpful message
+      setUploadError('');
       try {
         await connectWallet();
-      } catch {
-        // user dismissed wallet modal — leave the error message visible
+        // After connectWallet returns, check if we're now connected
+        // If connected (via autoConnect), continue with the upload
+        // Otherwise, return and let the user try again after connecting
+      } catch (err) {
+        console.error('Wallet connection error:', err);
+        setUploadError('Failed to connect wallet. Please try again.');
       }
+      // Return early - if wallet is connected after this, the user can click again to proceed
+      // This avoids the confusing error message + modal behavior
       return;
     }
 
@@ -465,30 +472,7 @@ function Upload() {
           </p>
         </motion.div>
 
-        {/* Wallet connection banner — shown to email users who haven't connected a wallet yet */}
-        <AnimatePresence>
-          {!connected && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="mb-6 p-4 rounded-xl text-sm bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 flex items-center justify-between gap-3"
-            >
-              <div className="flex items-center gap-3">
-                <i className="fa-solid fa-wallet text-lg text-yellow-400"></i>
-                <span>Connect a wallet — you'll need it to sign the upload transaction.</span>
-              </div>
-              <button
-                type="button"
-                onClick={connectWallet}
-                className="shrink-0 px-4 py-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 font-semibold text-xs transition-colors border border-yellow-500/30"
-              >
-                Connect Wallet
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+    
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
