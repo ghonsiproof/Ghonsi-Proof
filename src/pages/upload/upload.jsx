@@ -610,7 +610,7 @@ function Upload() {
                   Reference Link <span className="text-gray-600 normal-case tracking-normal font-normal ml-1">(Optional)</span>
                 </label>
                 <input
-                  type="url"
+                  type="text"
                   value={referenceLink}
                   onChange={(e) => setReferenceLink(e.target.value)}
                   placeholder="https://github.com/project or https://certificate-url.com"
