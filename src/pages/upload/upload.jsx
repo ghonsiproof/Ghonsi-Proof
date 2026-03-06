@@ -104,7 +104,7 @@ function Upload() {
       ],
       notAllowed: 'Performance reviews, salary information, internal feedback or one-on-one reports, data regarding other employees.',
     },
-    community_contributions: {
+    contributions: {
       summaryPlaceholder: 'Enter: Contribution Type (Talk, Article, Open Source, Community Role), Platform Name, Date, Internal Contribution ID...',
       validEvidences: [
         'Link to article, talk, or recording',
@@ -121,7 +121,7 @@ function Upload() {
     { value: 'job_history', label: 'Job History (Work Experience)' },
     { value: 'skills', label: 'Skills / Competencies' },
     { value: 'milestones', label: 'Career Milestones (Promotions / Awards)' },
-    { value: 'community_contributions', label: 'Community Contributions / Public Work' },
+    { value: 'contributions', label: 'Community Contributions / Public Work' },
   ];
 
   const extractProofData = async (file, selectedProofType) => {
