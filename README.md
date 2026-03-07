@@ -97,20 +97,6 @@ Ghonsi Proof is a decentralized platform that transforms scattered professional 
 
 ---
 
-## 🎯 Overview
-
-Professionals often struggle to prove their contributions across multiple ecosystems. Traditional resumes do not provide tamper-resistant verification, making credentials easy to falsify and hard to validate.
-
-Ghonsi Proof solves the trust problem in Web3 by providing decentralized infrastructure where credentials become **verifiable digital proofs**:
-
-* **Verifiable Credentials**: Upload certificates, work history, skills, and achievements.
-* **AI-Powered Extraction**: Automatic data extraction and metadata parsing from documents using Claude AI.
-* **Automated CRE Verification**: Chainlink CRE Agents silently verify document authenticity in the background.
-* **IPFS Storage**: Decentralized file storage via Pinata.
-* **Blockchain Anchoring**: All proofs are permanently anchored as soulbound NFTs on Solana.
-* **Public Portfolios**: Shareable on-chain professional profiles.
-
----
 
 ## ✨ Features
 
