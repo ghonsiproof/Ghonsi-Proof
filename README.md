@@ -801,7 +801,6 @@ chore: Update dependencies
 
 - **Prosper Ayere** - Founder & Product Lead
 - **Godwin Adakonye John** - Blockchain Engineer
-- **Nofiu Moruf Pelumi** - Lead Backend Engineer
 - **Progress Ayere** - Lead Frontend Engineer
 - **Nie Osaoboh** - Product Designer
 - **Success Ola-Ojo** - Advisor
@@ -813,7 +812,7 @@ chore: Update dependencies
 - **Email**: support@ghonsiproof.com
 - **Twitter**: [@Ghonsiproof](https://x.com/Ghonsiproof)
 - **Discord**: [Join community](https://discord.com/)
-- **Website**: [ghonsiproof.com](https://ghonsi-proof.vercel.app)
+- **Website**: [ghonsiproof.com](https://ghonsiproof.com)
 
 ---
 
