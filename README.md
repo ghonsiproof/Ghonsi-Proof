@@ -1,35 +1,35 @@
+Here is the updated README file. I've integrated the Chainlink CRE Agent into your workflow, updated the architecture diagram to reflect the new pipeline, and detailed the silent background verification process in the Upload section.
+
+---
+
 # Ghonsi Proof
 
 **The On-Chain Trust Engine for the Web3 Workforce.**
 
 Ghonsi Proof is a decentralized platform built on Solana that transforms scattered professional contributions into a single verifiable on-chain identity. We help Web3 professionals prove their skills, authenticate their work, and showcase verified credentials through blockchain-anchored NFT certificates.
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://ghonsi-proof.vercel.app)
-[![Solana](https://img.shields.io/badge/Solana-Devnet-blueviolet)](https://solana.com)
-[![License](https://img.shields.io/badge/license-Proprietary-red)]()
-
 ---
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Running the Application](#running-the-application)
-- [Smart Contract](#smart-contract)
-- [Backend API](#backend-api)
-- [Extraction API](#extraction-api)
-- [Frontend Application](#frontend-application)
-- [Deployment](#deployment)
-- [API Documentation](#api-documentation)
-- [Contributing](#contributing)
-- [Team](#team)
-- [License](#license)
+* [Overview](https://www.google.com/search?q=%23overview)
+* [Features](https://www.google.com/search?q=%23features)
+* [Architecture](https://www.google.com/search?q=%23architecture)
+* [Tech Stack](https://www.google.com/search?q=%23tech-stack)
+* [Project Structure](https://www.google.com/search?q=%23project-structure)
+* [Prerequisites](https://www.google.com/search?q=%23prerequisites)
+* [Installation](https://www.google.com/search?q=%23installation)
+* [Configuration](https://www.google.com/search?q=%23configuration)
+* [Running the Application](https://www.google.com/search?q=%23running-the-application)
+* [Smart Contract](https://www.google.com/search?q=%23smart-contract)
+* [Backend API](https://www.google.com/search?q=%23backend-api)
+* [Extraction API](https://www.google.com/search?q=%23extraction-api)
+* [Frontend Application](https://www.google.com/search?q=%23frontend-application)
+* [Deployment](https://www.google.com/search?q=%23deployment)
+* [API Documentation](https://www.google.com/search?q=%23api-documentation)
+* [Contributing](https://www.google.com/search?q=%23contributing)
+* [Team](https://www.google.com/search?q=%23team)
+* [License](https://www.google.com/search?q=%23license)
 
 ---
 
@@ -37,71 +37,83 @@ Ghonsi Proof is a decentralized platform built on Solana that transforms scatter
 
 Ghonsi Proof solves the trust problem in Web3 by providing:
 
-- **Verifiable Credentials**: Upload certificates, work history, skills, and achievements
-- **Blockchain Anchoring**: All proofs are minted as soulbound NFTs on Solana
-- **AI-Powered Extraction**: Automatic data extraction from documents using Claude AI
-- **IPFS Storage**: Decentralized file storage via Pinata
-- **Public Portfolios**: Shareable on-chain professional profiles
-- **Peer Verification**: Request verification from colleagues and organizations
+* **Verifiable Credentials**: Upload certificates, work history, skills, and achievements
+* **Blockchain Anchoring**: All proofs are minted as soulbound NFTs on Solana
+* **AI-Powered Extraction**: Automatic data extraction from documents using Claude AI
+* **Automated CRE Verification**: Chainlink CRE Agents silently verify document authenticity in the background
+* **IPFS Storage**: Decentralized file storage via Pinata
+* **Public Portfolios**: Shareable on-chain professional profiles
+* **Peer Verification**: Request verification from colleagues and organizations
 
 ---
 
 ## ✨ Features
 
 ### Core Features
-- **Multi-Wallet Support**: Phantom, Solflare, Backpack, Glow wallet integration
-- **Email Authentication**: Magic link authentication via Supabase
-- **Proof Types**: Certificates, Job History, Skills, Milestones, Community Contributions
-- **Document Upload**: Support for PDF, JPG, PNG, DOC, DOCX (up to 2MB)
-- **AI Extraction**: Automatic field extraction from uploaded documents
-- **Blockchain Minting**: Soulbound NFT certificates on Solana
-- **IPFS Storage**: Dual upload (file + metadata) to IPFS via Pinata
-- **Admin Dashboard**: Proof verification and management system
-- **Public Profiles**: Shareable portfolio pages with verified credentials
-- **Verification Requests**: Request proof verification from peers
-- **Real-time Notifications**: Toast notifications for user actions
-- **Responsive Design**: Mobile-first design with Tailwind CSS
+
+* **Multi-Wallet Support**: Phantom, Solflare, Backpack, Glow wallet integration
+* **Email Authentication**: Magic link authentication via Supabase
+* **Proof Types**: Certificates, Job History, Skills, Milestones, Community Contributions
+* **Document Upload**: Support for PDF, JPG, PNG, DOC, DOCX (up to 2MB)
+* **AI Extraction**: Automatic field extraction from uploaded documents
+* **Background Validation**: Chainlink CRE agent verifies document data accuracy post-upload
+* **Blockchain Minting**: Soulbound NFT certificates on Solana
+* **IPFS Storage**: Dual upload (file + metadata) to IPFS via Pinata
+* **Admin Dashboard**: Proof verification and management system
+* **Public Profiles**: Shareable portfolio pages with verified credentials
+* **Verification Requests**: Request proof verification from peers
+* **Real-time Notifications**: Toast notifications for user actions and background status changes
+* **Responsive Design**: Mobile-first design with Tailwind CSS
 
 ### Security Features
-- **Row Level Security (RLS)**: Database-level access control
-- **Soulbound NFTs**: Non-transferable proof certificates
-- **Wallet Signatures**: Cryptographic proof of ownership
-- **Admin Multi-Sig**: Support for up to 10 program admins
-- **Encrypted Storage**: Secure file storage on Supabase
+
+* **Row Level Security (RLS)**: Database-level access control
+* **Soulbound NFTs**: Non-transferable proof certificates
+* **Wallet Signatures**: Cryptographic proof of ownership
+* **Admin Multi-Sig**: Support for up to 10 program admins
+* **Encrypted Storage**: Secure file storage on Supabase
 
 ---
 
 ## 🏗 Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
-│                     Frontend (React)                         │
-│  - User Interface                                            │
-│  - Wallet Integration                                        │
-│  - Form Management                                           │
+│                      Frontend (React)                       │
+│  - User Interface                                           │
+│  - Wallet Integration                                       │
+│  - Form Management                                          │
 └────────────┬────────────────────────────────────────────────┘
              │
              ├──────────────┬──────────────┬──────────────┐
              │              │              │              │
              ▼              ▼              ▼              ▼
 ┌────────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│   Supabase     │ │   Backend    │ │  Extraction  │ │    Solana    │
+│   Supabase     │ │   Backend    │ │ Extraction   │ │   Solana     │
 │   Database     │ │     API      │ │     API      │ │   Blockchain │
 │                │ │              │ │              │ │              │
 │ - PostgreSQL   │ │ - Messages   │ │ - AI OCR     │ │ - Smart      │
 │ - Auth         │ │ - Blockchain │ │ - Document   │ │   Contract   │
 │ - Storage      │ │   Submit     │ │   Processing │ │ - NFT Mint   │
-│ - RLS          │ │              │ │              │ │ - Verify     │
-└────────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
-                                                              │
-                                                              ▼
-                                                     ┌──────────────┐
-                                                     │    IPFS      │
-                                                     │   (Pinata)   │
-                                                     │              │
-                                                     │ - Files      │
-                                                     │ - Metadata   │
-                                                     └──────────────┘
+│ - RLS          │ │ - CRE Webhook│ │              │ │ - Verify     │
+└───────┬────────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+        │                 │                │                │
+        │                 ▼                │                │
+        │          ┌──────────────┐        │                │
+        │          │  Chainlink   │        │                │
+        └─────────>│  CRE Agent   │<───────┘                │
+                   │ (Background) │                         │
+                   └──────┬───────┘                         │
+                          │                                 │
+                          ▼                                 ▼
+                   ┌──────────────┐                  ┌──────────────┐
+                   │    IPFS      │                  │    IPFS      │
+                   │   (Pinata)   │                  │   (Pinata)   │
+                   │              │                  │              │
+                   │ - Files      │                  │ - Files      │
+                   │ - Metadata   │                  │ - Metadata   │
+                   └──────────────┘                  └──────────────┘
+
 ```
 
 ---
@@ -109,48 +121,55 @@ Ghonsi Proof solves the trust problem in Web3 by providing:
 ## 🛠 Tech Stack
 
 ### Frontend
-- **React** 18.2.0 - UI library
-- **React Router DOM** 6.28.0 - Client-side routing
-- **Tailwind CSS** 3.4.18 - Utility-first CSS
-- **Framer Motion** 12.31.0 - Animations
-- **Lucide React** 0.555.0 - Icons
-- **FontAwesome** 7.1.0 - Additional icons
+
+* **React** 18.2.0 - UI library
+* **React Router DOM** 6.28.0 - Client-side routing
+* **Tailwind CSS** 3.4.18 - Utility-first CSS
+* **Framer Motion** 12.31.0 - Animations
+* **Lucide React** 0.555.0 - Icons
+* **FontAwesome** 7.1.0 - Additional icons
 
 ### Blockchain
-- **Solana Web3.js** 1.98.4 - Solana JavaScript API
-- **Wallet Adapter** 0.15.39 - Multi-wallet support
-- **Anchor Framework** 0.32.1 - Solana smart contract framework
-- **SPL Token** 0.4.14 - Token program integration
+
+* **Solana Web3.js** 1.98.4 - Solana JavaScript API
+* **Wallet Adapter** 0.15.39 - Multi-wallet support
+* **Anchor Framework** 0.32.1 - Solana smart contract framework
+* **SPL Token** 0.4.14 - Token program integration
+* **Chainlink CRE** - Cross-Chain verification agent
 
 ### Backend
-- **Node.js** 18+ - Runtime environment
-- **Express** 4.18.2 - Web framework
-- **Supabase JS** 2.89.0 - Database client
-- **CORS** 2.8.5 - Cross-origin resource sharing
+
+* **Node.js** 18+ - Runtime environment
+* **Express** 4.18.2 - Web framework
+* **Supabase JS** 2.89.0 - Database client
+* **CORS** 2.8.5 - Cross-origin resource sharing
 
 ### Extraction API
-- **Django** 6.0.2 - Python web framework
-- **Django REST Framework** 3.16.1 - API framework
-- **Anthropic Claude** - AI document extraction
-- **Tesseract OCR** 0.3.13 - Optical character recognition
-- **PyPDF2** 3.0.1 - PDF processing
-- **Pillow** 12.1.1 - Image processing
+
+* **Django** 6.0.2 - Python web framework
+* **Django REST Framework** 3.16.1 - API framework
+* **Anthropic Claude** - AI document extraction
+* **Tesseract OCR** 0.3.13 - Optical character recognition
+* **PyPDF2** 3.0.1 - PDF processing
+* **Pillow** 12.1.1 - Image processing
 
 ### Database & Storage
-- **Supabase** - PostgreSQL database + Auth + Storage
-- **IPFS (Pinata)** - Decentralized file storage
+
+* **Supabase** - PostgreSQL database + Auth + Storage
+* **IPFS (Pinata)** - Decentralized file storage
 
 ### Deployment
-- **Vercel** - Frontend hosting
-- **Render** - Backend API hosting
-- **Render** - Extraction API hosting
-- **Solana Devnet** - Smart contract deployment
+
+* **Vercel** - Frontend hosting
+* **Render** - Backend API hosting
+* **Render** - Extraction API hosting
+* **Solana Devnet** - Smart contract deployment
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 ghonsi-proof/
 ├── src/                          # Frontend React application
 │   ├── components/               # Reusable UI components
@@ -158,7 +177,7 @@ ghonsi-proof/
 │   │   ├── footer/              # Footer component
 │   │   ├── Toast.jsx            # Toast notifications
 │   │   └── TransactionSignerModal.jsx  # Wallet transaction modal
-│   ├── pages/                   # Page components
+│   ├── pages/                    # Page components
 │   │   ├── home/                # Landing page
 │   │   ├── login/               # Authentication
 │   │   ├── dashboard/           # User dashboard
@@ -172,7 +191,7 @@ ghonsi-proof/
 │   │   ├── contact/             # Contact page
 │   │   ├── terms/               # Terms of service
 │   │   └── policy/              # Privacy policy
-│   ├── utils/                   # Utility functions
+│   ├── utils/                    # Utility functions
 │   │   ├── supabaseAuth.js      # Authentication utilities
 │   │   ├── profileApi.js        # Profile management
 │   │   ├── proofsApi.js         # Proof management
@@ -181,50 +200,51 @@ ghonsi-proof/
 │   │   ├── pinataUpload.js      # IPFS upload
 │   │   ├── blockchainSubmission.js  # Blockchain integration
 │   │   └── formPersistence.js   # Form state management
-│   ├── hooks/                   # Custom React hooks
+│   ├── hooks/                    # Custom React hooks
 │   │   ├── useAuth.js           # Authentication hook
 │   │   └── useWallet.js         # Wallet connection hook
-│   ├── config/                  # Configuration files
+│   ├── config/                   # Configuration files
 │   │   └── supabaseClient.js    # Supabase client setup
-│   ├── assets/                  # Static assets
+│   ├── assets/                   # Static assets
 │   │   ├── ghonsi-proof-logos/  # Brand logos
 │   │   ├── team/                # Team photos
 │   │   └── wallet-icons/        # Wallet icons
-│   ├── App.js                   # Main app component
-│   └── index.js                 # Entry point
+│   ├── App.js                    # Main app component
+│   └── index.js                  # Entry point
 │
-├── backend/                     # Node.js backend API
-│   ├── server.js                # Express server
-│   ├── package.json             # Backend dependencies
-│   └── .env                     # Backend environment variables
+├── backend/                      # Node.js backend API
+│   ├── server.js                 # Express server
+│   ├── package.json              # Backend dependencies
+│   └── .env                      # Backend environment variables
 │
-├── extraction_api/              # Django extraction API
-│   ├── extraction/              # Main app
+├── extraction_api/               # Django extraction API
+│   ├── extraction/               # Main app
 │   │   ├── views.py             # API endpoints
 │   │   ├── ocr.py               # OCR processing
 │   │   ├── extractor.py         # AI extraction logic
 │   │   ├── document_processor.py # Document handling
 │   │   └── urls.py              # URL routing
-│   ├── config/                  # Django settings
-│   ├── requirements.txt         # Python dependencies
-│   └── manage.py                # Django management
+│   ├── config/                   # Django settings
+│   ├── requirements.txt          # Python dependencies
+│   └── manage.py                 # Django management
 │
-├── ghonsi_proof/                # Solana smart contract
-│   ├── programs/                # Anchor programs
+├── ghonsi_proof/                 # Solana smart contract
+│   ├── programs/                 # Anchor programs
 │   │   └── ghonsi_proof/
 │   │       └── src/
 │   │           └── lib.rs       # Smart contract code
-│   ├── tests/                   # Contract tests
-│   ├── idl/                     # Interface definition
-│   ├── Anchor.toml              # Anchor configuration
-│   └── Cargo.toml               # Rust dependencies
+│   ├── tests/                    # Contract tests
+│   ├── idl/                      # Interface definition
+│   ├── Anchor.toml               # Anchor configuration
+│   └── Cargo.toml                # Rust dependencies
 │
-├── public/                      # Static files
-├── scripts/                     # Database migration scripts
-├── package.json                 # Frontend dependencies
-├── tailwind.config.js           # Tailwind configuration
-├── craco.config.js              # CRACO configuration
-└── README.md                    # This file
+├── public/                       # Static files
+├── scripts/                      # Database migration scripts
+├── package.json                  # Frontend dependencies
+├── tailwind.config.js            # Tailwind configuration
+├── craco.config.js               # CRACO configuration
+└── README.md                     # This file
+
 ```
 
 ---
@@ -232,19 +252,21 @@ ghonsi-proof/
 ## 📦 Prerequisites
 
 ### Required Software
-- **Node.js** 18.x or higher - [Download](https://nodejs.org/)
-- **npm** 8.x or higher (comes with Node.js)
-- **Git** - [Download](https://git-scm.com/)
-- **Rust** 1.70+ (for smart contract development) - [Install](https://rustup.rs/)
-- **Solana CLI** 1.18+ (for smart contract deployment) - [Install](https://docs.solana.com/cli/install-solana-cli-tools)
-- **Anchor CLI** 0.32+ (for smart contract framework) - [Install](https://www.anchor-lang.com/docs/installation)
-- **Python** 3.11+ (for extraction API) - [Download](https://www.python.org/)
+
+* **Node.js** 18.x or higher - [Download](https://nodejs.org/)
+* **npm** 8.x or higher (comes with Node.js)
+* **Git** - [Download](https://git-scm.com/)
+* **Rust** 1.70+ (for smart contract development) - [Install](https://rustup.rs/)
+* **Solana CLI** 1.18+ (for smart contract deployment) - [Install](https://docs.solana.com/cli/install-solana-cli-tools)
+* **Anchor CLI** 0.32+ (for smart contract framework) - [Install](https://www.anchor-lang.com/docs/installation)
+* **Python** 3.11+ (for extraction API) - [Download](https://www.python.org/)
 
 ### Required Accounts
-- **Supabase Account** - [Sign up](https://supabase.com)
-- **Pinata Account** - [Sign up](https://pinata.cloud)
-- **Anthropic API Key** - [Get key](https://console.anthropic.com/)
-- **Solana Wallet** - Phantom, Solflare, or any Solana wallet
+
+* **Supabase Account** - [Sign up](https://supabase.com)
+* **Pinata Account** - [Sign up](https://pinata.cloud)
+* **Anthropic API Key** - [Get key](https://console.anthropic.com/)
+* **Solana Wallet** - Phantom, Solflare, or any Solana wallet
 
 ---
 
@@ -255,12 +277,14 @@ ghonsi-proof/
 ```bash
 git clone https://github.com/ghonsiproof/Ghonsi-Proof.git
 cd Ghonsi-Proof/ghonsi-proof
+
 ```
 
 ### 2. Install Frontend Dependencies
 
 ```bash
 npm install
+
 ```
 
 ### 3. Install Backend Dependencies
@@ -269,6 +293,7 @@ npm install
 cd backend
 npm install
 cd ..
+
 ```
 
 ### 4. Install Extraction API Dependencies
@@ -277,6 +302,7 @@ cd ..
 cd extraction_api
 pip install -r requirements.txt
 cd ..
+
 ```
 
 ### 5. Install Smart Contract Dependencies
@@ -286,6 +312,7 @@ cd ghonsi_proof
 npm install
 anchor build
 cd ..
+
 ```
 
 ---
@@ -322,8 +349,12 @@ REACT_APP_PINATA_API_SECRET=your_pinata_api_secret_here
 # Treasury Wallet Configuration (for document proof payments)
 REACT_APP_TREASURY_WALLET=EKGNwqNBUBtH5Fnmcjjoj4Tci6dCXdcCrxcjTaWm5bLf
 
+# CRE Agent Configuration
+REACT_APP_CRE_ENDPOINT=https://your-cre-webhook.com
+
 # Optional: Analytics
 REACT_APP_GOOGLE_ANALYTICS_ID=your_ga_id
+
 ```
 
 ### Backend Environment Variables
@@ -343,6 +374,7 @@ COLLECTION_MINT_ADDRESS=your-collection-mint
 
 # Server Configuration
 PORT=3001
+
 ```
 
 ### Extraction API Environment Variables
@@ -360,6 +392,7 @@ ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com
 
 # CORS
 CORS_ALLOWED_ORIGINS=http://localhost:3000,https://ghonsi-proof.vercel.app
+
 ```
 
 ---
@@ -369,30 +402,38 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,https://ghonsi-proof.vercel.app
 ### Development Mode (All Services)
 
 #### Terminal 1: Frontend
+
 ```bash
 npm start
 # Runs on http://localhost:3000
+
 ```
 
 #### Terminal 2: Backend API
+
 ```bash
 cd backend
 npm start
 # Runs on http://localhost:3001
+
 ```
 
 #### Terminal 3: Extraction API
+
 ```bash
 cd extraction_api
 python manage.py runserver
 # Runs on http://localhost:8000
+
 ```
 
 #### Terminal 4: Solana Localnet (Optional)
+
 ```bash
 cd ghonsi_proof
 solana-test-validator
 # Runs local Solana validator
+
 ```
 
 ### Production Build
@@ -402,6 +443,7 @@ solana-test-validator
 npm run build
 
 # Build output in /build directory
+
 ```
 
 ---
@@ -411,23 +453,25 @@ npm run build
 ### Overview
 
 The Ghonsi Proof smart contract is built with Anchor Framework on Solana. It handles:
-- NFT minting for proof certificates
-- Admin management (up to 10 admins)
-- Proof verification and rejection
-- Soulbound token implementation (non-transferable)
+
+* NFT minting for proof certificates
+* Admin management (up to 10 admins)
+* Proof verification and rejection
+* Soulbound token implementation (non-transferable)
 
 ### Key Features
 
-- **Soulbound NFTs**: Proofs are minted as frozen (non-transferable) NFTs
-- **Multi-Admin System**: Primary admin can add/remove up to 10 secondary admins
-- **Proof States**: Pending → Verified/Rejected
-- **Mint Fee**: 0.01 SOL per proof mint
-- **Metaplex Integration**: Full NFT metadata support
+* **Soulbound NFTs**: Proofs are minted as frozen (non-transferable) NFTs
+* **Multi-Admin System**: Primary admin can add/remove up to 10 secondary admins
+* **Proof States**: Pending → Verified/Rejected
+* **Mint Fee**: 0.01 SOL per proof mint
+* **Metaplex Integration**: Full NFT metadata support
 
 ### Program ID
 
-```
+```text
 5N6CH3GTndpqdiTHrqPutaypu5Zxy4BDVMwnq88LckNv
+
 ```
 
 ### Instructions
@@ -455,6 +499,7 @@ anchor deploy --provider.cluster devnet
 
 # Deploy to mainnet
 anchor deploy --provider.cluster mainnet
+
 ```
 
 ### Testing
@@ -465,6 +510,7 @@ anchor test
 
 # Run specific test
 anchor test --skip-local-validator
+
 ```
 
 ---
@@ -474,29 +520,38 @@ anchor test --skip-local-validator
 ### Overview
 
 Node.js/Express backend handling:
-- Message system between users
-- Blockchain proof submission
-- Supabase service role operations
+
+* Message system between users
+* Blockchain proof submission
+* Supabase service role operations
+* Background webhooks for CRE Agent
 
 ### Endpoints
 
 #### Health Check
-```
+
+```text
 GET /health
+
 ```
 
 #### Messages
-```
+
+```text
 POST   /api/messages                    # Send message
 GET    /api/messages/:userId            # Get user messages
 PATCH  /api/messages/:messageId/read    # Mark as read
 DELETE /api/messages/:messageId         # Delete message
 PATCH  /api/messages/:messageId/respond # Respond to message
+
 ```
 
-#### Blockchain
-```
+#### Blockchain & Verification
+
+```text
 POST /api/submit-proof                  # Submit proof to blockchain
+POST /api/cre/trigger                   # Trigger CRE Agent webhook
+
 ```
 
 ### Running Backend
@@ -505,6 +560,7 @@ POST /api/submit-proof                  # Submit proof to blockchain
 cd backend
 npm install
 npm start
+
 ```
 
 ### Deployment (Render)
@@ -523,33 +579,38 @@ npm start
 ### Overview
 
 Django REST API using Claude AI for intelligent document extraction:
-- Automatic field extraction from certificates, job letters, etc.
-- OCR for image-based documents
-- PDF text extraction
-- Confidence scoring and validation
+
+* Automatic field extraction from certificates, job letters, etc.
+* OCR for image-based documents
+* PDF text extraction
+* Confidence scoring and validation
 
 ### Supported Proof Types
 
-- **job**: Job history/work experience
-- **certificate**: Certificates and training
-- **skill**: Skills and competencies
-- **milestone**: Career milestones (promotions, awards)
-- **contribution**: Community contributions (talks, articles, open source)
+* **job**: Job history/work experience
+* **certificate**: Certificates and training
+* **skill**: Skills and competencies
+* **milestone**: Career milestones (promotions, awards)
+* **contribution**: Community contributions (talks, articles, open source)
 
 ### Endpoints
 
-```
+```text
 POST /api/extract/
+
 ```
 
 **Request:**
+
 ```bash
 curl -X POST http://localhost:8000/api/extract/ \
   -F "file=@certificate.pdf" \
   -F "proof_type=certificate"
+
 ```
 
 **Response:**
+
 ```json
 {
   "proof_type": "certificate",
@@ -567,6 +628,7 @@ curl -X POST http://localhost:8000/api/extract/ \
   "validation_hash": "3a9244f13222...",
   "cached": false
 }
+
 ```
 
 ### Running Extraction API
@@ -576,6 +638,7 @@ cd extraction_api
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
+
 ```
 
 ### Deployment (Render)
@@ -594,41 +657,51 @@ python manage.py runserver
 ### Key Pages
 
 #### Home (`/`)
+
 Landing page with hero section, features, and call-to-action
 
 #### Login (`/login`)
-- Email magic link authentication
-- Multi-wallet connection (Phantom, Solflare, Backpack, Glow)
+
+* Email magic link authentication
+* Multi-wallet connection (Phantom, Solflare, Backpack, Glow)
 
 #### Dashboard (`/dashboard`)
-User dashboard showing:
-- Proof statistics
-- Recent proofs
-- Verification requests
-- Quick actions
 
-#### Upload (`/upload`)
-Multi-step proof upload:
-1. Select proof type
-2. Fill proof details
-3. Upload document (auto-extraction)
-4. Connect wallet & sign transaction
-5. Upload to IPFS
-6. Mint NFT on Solana
+User dashboard showing:
+
+* Proof statistics
+* Recent proofs
+* Verification requests
+* Quick actions
+
+#### Upload Workflow & CRE Verification (`/upload`)
+
+The core proof submission pipeline happens here seamlessly:
+
+1. **Details:** User selects proof type and fills details.
+2. **Extraction:** User uploads document; the Extraction API auto-fills fields via Claude AI.
+3. **Sign Transaction:** User connects wallet & signs the upload transaction.
+4. **Anchor:** Document uploaded to IPFS (File + Metadata) and NFT minted on Solana. Initial status is set to `pending`.
+5. **Background CRE Validation:** The Chainlink CRE Agent is silently triggered via webhook to cross-reference and verify data accuracy without blocking the user interface.
+6. **Portfolio Auto-Update:** Once the CRE Agent confirms the proof is valid, the UI automatically updates the user's Portfolio page from `pending` to `verified`.
 
 #### Portfolio (`/portfolio`)
+
 User's proof collection with:
-- Filter by type and status
-- Search functionality
-- Proof cards with details
-- View on Solscan links
+
+* Filter by type and status (Pending/Verified/Rejected)
+* Search functionality
+* Proof cards with details
+* View on Solscan links
 
 #### Public Profile (`/publicProfile`)
+
 Shareable portfolio page:
-- Public proof display
-- Verification badges
-- Social links
-- Contact form
+
+* Public proof display
+* Verification badges
+* Social links
+* Contact form
 
 ### Wallet Integration
 
@@ -644,6 +717,7 @@ function Component() {
     </button>
   );
 }
+
 ```
 
 ### Authentication
@@ -656,6 +730,7 @@ const user = await getCurrentUser();
 
 // Logout
 await logout();
+
 ```
 
 ---
@@ -664,13 +739,15 @@ await logout();
 
 ### Frontend (Vercel)
 
-**Live URL**: https://ghonsi-proof.vercel.app
+**Live URL**: [https://ghonsi-proof.vercel.app](https://ghonsi-proof.vercel.app)
 
 1. Connect GitHub repository to Vercel
 2. Configure build settings:
-   - Framework: Create React App
-   - Build command: `npm run build`
-   - Output directory: `build`
+* Framework: Create React App
+* Build command: `npm run build`
+* Output directory: `build`
+
+
 3. Add environment variables
 4. Deploy
 
@@ -698,6 +775,7 @@ anchor deploy --provider.cluster devnet
 
 # Verify deployment
 solana program show <PROGRAM_ID> --url devnet
+
 ```
 
 ---
@@ -709,59 +787,65 @@ solana program show <PROGRAM_ID> --url devnet
 #### Tables
 
 **users**
-- `id` (uuid, primary key)
-- `email` (text, unique)
-- `wallet_address` (text, unique)
-- `created_at` (timestamp)
+
+* `id` (uuid, primary key)
+* `email` (text, unique)
+* `wallet_address` (text, unique)
+* `created_at` (timestamp)
 
 **profiles**
-- `id` (uuid, primary key)
-- `user_id` (uuid, foreign key)
-- `display_name` (text)
-- `bio` (text)
-- `profession` (text)
-- `is_public` (boolean)
-- `avatar_url` (text)
+
+* `id` (uuid, primary key)
+* `user_id` (uuid, foreign key)
+* `display_name` (text)
+* `bio` (text)
+* `profession` (text)
+* `is_public` (boolean)
+* `avatar_url` (text)
 
 **proofs**
-- `id` (uuid, primary key)
-- `user_id` (uuid, foreign key)
-- `proof_type` (text)
-- `proof_name` (text)
-- `summary` (text)
-- `reference_link` (text)
-- `status` (text: pending/verified/rejected)
-- `ipfs_hash` (text)
-- `ipfs_url` (text)
-- `file_ipfs_hash` (text)
-- `file_ipfs_url` (text)
-- `transaction_hash` (text)
-- `extracted_data` (jsonb)
-- `created_at` (timestamp)
+
+* `id` (uuid, primary key)
+* `user_id` (uuid, foreign key)
+* `proof_type` (text)
+* `proof_name` (text)
+* `summary` (text)
+* `reference_link` (text)
+* `status` (text: pending/verified/rejected) *— Transitions handled silently by CRE Agent*
+* `ai_confidence_score` (numeric)
+* `ipfs_hash` (text)
+* `ipfs_url` (text)
+* `file_ipfs_hash` (text)
+* `file_ipfs_url` (text)
+* `transaction_hash` (text)
+* `extracted_data` (jsonb)
+* `created_at` (timestamp)
 
 **verification_requests**
-- `id` (uuid, primary key)
-- `proof_id` (uuid, foreign key)
-- `requester_id` (uuid, foreign key)
-- `verifier_email` (text)
-- `verifier_name` (text)
-- `relationship` (text)
-- `message` (text)
-- `status` (text: pending/approved/rejected)
-- `created_at` (timestamp)
+
+* `id` (uuid, primary key)
+* `proof_id` (uuid, foreign key)
+* `requester_id` (uuid, foreign key)
+* `verifier_email` (text)
+* `verifier_name` (text)
+* `relationship` (text)
+* `message` (text)
+* `status` (text: pending/approved/rejected)
+* `created_at` (timestamp)
 
 **messages**
-- `id` (uuid, primary key)
-- `sender_id` (uuid, foreign key)
-- `receiver_id` (uuid, foreign key)
-- `portfolio_id` (uuid)
-- `message` (text)
-- `sender_name` (text)
-- `sender_email` (text)
-- `type` (text)
-- `read` (boolean)
-- `status` (text)
-- `created_at` (timestamp)
+
+* `id` (uuid, primary key)
+* `sender_id` (uuid, foreign key)
+* `receiver_id` (uuid, foreign key)
+* `portfolio_id` (uuid)
+* `message` (text)
+* `sender_name` (text)
+* `sender_email` (text)
+* `type` (text)
+* `read` (boolean)
+* `status` (text)
+* `created_at` (timestamp)
 
 ---
 
@@ -777,7 +861,7 @@ solana program show <PROGRAM_ID> --url devnet
 
 ### Commit Convention
 
-```
+```text
 feat: Add new feature
 fix: Fix bug
 docs: Update documentation
@@ -785,35 +869,36 @@ style: Format code
 refactor: Refactor code
 test: Add tests
 chore: Update dependencies
+
 ```
 
 ### Code Style
 
-- Use ESLint and Prettier
-- Follow React best practices
-- Write meaningful commit messages
-- Add comments for complex logic
-- Update documentation
+* Use ESLint and Prettier
+* Follow React best practices
+* Write meaningful commit messages
+* Add comments for complex logic
+* Update documentation
 
 ---
 
 ## 👥 Team
 
-- **Prosper Ayere** - Founder & Product Lead
-- **Godwin Adakonye John** - Blockchain Engineer
-- **Nofiu Moruf Pelumi** - Lead Backend Engineer
-- **Progress Ayere** - Lead Frontend Engineer
-- **Nie Osaoboh** - Product Designer
-- **Success Ola-Ojo** - Advisor
+* **Prosper Ayere** - Founder & Product Lead
+* **Godwin Adakonye John** - Blockchain Engineer
+* **Progress Ayere** - Lead Frontend Engineer
+* **Gunduor Victor** - Frontend Engineer 
+* **Nie Osaoboh** - Product Designer
+* **Success Ola-Ojo** - Advisor
 
 ---
 
 ## 📞 Support
 
-- **Email**: support@ghonsiproof.com
-- **Twitter**: [@Ghonsiproof](https://x.com/Ghonsiproof)
-- **Telegram**: [Join community](https://t.me/ghonsiproofhub)
-- **Website**: [ghonsiproof.com](https://ghonsi-proof.vercel.app)
+* **Email**: support@ghonsiproof.com
+* **Twitter**: [@Ghonsiproof](https://x.com/Ghonsiproof)
+* **Discord**: [Join community](https://discord.com/)
+* **Website**: [ghonsiproof.com](https://ghonsi-proof.vercel.app)
 
 ---
 
@@ -825,12 +910,13 @@ This project is proprietary and confidential. All rights reserved by Ghonsi Proo
 
 ## 🙏 Acknowledgments
 
-- Solana Foundation
-- Anchor Framework Team
-- Supabase Team
-- Anthropic (Claude AI)
-- Web3 Community
-- All contributors and supporters
+* Solana Foundation
+* Anchor Framework Team
+* Supabase Team
+* Anthropic (Claude AI)
+* Chainlink Build
+* Web3 Community
+* All contributors and supporters
 
 ---
 
