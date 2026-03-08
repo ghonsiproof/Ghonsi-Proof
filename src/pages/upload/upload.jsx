@@ -489,6 +489,18 @@ function Upload() {
           )}
         </AnimatePresence>
 
+        {/* Get test tokens link - always visible */}
+        <div className="mb-6 text-center">
+          <a
+            href="https://t.me/ghonsiproofhub"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#C19A4A] hover:text-[#d9b563] text-sm font-semibold transition-colors underline"
+          >
+            Get test tokens
+          </a>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
