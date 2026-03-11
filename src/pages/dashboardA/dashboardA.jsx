@@ -252,6 +252,7 @@ function DashboardA() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700">
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">#</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">USER ID</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Status</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Proofs</th>
@@ -263,6 +264,7 @@ function DashboardA() {
             <tbody>
               {filteredUsers.map((user, index) => (
                 <tr key={index} className="border-b border-gray-800 hover:bg-[#1A2332]">
+                  <td className="py-3 px-4 text-sm font-medium text-gray-400">{index + 1}</td>
                   <td className="py-3 px-4">
                     <div className="text-sm font-medium">{user.id}</div>
                     <div className="text-xs text-gray-400">{user.email}</div>
