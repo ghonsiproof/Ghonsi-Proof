@@ -59,6 +59,16 @@ function DashboardA() {
         const rejectedProofs = userProofs.filter(p => p.status === 'rejected').length;
         const uid = profile.uid || generateUID(profile.user_id);
         
+        // Calculate last activity from profile updated_at or created_at
+        const lastActivityDate = profile.updated_at || profile.created_at;
+        const lastActivity = lastActivityDate 
+          ? new Date(lastActivityDate).toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'short', 
+              day: 'numeric' 
+            })
+          : 'N/A';
+        
         return {
           id: uid,
           userId: profile.user_id,
@@ -66,7 +76,7 @@ function DashboardA() {
           status: 'active',
           proofs: { verified: verifiedProofs, pending: pendingProofs, rejected: rejectedProofs },
           dateJoined: profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A',
-          lastActivity: 'N/A',
+          lastActivity: lastActivity,
           fullName: profile.display_name || 'N/A',
           accountStatus: 'Active',
           joinDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A',
@@ -327,7 +337,7 @@ function DashboardA() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Last Activity</p>
-                    <p className="text-sm">January 15, 2024</p>
+                    <p className="text-sm">{selectedUser.lastActivity}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Full Name</p>
