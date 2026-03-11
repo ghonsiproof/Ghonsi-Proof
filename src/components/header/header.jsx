@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Bell, Wallet } from 'lucide-react';
+import { Menu, Wallet } from 'lucide-react';
 import { supabase } from '../../config/supabaseClient';
 import { logout } from '../../utils/supabaseAuth';
 import { getUnreadCount } from '../../utils/messagesApi';
@@ -14,6 +14,7 @@ function Header() {
   const [isHovered, setIsHovered] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
   const { connected, getWalletAddress, wallet, disconnectWallet } = useWallet();
   const menuRef = useRef(null);
@@ -23,6 +24,16 @@ function Header() {
 
   const walletAddress = getWalletAddress() || localStorage.getItem('wallet_address');
   const walletName = wallet?.adapter?.name || localStorage.getItem('wallet_name') || null;
+
+  // Check for mobile view
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const checkAuthStatus = useCallback(async () => {
     try {
@@ -168,13 +179,37 @@ function Header() {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
 
-  return (
+return (
     <header className="p-[0px_20px] fixed top-0 w-full z-[100] bg-black/30 backdrop-blur-[10px] box-border">
       <div className="flex justify-between items-center">
         <img src={logo} alt="Ghonsi proof Logo" className="h-[90px] w-auto object-contain" />
-        <div className="flex items-center gap-3">
-          {walletAddress && (
-            <div className="hidden sm:block relative">
+        
+        {/* Desktop Navigation Links - Visible on lg screens and above - Centered and evenly dispersed */}
+        <nav className="hidden lg:flex flex-1 justify-center items-center gap-2">
+          <Link to="/home" className="px-5 py-2 text-white text-sm font-medium no-underline transition-colors duration-200 hover:text-[#C19A4A] rounded-lg hover:bg-white/5 whitespace-nowrap">Home</Link>
+          <Link to="/about" className="px-5 py-2 text-white text-sm font-medium no-underline transition-colors duration-200 hover:text-[#C19A4A] rounded-lg hover:bg-white/5 whitespace-nowrap">About</Link>
+          <Link to="/portfolio" onClick={handlePortfolioClick} className="px-5 py-2 text-white text-sm font-medium no-underline transition-colors duration-200 hover:text-[#C19A4A] rounded-lg hover:bg-white/5 whitespace-nowrap">Portfolio</Link>
+          {isLoggedIn && <Link to="/dashboard" className="px-5 py-2 text-white text-sm font-medium no-underline transition-colors duration-200 hover:text-[#C19A4A] rounded-lg hover:bg-white/5 whitespace-nowrap">Dashboard</Link>}
+          <Link to="/contact" className="px-5 py-2 text-white text-sm font-medium no-underline transition-colors duration-200 hover:text-[#C19A4A] rounded-lg hover:bg-white/5 whitespace-nowrap">Contact</Link>
+          <Link to="/faq" className="px-5 py-2 text-white text-sm font-medium no-underline transition-colors duration-200 hover:text-[#C19A4A] rounded-lg hover:bg-white/5 whitespace-nowrap">FAQ</Link>
+        </nav>
+
+        {/* Desktop Auth Buttons - Visible on lg screens for non-logged in users */}
+        {!isMobile && !isLoggedIn && (
+          <div className="hidden lg:flex items-center gap-3">
+            <button id="signInBtn" onClick={handleSignIn} className="py-2 px-4 text-white text-sm font-medium border border-[#C19A4A] bg-transparent rounded-lg cursor-pointer transition-all duration-200 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#C19A4A]">
+              Sign In
+            </button>
+            <button id="getStartedBtn" onClick={handleGetStarted} className="py-2 px-4 text-[#0B0F1B] text-sm font-medium border-none bg-[#C19A4A] rounded-lg cursor-pointer transition-all duration-200 hover:opacity-90">
+              Get Started
+            </button>
+          </div>
+        )}
+
+        {/* Desktop Wallet - Visible on lg screens on the right side */}
+        {!isMobile && walletAddress && (
+          <div className="hidden lg:flex items-center">
+            <div className="relative">
               <button
                 ref={walletButtonRef}
                 onClick={() => setIsWalletMenuOpen(!isWalletMenuOpen)}
@@ -207,13 +242,66 @@ function Header() {
                   <div className="p-2">
                     <button
                       onClick={handleCopyAddress}
-                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#151925] rounded transition-colors"
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#151925] rounded transition-colors cursor-pointer"
                     >
                       📋 Copy Address
                     </button>
                     <button
                       onClick={handleDisconnect}
-                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded transition-colors cursor-pointer"
+                    >
+                      🔌 Disconnect Wallet
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          {/* Mobile Wallet - Only show on small screens (below 640px) and on md screens */}
+          {walletAddress && (
+            <div className="sm:block lg:hidden relative">
+              <button
+                ref={walletButtonRef}
+                onClick={() => setIsWalletMenuOpen(!isWalletMenuOpen)}
+                className="flex items-center gap-2 px-3 py-2 bg-[#151925] rounded-lg border border-[#C19A4A]/30 hover:border-[#C19A4A] transition-all cursor-pointer"
+              >
+                <Wallet size={16} className="text-[#C19A4A]" />
+                <span className="text-[#C19A4A] text-sm font-medium">
+                  {shortenAddress(walletAddress)}
+                </span>
+                {walletName && (
+                  <span className="text-xs text-gray-400">({walletName})</span>
+                )}
+              </button>
+
+              {isWalletMenuOpen && (
+                <div
+                  ref={walletMenuRef}
+                  className="absolute right-0 mt-2 w-64 bg-[#0B0F1B] border border-[#C19A4A]/30 rounded-lg shadow-xl overflow-hidden z-50"
+                >
+                  <div className="p-3 border-b border-[#C19A4A]/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Wallet size={14} className="text-[#C19A4A]" />
+                      <span className="text-xs text-gray-400">{walletName} Wallet</span>
+                    </div>
+                    <div className="text-xs text-gray-300 break-all font-mono">
+                      {walletAddress}
+                    </div>
+                  </div>
+
+                  <div className="p-2">
+                    <button
+                      onClick={handleCopyAddress}
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#151925] rounded transition-colors cursor-pointer"
+                    >
+                      📋 Copy Address
+                    </button>
+                    <button
+                      onClick={handleDisconnect}
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded transition-colors cursor-pointer"
                     >
                       🔌 Disconnect Wallet
                     </button>
@@ -222,22 +310,10 @@ function Header() {
               )}
             </div>
           )}
-          {isLoggedIn && (
-            <button
-              onClick={() => navigate('/message')}
-              className="relative p-2 rounded-lg hover:bg-[#151925] transition-colors"
-            >
-              <Bell size={20} className="text-[#C19A4A]" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-          )}
+          {/* Only show hamburger menu on mobile */}
           <button
             ref={buttonRef}
-            className="bg-none border-none p-0 flex items-center justify-center cursor-pointer"
+            className="lg:hidden bg-none border-none p-0 flex items-center justify-center cursor-pointer"
             onClick={handleMenuToggle}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}

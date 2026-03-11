@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import WalletProvider from './context/WalletProvider.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import FloatingBell from './components/FloatingBell.jsx';
 import Home from './pages/home/home.jsx';
 import FAQ from './pages/faq/faq.jsx';
 import About from './pages/about/about.jsx';
@@ -37,6 +38,7 @@ function App() {
       <WalletProvider>
         <Router>
           <ScrollToTop />
+          <FloatingBell />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/home" element={<Home />} />
