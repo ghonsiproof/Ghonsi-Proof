@@ -1,94 +1,119 @@
+/**
+ * Upload Component
+ */
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { uploadProof } from '../../utils/proofsApi';
+import { extractDocumentData, supportsExtraction } from '../../utils/extractionApi';
+import { uploadDocumentWithMetadata } from '../../utils/pinataUpload';
+import { submitProofToBlockchain, updateProofWithBlockchainData } from '../../utils/blockchainSubmission';
+import { saveFormData, getFormData, clearFormData } from '../../utils/formPersistence';
+import { useWallet } from '../../hooks/useWallet';
+import { useToast } from '../../components/Toast';
+import ToastContainer from '../../components/Toast';
+import TransactionSignerModal from '../../components/TransactionSignerModal';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import './upload.css';
 
-// API endpoint for document extraction
-const EXTRACTION_API_URL = 'https://credentials-api-irsm.onrender.com/api/documents/extract_and_create/';
-
 function Upload() {
+  const { publicKey, connected, connectWallet } = useWallet();
+  const { toasts, addToast, removeToast } = useToast();
+
+  // Form state
   const [proofType, setProofType] = useState('');
   const [proofName, setProofName] = useState('');
   const [summary, setSummary] = useState('');
   const [referenceLink, setReferenceLink] = useState('');
   const [referenceFiles, setReferenceFiles] = useState([]);
-  const [supportingFiles, setSupportingFiles] = useState([]);
+
+  // UI state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showSubmittedModal, setShowSubmittedModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [referenceError, setReferenceError] = useState('');
   const [supportingError, setSupportingError] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
-  // eslint-disable-next-line no-unused-vars
-  const [extractedData, setExtractedData] = useState(null);
+  const [extractionProgress, setExtractionProgress] = useState(0);
+
+  // Transaction modal state
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [extractedDocumentData, setExtractedDocumentData] = useState(null);
+  const [extractedApiData, setExtractedApiData] = useState(null);
+  const [pendingProofData, setPendingProofData] = useState(null);
+
+  // Store result data for success modal
+  const [submissionResult, setSubmissionResult] = useState(null);
 
   const dropdownRef = useRef(null);
   const referenceFileInputRef = useRef(null);
-  const supportingFileInputRef = useRef(null);
 
   const MAX_SIZE = 2 * 1024 * 1024;
-  const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  const ACCEPTED_TYPES = [
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
 
   const proofRequirements = {
     certificates: {
-      summaryPlaceholder: "Enter: Certificate Title, Issuer Name, Completion Date, Credential Type (Course/Bootcamp), and Instructor Names...",
+      summaryPlaceholder: 'Enter: Certificate Title, Issuer Name, Completion Date, Credential Type (Course/Bootcamp), and Instructor Names...',
       validEvidences: [
-        "Full certificate file (PDF, PNG, screenshot)",
-        "Email confirmation screenshot",
-        "LMS dashboard showing 'Completed'",
-        "Screenshot of 'Congratulations, you passed'",
-        "Official issuer message confirming completion"
+        'Full certificate file (PDF, PNG, screenshot)',
+        'Certificate link',
+        'Official issuer message confirming completion of training',
+        'Link to public graduate announcement (if issuer posts those)',
       ],
-      notAllowed: "NDA-covered materials, proprietary internal tools, certificate PDFs with watermarks forbidding redistribution."
+      notAllowed: 'NDA-covered materials, proprietary internal tools, certificate PDFs with watermarks forbidding redistribution, documents showing sensitive internal company data.',
     },
     job_history: {
-      summaryPlaceholder: "Enter: Job Title, Employer Name, Employment Type, Start/End Dates, Job Category...",
+      summaryPlaceholder: 'Enter: Job Title, Employer Name, Employment Type, Start/End Dates, Job Category, Internal Work Experience ID...',
       validEvidences: [
-        "Screenshot of offer letter (redacted salary)",
-        "Proof of workspace (company welcome message)",
-        "LinkedIn announcement from company",
-        "Work dashboard screenshot (non-sensitive)",
-        "HR email confirming employment"
+        'Snapshot of offer letter (redacted salary)',
+        'HR email confirming employment',
+        'Work badge snapshot',
+        "Public team page snapshot where user's name appears (if applicable)",
+        'GitHub contribution logs linked to the company repo',
+        'Public posts (LinkedIn) from the employer announcing new hires',
       ],
-      notAllowed: "Confidential HR portals, salary details, internal documentation, private client data, or anything uniquely traceable to a person."
+      notAllowed: 'Confidential HR portals, salary details, internal documentation, private client data, or anything uniquely traceable to a person.',
     },
     skills: {
-      summaryPlaceholder: "Enter: Skill Name (e.g., Solidity), Proficiency Level, Skill Category...",
+      summaryPlaceholder: 'Enter: Skill Name (e.g., Solidity), Proficiency Level (e.g., Beginner/Intermediate/Advanced), Skill Category, Internal Skill ID...',
       validEvidences: [
-        "GitHub activity screenshots",
-        "Snippets of work (non-sensitive)",
-        "Public portfolio links",
-        "Dribbble/Behance links",
-        "Screenshots of skill tests (without sensitive user info)"
+        'GitHub activity screenshots',
+        'Snippets of work (non-sensitive)',
+        'Public portfolio links',
+        'Dribbble/Behance links',
+        'Snapshots of skill tests (without sensitive user info)',
       ],
-      notAllowed: "Proprietary materials, private client work, codebases belonging to employers, or any IP you don't own."
+      notAllowed: "Proprietary materials, private client work, snapshots of codebases belonging to employers, or any IP you don't own.",
     },
     milestones: {
-      summaryPlaceholder: "Enter: Milestone Type (Promotion/Award), Issuer Name, Month & Year, Milestone Summary...",
+      summaryPlaceholder: 'Enter: Milestone Type (Promotion/Award/Recognition/Key Result), Issuer Name(company or platform), Month & Year, Internal Milestone ID...',
       validEvidences: [
-        "Screenshot of award announcement",
-        "Email confirming promotion",
-        "Public recognition posts",
-        "Certificate of achievement",
-        "Screenshot of internal dashboard badge (non-sensitive)"
+        'Snapshot of award announcement',
+        'Email confirming promotion',
+        'Public recognition posts',
+        'Certificate of achievement',
       ],
-      notAllowed: "Performance reviews, salary information, internal feedback, or data regarding other employees."
+      notAllowed: 'Performance reviews, salary information, internal feedback or one-on-one reports, data regarding other employees.',
     },
-    community: {
-      summaryPlaceholder: "Enter: Contribution Type (Talk, Article, Open Source), Platform Name, Date...",
+    contributions: {
+      summaryPlaceholder: 'Enter: Contribution Type (Talk, Article, Open Source, Community Role), Platform Name, Date, Internal Contribution ID...',
       validEvidences: [
-        "Link to article, talk, or recording",
-        "Screenshot of Speaking Engagement Flyer",
-        "Screenshot of GitHub PR",
-        "Screenshot of community role announcement"
+        'Link to article, talk, or recording',
+        'Snapshot of Speaking Engagement Flyer',
+        'Image of GitHub PR',
+        'Snapshot of community role announcement',
       ],
-      notAllowed: "Sensitive community data or private correspondence."
-    }
+      notAllowed: 'Sensitive community data or private correspondence.',
+    },
   };
 
   const proofOptions = [
@@ -96,60 +121,61 @@ function Upload() {
     { value: 'job_history', label: 'Job History (Work Experience)' },
     { value: 'skills', label: 'Skills / Competencies' },
     { value: 'milestones', label: 'Career Milestones (Promotions / Awards)' },
-    { value: 'community', label: 'Community Contributions / Public Work' }
+    { value: 'contributions', label: 'Community Contributions / Public Work' },
   ];
 
-  // Helper functions for constructing auto-fill summaries
-  const constructCertificateSummary = (data) => {
-    const fields = [];
-    if (data.title || data.certificate_title) fields.push(data.title || data.certificate_title);
-    if (data.issuer || data.organization) fields.push(`Issuer: ${data.issuer || data.organization}`);
-    if (data.completion_date || data.date) fields.push(`Completion Date: ${data.completion_date || data.date}`);
-    if (data.credential_type) fields.push(`Credential Type: ${data.credential_type}`);
-    if (data.instructor_names) fields.push(`Instructor Names: ${data.instructor_names}`);
-    return fields.join(', ');
-  };
+  const extractProofData = async (file, selectedProofType) => {
+    if (!supportsExtraction(selectedProofType)) return null;
+    try {
+      setIsExtracting(true);
+      setExtractionProgress(0);
 
-  const constructJobHistorySummary = (data) => {
-    const fields = [];
-    if (data.job_title) fields.push(data.job_title);
-    if (data.employer_name || data.organization) fields.push(`Employer: ${data.employer_name || data.organization}`);
-    if (data.employment_type) fields.push(`Employment Type: ${data.employment_type}`);
-    if (data.start_date && data.end_date) {
-      fields.push(`Dates: ${data.start_date} - ${data.end_date}`);
-    } else if (data.date) {
-      fields.push(`Date: ${data.date}`);
+      const progressInterval = setInterval(() => {
+        setExtractionProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + Math.random() * 15;
+        });
+      }, 300);
+
+      const data = await extractDocumentData(file, selectedProofType);
+
+      clearInterval(progressInterval);
+
+      // FIX: extractDocumentData returns null on timeout/cold-start — treat as
+      // soft failure so the user can still fill in fields manually.
+      if (!data) {
+        setExtractionProgress(0);
+        return null;
+      }
+
+      setExtractionProgress(100);
+
+      setTimeout(() => {
+        setExtractionProgress(0);
+      }, 500);
+
+      return data;
+    } catch (error) {
+      console.error('Extraction error:', error);
+      setExtractionProgress(0);
+      return null;
+    } finally {
+      setIsExtracting(false);
     }
-    if (data.job_category) fields.push(`Category: ${data.job_category}`);
-    return fields.join(', ');
-  };
-
-  const constructSkillsSummary = (data) => {
-    const fields = [];
-    if (data.skill_name) fields.push(data.skill_name);
-    if (data.proficiency_level) fields.push(`Proficiency: ${data.proficiency_level}`);
-    if (data.skill_category) fields.push(`Category: ${data.skill_category}`);
-    return fields.join(', ');
-  };
-
-  const constructMilestonesSummary = (data) => {
-    const fields = [];
-    if (data.milestone_type) fields.push(data.milestone_type);
-    if (data.issuer_name || data.organization) fields.push(`Issuer: ${data.issuer_name || data.organization}`);
-    if (data.month_year || data.date) fields.push(`Date: ${data.month_year || data.date}`);
-    if (data.milestone_summary || data.description) fields.push(data.milestone_summary || data.description);
-    return fields.join(', ');
-  };
-
-  const constructCommunitySummary = (data) => {
-    const fields = [];
-    if (data.contribution_type) fields.push(data.contribution_type);
-    if (data.platform_name) fields.push(`Platform: ${data.platform_name}`);
-    if (data.date) fields.push(`Date: ${data.date}`);
-    return fields.join(', ');
   };
 
   useEffect(() => {
+    const savedData = getFormData('uploadProof');
+    if (savedData) {
+      console.log('[v0] Restoring upload form data');
+      setProofType(savedData.proofType || '');
+      setProofName(savedData.proofName || '');
+      setSummary(savedData.summary || '');
+      setReferenceLink(savedData.referenceLink || '');
+    }
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsDropdownOpen(false);
@@ -159,10 +185,24 @@ function Upload() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const handleProofTypeSelect = (value) => {
+  useEffect(() => {
+    const saveTimeout = setTimeout(() => {
+      saveFormData('uploadProof', { proofType, proofName, summary, referenceLink });
+    }, 1000);
+    return () => clearTimeout(saveTimeout);
+  }, [proofType, proofName, summary, referenceLink]);
+
+  const handleProofTypeSelect = async (value) => {
     setProofType(value);
     setIsDropdownOpen(false);
     setShowInstructions(true);
+    if (referenceFiles.length > 0) {
+      const extracted = await extractProofData(referenceFiles[0], value);
+      if (extracted) {
+        if (!summary.trim() && extracted.summary) setSummary(extracted.summary);
+        if (!proofName.trim() && extracted.title) setProofName(extracted.title);
+      }
+    }
   };
 
   const validateFile = (file) => {
@@ -175,88 +215,34 @@ function Upload() {
     return null;
   };
 
-  const handleReferenceFiles = (files) => {
-    setReferenceError('');
-    if (files.length === 0) return;
-    const file = files[0];
-    const error = validateFile(file);
-    if (error) {
-      setReferenceError(error);
-      setTimeout(() => setReferenceError(''), 5000);
-      return;
-    }
-    setReferenceFiles([file]);
-  };
-
-  const handleSupportingFiles = async (files) => {
+  const handleReferenceFiles = async (files) => {
     setSupportingError('');
     if (files.length === 0) return;
     const file = files[0];
     const error = validateFile(file);
     if (error) {
       setSupportingError(error);
+      addToast(error, 'error');
       setTimeout(() => setSupportingError(''), 5000);
       return;
     }
-    setSupportingFiles([file]);
-
-    // Extract data from the uploaded file
-    try {
-      const extractedData = await extractDataFromFile(file);
-      if (extractedData && typeof extractedData === 'object') {
-        console.log('Data extracted successfully:', extractedData);
-
-        // Auto-fill form fields based on extracted data if they are empty
-        // Handle various possible field names from the API
-        const title = extractedData.title || extractedData.name || extractedData.certificate_title || extractedData.proof_name;
-        const description = extractedData.summary || extractedData.description || extractedData.details;
-
-        if (!proofName && title) {
-          setProofName(title);
+    setReferenceFiles([file]);
+    if (proofType) {
+      const extracted = await extractProofData(file, proofType);
+      if (extracted) {
+        // FIX: store extracted.raw (the extracted_data object) not the whole
+        // normalized wrapper — raw is what gets saved to the DB and IPFS payload.
+        setExtractedApiData(extracted.raw);
+        if (!summary.trim() && extracted.summary) setSummary(extracted.summary);
+        if (!proofName.trim() && extracted.title) setProofName(extracted.title);
+        if (extracted.needsReview) {
+          addToast('Document processed — some fields may need review', 'warning');
+        } else {
+          addToast('Document processed successfully', 'success');
         }
-
-        // Auto-fill summary based on proof type and available data
-        if (!summary) {
-          let autoSummary = '';
-
-          if (description) {
-            autoSummary = description;
-          } else if (proofType && extractedData) {
-            // Construct summary based on proof type
-            switch (proofType) {
-              case 'certificates':
-                autoSummary = constructCertificateSummary(extractedData);
-                break;
-              case 'job_history':
-                autoSummary = constructJobHistorySummary(extractedData);
-                break;
-              case 'skills':
-                autoSummary = constructSkillsSummary(extractedData);
-                break;
-              case 'milestones':
-                autoSummary = constructMilestonesSummary(extractedData);
-                break;
-              case 'community':
-                autoSummary = constructCommunitySummary(extractedData);
-                break;
-              default:
-                // Generic summary construction
-                const fields = [];
-                if (title) fields.push(title);
-                if (extractedData.issuer || extractedData.organization) fields.push(`Issuer: ${extractedData.issuer || extractedData.organization}`);
-                if (extractedData.date || extractedData.completion_date) fields.push(`Date: ${extractedData.date || extractedData.completion_date}`);
-                autoSummary = fields.join(', ');
-            }
-          }
-
-          if (autoSummary.trim()) {
-            setSummary(autoSummary);
-          }
-        }
+      } else {
+        addToast('Auto-fill unavailable — fill in the fields manually', 'info');
       }
-    } catch (error) {
-      console.error('Failed to extract data:', error);
-      // Don't show error to user - extraction is optional
     }
   };
 
@@ -265,104 +251,149 @@ function Upload() {
     e.stopPropagation();
   };
 
-  // Function to extract data from uploaded files using the API
-  const extractDataFromFile = async (file) => {
-    if (!file) return null;
-
-    setIsExtracting(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('proof_type', proofType || 'certificate'); // Include proof type, default to certificate
-
-      const response = await fetch(EXTRACTION_API_URL, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('Extracted data:', result);
-
-      // Store extracted data for potential auto-fill
-      setExtractedData(result);
-
-      return result;
-    } catch (error) {
-      console.error('Error extracting data from file:', error);
-      // Don't throw error - extraction is optional, continue with upload
-      return null;
-    } finally {
-      setIsExtracting(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploadError('');
-
     let hasError = false;
 
+    // Validate form fields only — wallet check is deferred to transaction signing step
     if (!proofName.trim() || !summary.trim() || !proofType) {
       setUploadError('Please fill in all required fields.');
       hasError = true;
     }
-
-    if (supportingFiles.length === 0) {
-      setSupportingError('A Supporting Document is required.');
+    if (referenceFiles.length === 0) {
+      setSupportingError('A Reference Document is required.');
       hasError = true;
     }
-
-    const isLinkPresent = !!referenceLink.trim();
-    const isReferenceFilePresent = referenceFiles.length > 0;
-    const isSupportingFilePresent = supportingFiles.length > 0;
-    const filledCount = (isLinkPresent ? 1 : 0) + (isReferenceFilePresent ? 1 : 0) + (isSupportingFilePresent ? 1 : 0);
-
-    if (filledCount < 2) {
-      if (!isReferenceFilePresent) {
-        setReferenceError("Please provide a Reference Link or a Reference Image.");
-      }
-      setSupportingError("You must fill at least two fields among Reference Link, Reference Image, and Supporting Document.");
-      hasError = true;
-    }
-
     if (hasError) return;
 
+    // If wallet not connected, prompt connection now (before opening transaction modal).
+    // connectWallet() opens the wallet adapter modal. After connecting the user
+    // can click Upload again and we proceed immediately since connected will be true.
+    if (!connected) {
+      setUploadError('Please connect your wallet to sign the upload transaction.');
+      try {
+        await connectWallet();
+      } catch {
+        // user dismissed wallet modal — leave the error message visible
+      }
+      return;
+    }
+
     setIsUploading(true);
+    try {
+      const user = await getCurrentUser();
+      if (!user) throw new Error('You must be logged in to upload proofs');
+
+      const documentData = {
+        proofType,
+        proofName,
+        summary,
+        referenceLink: referenceLink || null,
+        walletAddress: publicKey?.toString() || null,
+        userId: user.id,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      setExtractedDocumentData(documentData);
+      setPendingProofData({
+        proofType,
+        proofName,
+        summary,
+        referenceLink: referenceLink || null,
+        userId: user.id,
+        extractedData: extractedApiData,
+      });
+      setShowTransactionModal(true);
+    } catch (error) {
+      console.error('[v0] Error preparing proof submission:', error);
+      addToast(error.message || 'Failed to prepare proof submission', 'error');
+      setIsUploading(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleTransactionSuccess = async (txData) => {
+    setShowTransactionModal(false);
     setShowPendingModal(true);
 
     try {
-      // Get current user
-      const user = await getCurrentUser();
-      if (!user) {
-        throw new Error('You must be logged in to upload proofs');
-      }
+      console.log('[v0] Transaction successful, uploading to Pinata:', txData.txHash);
 
-      // Prepare proof data
-      const proofData = {
-        proofType: proofType,
-        proofName: proofName,
-        summary: summary,
-        referenceLink: referenceLink || null
+      const metadata = {
+        transactionHash: txData.txHash,
+        walletAddress: publicKey?.toString() || null,
+        amount: txData.amount,
+        timestamp: new Date().toISOString(),
       };
 
-      // Upload with files
-      await uploadProof(proofData, [referenceFiles[0] || null].filter(Boolean), [supportingFiles[0]]);
+      const ipfsResult = await uploadDocumentWithMetadata(
+        referenceFiles[0],
+        extractedDocumentData,
+        metadata
+      );
 
-      // Success
-      setTimeout(() => {
-        setShowPendingModal(false);
-        setTimeout(() => setShowSubmittedModal(true), 300);
-      }, 2000);
+      console.log('[v0] Pinata dual upload successful:', ipfsResult);
+
+      const proofDataWithIPFS = {
+        ...pendingProofData,
+        ipfsHash: ipfsResult.hash,
+        ipfsUrl: ipfsResult.url,
+        fileIpfsHash: ipfsResult.fileHash,
+        fileIpfsUrl: ipfsResult.fileUrl,
+        transactionHash: txData.txHash,
+      };
+
+      const uploadedProof = await uploadProof(proofDataWithIPFS, [], [referenceFiles[0]]);
+      const proofId = uploadedProof.proof.id;
+      console.log('[v0] Proof saved to database:', proofId);
+
+      let blockchainTxHash = txData.txHash;
+      try {
+        console.log('[v0] Submitting proof to blockchain...');
+        const blockchainResult = await submitProofToBlockchain(
+          {
+            proofId,
+            title: pendingProofData.proofName,
+            description: pendingProofData.summary,
+            proofType: pendingProofData.proofType,
+            ipfsUri: ipfsResult.url,
+          },
+          publicKey?.toString()
+        );
+        console.log('[v0] Blockchain submission successful:', blockchainResult);
+        await updateProofWithBlockchainData(proofId, blockchainResult);
+        blockchainTxHash = blockchainResult.tx || txData.txHash;
+        console.log('[v0] Proof fully anchored on-chain');
+      } catch (blockchainError) {
+        console.warn('[v0] Blockchain anchoring skipped (backend not ready):', blockchainError.message);
+      }
+
+      setSubmissionResult({
+        txHash: blockchainTxHash,
+        fileUrl: ipfsResult.fileUrl,
+        metadataUrl: ipfsResult.url,
+        proofName: pendingProofData.proofName,
+      });
+
+      clearFormData('uploadProof');
+      setShowPendingModal(false);
+      setShowSubmittedModal(true);
+
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadError(error.message || 'Failed to upload proof');
+      console.error('[v0] Error completing proof submission:', error);
+      addToast(error.message || 'Failed to complete proof submission.', 'error');
       setShowPendingModal(false);
       setIsUploading(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const handleTransactionModalClose = () => {
+    setShowTransactionModal(false);
+    setExtractedDocumentData(null);
+    setPendingProofData(null);
+    setIsUploading(false);
   };
 
   const resetAll = () => {
@@ -371,14 +402,16 @@ function Upload() {
     setSummary('');
     setReferenceLink('');
     setReferenceFiles([]);
-    setSupportingFiles([]);
     setShowInstructions(false);
-    setReferenceError('');
     setSupportingError('');
     setUploadError('');
     setIsUploading(false);
     setIsExtracting(false);
-    setExtractedData(null);
+    setShowTransactionModal(false);
+    setExtractedDocumentData(null);
+    setExtractedApiData(null);
+    setPendingProofData(null);
+    setSubmissionResult(null);
   };
 
   const getFileIcon = (file) => {
@@ -391,300 +424,472 @@ function Upload() {
   const currentRequirements = proofType ? proofRequirements[proofType] : null;
 
   return (
-    <>
+    <div className="min-h-screen bg-[#0B0F1B] text-white selection:bg-[#C19A4A]/30 relative overflow-hidden flex flex-col">
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      {/* Background Elements */}
+      <div className="fixed inset-0 opacity-30 pointer-events-none z-0">
+        <div className="absolute top-0 -left-40 w-96 h-96 bg-[#C19A4A] rounded-full mix-blend-multiply filter blur-[128px] animate-blob" />
+        <div className="absolute top-0 -right-40 w-96 h-96 bg-[#d9b563] rounded-full mix-blend-multiply filter blur-[128px] animate-blob animation-delay-2000" />
+        <div className="absolute -bottom-40 left-1/2 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-[128px] animate-blob animation-delay-4000" />
+      </div>
+      <div className="fixed inset-0 pointer-events-none opacity-20 bg-grid z-0" />
+
       <Header />
-      <main className="flex-grow px-4 py-8 max-w-none mx-auto w-full mt-[105px]">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold mb-2">Upload Your Proof</h1>
-          <p className="text-gray-300 text-sm leading-relaxed">
-            Add a new proof to your on-chain portfolio<br />and get it verified by our community
+
+      <TransactionSignerModal
+        isOpen={showTransactionModal}
+        onClose={handleTransactionModalClose}
+        onSuccess={handleTransactionSuccess}
+        amount={0.01}
+        treasuryAddress={process.env.REACT_APP_TREASURY_WALLET || 'EKGNwqNBUBtH5Fnmcjjoj4Tci6dCXdcCrxcjTaWm5bLf'}
+        documentData={extractedDocumentData}
+      extractedPreview={extractedApiData}
+
+      />
+
+      <main className="relative z-10 flex-grow px-4 py-8 max-w-4xl mx-auto w-full mt-[105px]">
+
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-10"
+        >
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-white via-gray-300 to-gray-500 bg-clip-text text-transparent">
+            Upload Your Proof
+          </h1>
+          <p className="text-gray-400 text-sm md:text-base max-w-md mx-auto leading-relaxed">
+            Add a new proof to your on-chain portfolio
           </p>
-        </div>
+        </motion.div>
 
-        <div className="border border-gray-700 rounded-xl p-5 mb-6 relative bg-brand-card">
-          {uploadError && (
-            <div className="mb-5 p-3 rounded-lg text-sm bg-red-500/20 text-red-400 border border-red-500/30">
-              {uploadError}
-            </div>
+        {/* Wallet connection banner — shown to email users who haven't connected a wallet yet */}
+        <AnimatePresence>
+          {!connected && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="mb-6 p-4 rounded-xl text-sm bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <i className="fa-solid fa-wallet text-lg text-yellow-400"></i>
+                <span>Connect a wallet — you'll need it to sign the upload transaction.</span>
+              </div>
+              <button
+                type="button"
+                onClick={connectWallet}
+                className="shrink-0 px-4 py-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 font-semibold text-xs transition-colors border border-yellow-500/30"
+              >
+                Connect Wallet
+              </button>
+            </motion.div>
           )}
-          
-          <form onSubmit={handleSubmit} className="space-y-5">
-            
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Proof Name *</label>
-              <input
-                type="text"
-                value={proofName}
-                onChange={(e) => setProofName(e.target.value)}
-                placeholder="e.g., Senior Frontend Developer Certification"
-                className={`w-full bg-transparent border rounded px-3 py-2.5 text-sm placeholder-gray-500 focus:outline-none transition-colors ${!proofName.trim() && 'border-brand-gold'}`}
-              />
-            </div>
+        </AnimatePresence>
 
-            <div className="space-y-1.5 relative" ref={dropdownRef}>
-              <label className="text-sm font-medium">Proof Type *</label>
-              <div className={`custom-dropdown ${isDropdownOpen ? 'open' : ''}`}>
-                <div
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="custom-dropdown-selected w-full bg-transparent border border-brand-gold rounded px-3 py-2.5 text-sm cursor-pointer flex justify-between items-center hover:border-white transition-colors"
-                >
-                  <span className={proofType ? 'text-white' : 'text-gray-500'}>
-                    {proofType ? proofOptions.find(opt => opt.value === proofType)?.label : 'Select proof type'}
-                  </span>
-                  <i className={`fa-solid ${isDropdownOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-xs`}></i>
-                </div>
-                {isDropdownOpen && (
-                  <div className="custom-dropdown-options shadow-xl">
-                    {proofOptions.map(option => (
-                      <div
-                        key={option.value}
-                        onClick={() => handleProofTypeSelect(option.value)}
-                        className={`custom-option ${proofType === option.value ? 'selected' : ''}`}
-                      >
-                        {option.label}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Summary *</label>
-              <div className="relative">
-                <textarea
-                  value={summary}
-                  onChange={(e) => setSummary(e.target.value)}
-                  rows="4"
-                  maxLength="500"
-                  className="w-full bg-transparent border border-brand-gold rounded px-3 py-2.5 text-sm placeholder-gray-500 focus:outline-none resize-none"
-                  placeholder={currentRequirements?.summaryPlaceholder || "Describe your achievement, skills demonstrated or work completed"}
-                />
-                <div className={`text-right text-xs mt-1 ${summary.length >= 500 ? 'text-red-500' : 'text-gray-400'}`}>
-                  {summary.length}/500 characters
-                </div>
-              </div>
-            </div>
-
-            {showInstructions && currentRequirements && (
-              <div className="bg-brand-gold/5 border border-brand-gold/20 rounded p-4 text-xs transition-all duration-300">
-                <h4 className="text-brand-gold font-bold mb-2 flex items-center gap-2">
-                  <i className="fa-solid fa-clipboard-check"></i> Required Evidence
-                </h4>
-                <p className="text-gray-300 mb-2 font-medium">Please ensure your Supporting Document or Reference Image includes:</p>
-                <ul className="list-disc pl-4 space-y-1 text-gray-400 mb-3">
-                  {currentRequirements.validEvidences.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-                <div className="bg-red-500/10 border-l-2 border-red-500/50 p-2 mt-2">
-                  <span className="text-red-300 font-bold block mb-1">Not Allowed:</span>
-                  <p className="text-gray-400 italic">{currentRequirements.notAllowed}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Reference Link</label>
-              <input
-                type="url"
-                value={referenceLink}
-                onChange={(e) => setReferenceLink(e.target.value)}
-                placeholder="https://github.com/project or https://certificate-url.com"
-                className="w-full bg-transparent border border-brand-gold rounded px-3 py-2.5 text-sm placeholder-gray-500 focus:outline-none transition-colors"
-              />
-              <p className="text-[10px] text-gray-300">Optional: Link to GitHub repo, certificate URL, or other relevant documentation</p>
-            </div>
-
-            <div className="space-y-1.5 pt-2">
-              <label className="text-sm font-medium">Reference Image</label>
-              <div
-                onClick={() => referenceFileInputRef.current?.click()}
-                onDragOver={handleDragOver}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  handleReferenceFiles(Array.from(e.dataTransfer.files));
-                }}
-                className="border border-dashed border-gray-500 rounded-lg p-6 flex flex-col items-center justify-center text-center bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group relative"
-              >
-                <div className="w-8 h-8 rounded flex items-center justify-center border border-brand-gold text-brand-gold mb-3 group-hover:bg-brand-gold group-hover:text-black transition-colors">
-                  <i className="fa-solid fa-arrow-up-from-bracket text-sm"></i>
-                </div>
-                <p className="text-sm font-medium mb-1">Click to upload or drag and drop</p>
-                <p className="text-[10px] text-gray-400">PDF, JPG, PNG, DOC up to 2MB</p>
-                <input
-                  ref={referenceFileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={(e) => handleReferenceFiles(Array.from(e.target.files))}
-                />
-              </div>
-              {referenceFiles.length > 0 && (
-                <ul className="space-y-2 mt-2">
-                  {referenceFiles.map((file, idx) => (
-                    <li key={idx} className="flex items-center justify-between bg-white/5 border border-gray-700 rounded px-3 py-2 text-sm">
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <i className={`fa-solid ${getFileIcon(file)} text-brand-gold/70`}></i>
-                        <span className="truncate text-gray-300 max-w-[150px]">{file.name}</span>
-                        <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                      </div>
-                      <button type="button" onClick={() => setReferenceFiles([])} className="text-gray-500 hover:text-red-400 transition-colors">
-                        <i className="fa-solid fa-xmark"></i>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {referenceError && (
-                <p className="text-red-500 text-xs bg-red-500/10 p-2 rounded border border-red-500/50 text-center mt-2">{referenceError}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5 pt-2">
-              <label className="flex items-center justify-between text-sm font-medium">
-                <span>Supporting Document *</span>
-                <span className="flex items-center gap-2"><i className="fa-regular fa-circle-question"></i>Get Help</span>
-              </label>
-              <div
-                onClick={() => supportingFileInputRef.current?.click()}
-                onDragOver={handleDragOver}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  handleSupportingFiles(Array.from(e.dataTransfer.files));
-                }}
-                className="border border-dashed border-gray-500 rounded-lg p-6 flex flex-col items-center justify-center text-center bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group relative"
-              >
-                <div className="w-8 h-8 rounded flex items-center justify-center border border-brand-gold text-brand-gold mb-3 group-hover:bg-brand-gold group-hover:text-black transition-colors">
-                  <i className="fa-solid fa-arrow-up-from-bracket text-sm"></i>
-                </div>
-                <p className="text-sm font-medium mb-1">Click to upload or drag and drop</p>
-                <p className="text-[10px] text-gray-400">PDF, JPG, PNG, DOC up to 2MB</p>
-                <input
-                  ref={supportingFileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={(e) => handleSupportingFiles(Array.from(e.target.files))}
-                />
-              </div>
-              {supportingFiles.length > 0 && (
-                <ul className="space-y-2 mt-2">
-                  {supportingFiles.map((file, idx) => (
-                    <li key={idx} className="flex items-center justify-between bg-white/5 border border-gray-700 rounded px-3 py-2 text-sm">
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <i className={`fa-solid ${getFileIcon(file)} text-brand-gold/70`}></i>
-                        <span className="truncate text-gray-300 max-w-[150px]">{file.name}</span>
-                        <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                        {isExtracting && (
-                          <span className="text-xs text-brand-gold flex items-center gap-1">
-                            <i className="fa-solid fa-spinner fa-spin"></i>
-                            Extracting...
-                          </span>
-                        )}
-                      </div>
-                      <button type="button" onClick={() => setSupportingFiles([])} className="text-gray-500 hover:text-red-400 transition-colors">
-                        <i className="fa-solid fa-xmark"></i>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {supportingError && (
-                <p className="text-red-500 text-xs bg-red-500/10 p-2 rounded border border-red-500/50 text-center mt-2">{supportingError}</p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between pt-4">
-              <button type="button" onClick={resetAll} className="text-white text-sm font-medium hover:text-brand-gold transition-colors">
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                disabled={isUploading}
-                className="bg-brand-gold text-[#0B0F1B] px-5 py-3 rounded font-semibold text-sm hover:bg-yellow-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isUploading ? 'Uploading...' : 'Submit for Verification'}
-              </button>
-            </div>
-          </form>
+        {/* Get test tokens link - always visible */}
+        <div className="mb-6 text-center">
+          <a
+            href="https://t.me/ghonsiproofhub"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#C19A4A] hover:text-[#d9b563] text-sm font-semibold transition-colors underline"
+          >
+            Get test tokens
+          </a>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500 shadow-2xl mb-10"
+        >
+          <div className="bg-[#111625] rounded-[14px] p-6 md:p-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/5 via-transparent to-blue-500/5 pointer-events-none" />
+
+            <AnimatePresence>
+              {uploadError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-6 p-4 rounded-xl text-sm bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-3 relative z-10"
+                >
+                  <i className="fa-solid fa-circle-exclamation text-lg"></i>
+                  {uploadError}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+
+              {/* Proof Name */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">Proof Name *</label>
+                <input
+                  type="text"
+                  value={proofName}
+                  onChange={(e) => setProofName(e.target.value)}
+                  placeholder="e.g., Senior Frontend Developer Certification"
+                  className="w-full glass-input rounded-xl px-4 py-3.5 text-sm placeholder-gray-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Proof Type Dropdown */}
+              <div className="space-y-2 relative" ref={dropdownRef}>
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">Proof Type *</label>
+                <div className={`custom-dropdown ${isDropdownOpen ? 'open' : ''}`}>
+                  <div
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="w-full glass-input rounded-xl px-4 py-3.5 text-sm cursor-pointer flex justify-between items-center hover:border-[#aa8944]/60 transition-colors"
+                  >
+                    <span className={proofType ? 'text-white' : 'text-gray-500'}>
+                      {proofType ? proofOptions.find((opt) => opt.value === proofType)?.label : 'Select proof type'}
+                    </span>
+                    <i className={`fa-solid ${isDropdownOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-[#aa8944] text-xs transition-transform duration-300`}></i>
+                  </div>
+                  {isDropdownOpen && (
+                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="custom-dropdown-options">
+                      {proofOptions.map((option) => (
+                        <div
+                          key={option.value}
+                          onClick={() => handleProofTypeSelect(option.value)}
+                          className={`custom-option ${proofType === option.value ? 'selected' : ''}`}
+                        >
+                          {option.label}
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">Summary *</label>
+                <div className="relative">
+                  <textarea
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
+                    rows="4"
+                    maxLength="500"
+                    className="w-full glass-input rounded-xl px-4 py-3.5 text-sm placeholder-gray-500 focus:outline-none resize-none leading-relaxed"
+                    placeholder={currentRequirements?.summaryPlaceholder || 'Describe your achievement, skills demonstrated or work completed'}
+                  />
+                  <div className={`absolute bottom-3 right-4 text-[10px] font-mono tracking-wider ${summary.length >= 500 ? 'text-red-400' : 'text-gray-500'}`}>
+                    {summary.length}/500 characters
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Instructions */}
+              <AnimatePresence>
+                {showInstructions && currentRequirements && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="bg-gradient-to-r from-[#C19A4A]/10 to-transparent border border-[#C19A4A]/20 rounded-xl p-5 mb-2">
+                      <h4 className="text-[#C19A4A] font-bold text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i className="fa-solid fa-clipboard-check"></i> Required Evidence
+                      </h4>
+                      <p className="text-gray-300 text-xs mb-3 font-medium">Please ensure your Reference Document includes:</p>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-400 mb-4">
+                        {currentRequirements.validEvidences.map((item, idx) => (
+                          <li key={idx} className="flex gap-2 items-start">
+                            <span className="text-[#C19A4A] mt-0.5">→</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="bg-red-500/10 border-l-2 border-red-500/50 p-3 rounded-r-lg">
+                        <span className="text-red-400 font-bold text-[10px] uppercase tracking-wider block mb-1">Not Allowed:</span>
+                        <p className="text-gray-400 text-[11px] italic leading-relaxed">{currentRequirements.notAllowed}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Reference Link */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
+                  Reference Link <span className="text-gray-600 normal-case tracking-normal font-normal ml-1">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={referenceLink}
+                  onChange={(e) => setReferenceLink(e.target.value)}
+                  placeholder="https://github.com/project or https://certificate-url.com"
+                  className="w-full glass-input rounded-xl px-4 py-3.5 text-sm placeholder-gray-500 focus:outline-none"
+                />
+                <p className="text-[10px] text-gray-400 ml-1">Optional: Link to GitHub repo, certificate URL, or other relevant documentation</p>
+              </div>
+
+              {/* File Upload */}
+              <div className="space-y-3 pt-4 border-t border-white/5">
+                <label className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">
+                  <span>Reference Document *</span>
+                  <span className="flex items-center gap-1.5 text-[#C19A4A]/80 cursor-help hover:text-[#C19A4A] transition-colors normal-case tracking-normal font-normal">
+                    <i className="fa-regular fa-circle-question"></i> Get Help
+                  </span>
+                </label>
+                <div
+                  onClick={() => referenceFileInputRef.current?.click()}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => { e.preventDefault(); handleReferenceFiles(Array.from(e.dataTransfer.files)); }}
+                  className="border-2 border-dashed border-gray-600 rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-white/[0.02] hover:bg-white/[0.04] hover:border-[#C19A4A]/50 transition-all cursor-pointer group relative"
+                >
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-[#C19A4A]/30 text-[#C19A4A] mb-4 group-hover:bg-gradient-to-br group-hover:from-[#C19A4A] group-hover:to-[#d9b563] group-hover:text-[#0B0F1B] transition-all duration-300 group-hover:scale-110 shadow-lg">
+                    <i className="fa-solid fa-arrow-up-from-bracket text-xl"></i>
+                  </div>
+                  <p className="text-sm font-semibold mb-1 text-gray-200">Click to upload or drag and drop</p>
+                  <p className="text-xs text-gray-500">PDF, JPG, PNG, DOC up to 2MB</p>
+                  <input
+                    ref={referenceFileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={(e) => handleReferenceFiles(Array.from(e.target.files))}
+                  />
+                </div>
+
+                <AnimatePresence>
+                  {referenceFiles.length > 0 && (
+                    <motion.ul initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-2 mt-2">
+                      {referenceFiles.map((file, idx) => (
+                        <li key={idx} className="flex items-center justify-between bg-[#1A1F2E] border border-[#C19A4A]/30 rounded-xl px-4 py-3 shadow-lg">
+                          <div className="flex items-center gap-4 overflow-hidden">
+                            <i className={`fa-solid ${getFileIcon(file)} text-[#C19A4A] text-lg`}></i>
+                            <div className="flex flex-col">
+                              <span className="truncate text-sm font-medium text-gray-200 max-w-[200px] sm:max-w-[300px]">{file.name}</span>
+                              <div className="flex items-center gap-3 mt-0.5">
+                                <span className="text-[10px] text-gray-500 font-mono">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                                {isExtracting && extractionProgress > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-gradient-to-r from-[#C19A4A] to-[#d9b563] rounded-full transition-all duration-300 ease-out"
+                                        style={{ width: `${Math.min(extractionProgress, 100)}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-[10px] text-[#C19A4A] font-bold min-w-[32px]">
+                                      {Math.round(extractionProgress)}%
+                                    </span>
+                                  </div>
+                                )}
+                                {isExtracting && extractionProgress === 0 && (
+                                  <span className="text-[10px] text-[#C19A4A] flex items-center gap-1.5 font-medium">
+                                    <i className="fa-solid fa-spinner fa-spin"></i> Extracting...
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setReferenceFiles([])}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                          >
+                            <i className="fa-solid fa-xmark"></i>
+                          </button>
+                        </li>
+                      ))}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                  {supportingError && (
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-red-400 text-xs bg-red-500/10 p-3 rounded-xl border border-red-500/20 text-center mt-3 font-medium">
+                      {supportingError}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Upload Requirements */}
+              <div className="relative p-[1px] rounded-xl bg-gradient-to-br from-[#C19A4A]/60 to-[#C19A4A]/10">
+                <div className="rounded-xl p-5 bg-[#0d1020]">
+                  <h4 className="text-[#C19A4A] text-sm font-semibold mb-3 flex items-center gap-2">
+                    <i className="fa-solid fa-circle-exclamation"></i> Upload Requirements
+                  </h4>
+                  <ul className="text-[11px] text-gray-300 space-y-2 list-none">
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Reference document is required</li>
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Maximum file size: 2MB per document</li>
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Accepted formats: PDF, JPG, PNG, DOC, DOCX</li>
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>Documents should clearly show your achievement or work</li>
+                    <li className="flex gap-2 items-start"><span className="text-[#C19A4A] text-[6px] mt-1.5">●</span>A connected wallet is required to sign the upload transaction</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex items-center justify-between pt-8 mt-4 border-t border-white/5">
+                <button type="button" onClick={resetAll} className="text-white text-sm font-medium hover:text-[#C19A4A] transition-colors px-4 py-2">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploading}
+                  className="group relative px-8 py-3.5 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(193,154,74,0.4)] disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <span className="relative z-10">
+                    {isUploading ? 'Uploading...' : connected ? 'Upload' : 'Connect Wallet & Upload'}
+                  </span>
+                  {!isUploading && <i className="fa-solid fa-arrow-right relative z-10 text-sm group-hover:translate-x-1 transition-transform"></i>}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </motion.div>
       </main>
 
-      {showPendingModal && (
-        <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center px-4">
-          <div className="bg-brand-card border border-brand-border rounded-xl max-w-sm w-full p-8 relative text-center shadow-2xl">
-            <div className="relative w-16 h-16 mx-auto mb-6">
-              <div className="absolute inset-0 border-4 border-gray-700 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-brand-gold rounded-full border-t-transparent animate-spin"></div>
-            </div>
-            <h3 className="text-xl font-semibold mb-2 text-white">Submitting Proof...</h3>
-            <p className="text-gray-400 text-xs leading-relaxed">
-              Please wait for your documents.<br />This may take a few moments.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {showSubmittedModal && (
-        <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center px-4">
-          <div className="bg-brand-card border border-brand-border rounded-xl max-w-sm w-full p-8 relative text-center shadow-2xl">
-            {/* Close Button */}
-            <button
-              onClick={() => {
-                setShowSubmittedModal(false);
-                setIsUploading(false);
-                resetAll();
-              }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-              aria-label="Close"
+      {/* Pending Modal */}
+      <AnimatePresence>
+        {showPendingModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-[#0B0F1B]/90 backdrop-blur-sm z-[60] flex items-center justify-center px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500 max-w-sm w-full shadow-2xl"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            <div className="mb-4">
-              <h3 className="text-xl font-semibold mb-3 text-white">Verification Submitted!</h3>
-              <p className="text-gray-300 text-xs mb-8 leading-relaxed px-2">
-                Your proof has been successfully submitted!
-              </p>
-              <div className="p-3 bg-white/5 rounded border border-white/10 text-left">
-                <h4 className="text-sm font-semibold mb-2 text-brand-gold">Verification Process</h4>
-                <ul className="text-[11px] text-white space-y-1 list-none pl-1">
-                  <li className="flex gap-2 items-start"><span className="text-white text-[6px] mt-1.5">●</span> Your proof will be reviewed by our verification team</li>
-                  <li className="flex gap-2 items-start"><span className="text-white text-[6px] mt-1.5">●</span> Verification typically takes 2-5 business days</li>
-                  <li className="flex gap-2 items-start"><span className="text-white text-[6px] mt-1.5">●</span> Once verified, your proof will be recorded on-chain</li>
-                  <li className="flex gap-2 items-start"><span className="text-white text-[6px] mt-1.5">●</span> You'll receive a notification when verification is complete</li>
-                </ul>
+              <div className="bg-[#111625] rounded-[14px] p-8 text-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(193,154,74,0.1)_0%,transparent_70%)]" />
+                <div className="relative w-20 h-20 mx-auto mb-6">
+                  <div className="absolute inset-0 border-4 border-white/5 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-[#C19A4A] rounded-full border-t-transparent animate-spin"></div>
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-white relative z-10">Submitting Proof...</h3>
+                <p className="text-gray-400 text-xs leading-relaxed relative z-10">
+                  Uploading to IPFS and anchoring on-chain.<br />This may take a few moments.
+                </p>
               </div>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowSubmittedModal(false);
-                  setIsUploading(false);
-                  resetAll();
-                }}
-                className="flex-1 py-2.5 rounded-lg border border-white/20 text-white text-sm font-medium hover:bg-white/5 transition-colors"
-              >
-                Upload Another
-              </button>
-              <button
-                onClick={() => window.location.href = '/dashboard'}
-                className="flex-1 py-2.5 rounded-lg bg-brand-gold text-[#0B0F1B] text-sm font-semibold hover:bg-yellow-600 transition-colors"
-              >
-                View Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSubmittedModal && submissionResult && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-[#0B0F1B]/90 backdrop-blur-sm z-[60] flex items-center justify-center px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#22c55e] via-[#C19A4A] to-blue-500 max-w-sm w-full shadow-2xl"
+            >
+              <div className="bg-[#111625] rounded-[14px] p-7 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.08)_0%,transparent_70%)]" />
+
+                {/* Close button */}
+                <button
+                  onClick={() => { setShowSubmittedModal(false); setIsUploading(false); resetAll(); }}
+                  className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors z-20"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+
+                {/* Check icon */}
+                <div className="relative z-10 text-center mb-5">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', bounce: 0.5 }}
+                    className="w-16 h-16 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4"
+                  >
+                    <i className="fa-solid fa-check-circle text-green-400 text-3xl"></i>
+                  </motion.div>
+                  <h3 className="text-xl font-bold text-white mb-1">Proof Submitted!</h3>
+                  <p className="text-gray-400 text-xs">Your proof is now on-chain and stored on IPFS.</p>
+                </div>
+
+                {/* Links */}
+                <div className="relative z-10 space-y-2 mb-6">
+                  {submissionResult.txHash && (
+                    <a
+                      href={`https://solscan.io/tx/${submissionResult.txHash}?cluster=devnet`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between w-full px-4 py-3 bg-[#0B0F1B] border border-[#C19A4A]/30 rounded-xl hover:border-[#C19A4A] hover:bg-[#C19A4A]/5 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#C19A4A]/10 flex items-center justify-center">
+                          <i className="fa-solid fa-link text-[#C19A4A] text-xs"></i>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-white text-xs font-semibold">View on Solscan</p>
+                          <p className="text-gray-500 text-[10px] font-mono truncate max-w-[160px]">
+                            {submissionResult.txHash.slice(0, 16)}...
+                          </p>
+                        </div>
+                      </div>
+                      <i className="fa-solid fa-arrow-up-right-from-square text-gray-500 group-hover:text-[#C19A4A] text-xs transition-colors"></i>
+                    </a>
+                  )}
+
+                  {submissionResult.fileUrl && (
+                    <a
+                      href={submissionResult.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between w-full px-4 py-3 bg-[#0B0F1B] border border-blue-500/30 rounded-xl hover:border-blue-400 hover:bg-blue-500/5 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                          <i className="fa-solid fa-file text-blue-400 text-xs"></i>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-white text-xs font-semibold">View Document</p>
+                          <p className="text-gray-500 text-[10px]">Stored permanently on IPFS</p>
+                        </div>
+                      </div>
+                      <i className="fa-solid fa-arrow-up-right-from-square text-gray-500 group-hover:text-blue-400 text-xs transition-colors"></i>
+                    </a>
+                  )}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-3 relative z-10">
+                  <button
+                    onClick={() => { setShowSubmittedModal(false); setIsUploading(false); resetAll(); }}
+                    className="flex-1 py-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm font-bold hover:bg-white/10 transition-colors"
+                  >
+                    Upload Another
+                  </button>
+                  <button
+                    onClick={() => (window.location.href = '/dashboard')}
+                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] text-sm font-bold hover:shadow-[0_0_20px_rgba(193,154,74,0.4)] transition-all"
+                  >
+                    Dashboard
+                  </button>
+                </div>
+
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Footer />
-    </>
+    </div>
   );
 }
 

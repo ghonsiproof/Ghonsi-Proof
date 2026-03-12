@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from "react-router-dom";
-import { sendOTPToEmail, verifyOTP, getCurrentUser, signInWithWallet } from '../../utils/supabaseAuth';
-import { createWelcomeMessage } from '../../utils/messagesApi';
-import { getProfile } from '../../utils/profileApi';
-import { connectWallet, isWalletInstalled } from '../../utils/walletConnect';
-import phantomIcon from '../../assets/wallet-icons/phantom.png';
-import solflareIcon from '../../assets/wallet-icons/solflare.png';
-import backpackIcon from '../../assets/wallet-icons/backpack.png';
-import glowIcon from '../../assets/wallet-icons/glow.png';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '../../hooks/useWallet';
+import { sendOTPToEmail, verifyOTP, signInWithWallet } from '../../utils/supabaseAuth';
 
 function Login() {
   const [activeTab, setActiveTab] = useState('wallet');
@@ -17,46 +12,114 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isGetStarted, setIsGetStarted] = useState(false);
+  const [hasSigned, setHasSigned] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { connected, sign, getWalletAddress } = useWallet();
 
   useEffect(() => {
-    setActiveTab('wallet');
     const params = new URLSearchParams(location.search);
     setIsGetStarted(params.get('mode') === 'getstarted');
   }, [location]);
 
-  const validateEmail = (emailValue) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(emailValue);
-  };
+  // Check for existing wallet session on mount
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const walletAddress = localStorage.getItem('wallet_address');
+      const sessionToken = localStorage.getItem('session_token');
+      
+      if (walletAddress && sessionToken) {
+        console.log('Existing wallet session found, redirecting...');
+        setTimeout(() => navigate('/home'), 500);
+      }
+    };
+    checkExistingSession();
+  }, [navigate]);
 
-  const handleWalletConnect = async (walletName) => {
-    setIsLoading(true);
+  // When wallet connects, automatically trigger sign message
+  useEffect(() => {
+    if (connected && activeTab === 'wallet' && !hasSigned) {
+      handleWalletAuth();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected]);
+
+  const handleWalletAuth = async () => {
     setMessage('');
-
+    setIsLoading(true);
     try {
-      if (!isWalletInstalled(walletName)) {
-        setMessage(`❌ ${walletName} wallet not installed. Please install it first.`);
+      const walletAddress = getWalletAddress();
+      if (!walletAddress) {
+        setMessage('Wallet not connected');
         setIsLoading(false);
         return;
       }
 
-      const walletAddress = await connectWallet(walletName);
-      const { user, isNewUser } = await signInWithWallet(walletAddress);
+      console.log('Starting wallet authentication for:', walletAddress);
 
-      setMessage('✅ Wallet connected successfully!');
+      // Sign a message to prove wallet ownership
+      const messageToSign = `Sign this message to verify your Ghonsi Proof account.\nWallet: ${walletAddress}\nTimestamp: ${Date.now()}`;
+      const signResult = await sign(messageToSign);
 
-      if (isNewUser) {
-        const profile = await getProfile(user.id);
-        const firstName = profile?.full_name?.split(' ')[0] || 'User';
-        await createWelcomeMessage(user.id, firstName);
+      if (!signResult) {
+        setMessage('Failed to sign message. Please try again.');
+        setIsLoading(false);
+        return;
       }
 
-      setTimeout(() => navigate('/dashboard'), 1000);
-    } catch (error) {
-      setMessage('❌ Wallet connection failed: ' + error.message);
+      console.log('Message signed successfully');
+
+      // Authenticate with Supabase using wallet signature
+      const authResult = await signInWithWallet(walletAddress, {
+        signature: signResult.signature,
+        publicKey: signResult.publicKey,
+        walletName: localStorage.getItem('connected_wallet') || 'Phantom'
+      });
+
+      if (authResult && authResult.userId) {
+        console.log('Wallet authentication successful:', authResult.userId);
+        setHasSigned(true);
+        setMessage('✅ Wallet verified! Redirecting...');
+
+        // Store additional session info
+        localStorage.setItem('auth_method', 'wallet');
+        localStorage.setItem('last_login', new Date().toISOString());
+
+        // Redirect new wallet users to create profile, others to home
+        if (authResult.isNewUser) {
+          setTimeout(() => navigate('/createProfile'), 1000);
+        } else {
+          setTimeout(() => navigate('/home'), 1000);
+        }
+      } else {
+        console.error('Authentication returned invalid result:', authResult);
+        setMessage('Failed to authenticate. Please try again.');
+      }
+    } catch (err) {
+      console.error('Wallet auth error:', err);
+      setMessage('Error: ' + (err.message || 'Unknown error during wallet authentication'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const validateEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+
+  const handleSendOTP = async () => {
+    const trimmed = email.trim();
+    if (!trimmed || !validateEmail(trimmed)) {
+      setMessage('Please enter a valid email address');
+      return;
+    }
+    setIsLoading(true);
+    setMessage('');
+    try {
+      await sendOTPToEmail(trimmed);
+      setOtpSent(true);
+      setMessage('OTP sent! Check your email for the 6-digit code.');
+    } catch (err) {
+      setMessage('Failed to send OTP: ' + (err.message || 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
@@ -64,174 +127,168 @@ function Login() {
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
-    const trimmedEmail = email.trim();
-    
-    if (!trimmedEmail) {
-      setMessage('Please enter your email address');
-      return;
-    }
-    if (!validateEmail(trimmedEmail)) {
-      setMessage('Please enter a valid email address');
-      return;
-    }
-    
-    if (!otpSent) {
-      setMessage('❌ Please request an OTP code first');
-      return;
-    }
-    if (!otpCode || otpCode.length < 8) {
-      setMessage('❌ Please enter the complete code from your email');
-      return;
-    }
-    
+    const trimmed = email.trim();
+    if (!trimmed || !validateEmail(trimmed)) { setMessage('Please enter a valid email address'); return; }
+    if (!otpSent) { setMessage('Please request an OTP code first'); return; }
+    if (!otpCode || otpCode.length !== 6) { setMessage('Please enter the complete 6-digit code'); return; }
+
     setIsLoading(true);
     setMessage('');
-    
     try {
-      const { isNewUser } = await verifyOTP(trimmedEmail, otpCode);
-      setMessage('✅ Successfully signed in!');
-      
-      if (isNewUser) {
-        const user = await getCurrentUser();
-        try {
-          const profile = await getProfile(user.id);
-          const firstName = profile?.full_name?.split(' ')[0] || 'User';
-          await createWelcomeMessage(user.id, firstName);
-        } catch (profileError) {
-          // Profile may not exist yet if SQL trigger hasn't run
-          console.warn('Profile not found for new user, welcome message will be created later:', profileError);
-          // For now, just log the user in without creating welcome message
-          // The profile creation trigger should handle this
-        }
+      const result = await verifyOTP(trimmed, otpCode);
+      console.log('OTP verified, user:', result.user?.id, 'isNewUser:', result.isNewUser);
+      setMessage('Successfully signed in!');
+      // Redirect new email users to create profile
+      if (result.isNewUser) {
+        setTimeout(() => navigate('/createProfile'), 1000);
+      } else {
+        setTimeout(() => navigate('/home'), 1000);
       }
-      
-      setTimeout(() => navigate('/dashboard'), 1000);
     } catch (error) {
-      setMessage('❌ Invalid or expired code. Please try again.');
+      console.error('OTP verification error:', error);
+      setMessage('Invalid or expired code. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendOTP = async () => {
-    const trimmedEmail = email.trim();
-    
-    if (!trimmedEmail) {
-      setMessage('Please enter your email address');
-      return;
-    }
-    if (!validateEmail(trimmedEmail)) {
-      setMessage('Please enter a valid email address');
-      return;
-    }
-    
-    setIsLoading(true);
-    setMessage('');
-    
-    try {
-      await sendOTPToEmail(trimmedEmail);
-      setOtpSent(true);
-      setMessage('✅ OTP sent! Check your email for the 8-digit code.');
-    } catch (error) {
-      setMessage('❌ Failed to send OTP: ' + error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isSuccess = message.startsWith('✅') || message.startsWith('Wallet verified') || message.startsWith('Successfully') || message.startsWith('OTP sent');
 
   return (
     <main>
       <div className="mt-[115px] mx-auto py-10 px-5 text-center flex flex-col">
-        {!isGetStarted && <h2 className="text-2xl font-bold text-white mb-2.5">Welcome Back</h2>}
-        {isGetStarted && <h2 className="text-2xl font-bold text-white mb-2.5">Get Started</h2>}
-        <p className="text-sm text-[#ccc] leading-[1.5] mb-[30px]">Connect your wallet or sign in to access your proof portfolio</p>
+        <h2 className="text-2xl font-bold text-white mb-2.5">
+          {isGetStarted ? 'Get Started' : 'Welcome Back'}
+        </h2>
+        <p className="text-sm text-[#ccc] leading-[1.5] mb-[30px]">
+          Connect your wallet or sign in to access your proof portfolio
+        </p>
+
+        {/* Tabs */}
         <div className="flex flex-row gap-2.5 justify-center items-center mt-5">
-          <button className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${activeTab === 'wallet' ? 'bg-[#C19A4A] text-[#1a1a2e] border-none' : 'bg-white/10 text-white border border-white/20'}`} onClick={() => setActiveTab('wallet')}>Wallet Connect</button>
-          <button className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${activeTab === 'email' ? 'bg-[#C19A4A] text-[#1a1a2e] border-none' : 'bg-white/10 text-white border border-white/20'}`} onClick={() => setActiveTab('email')}>Email Login</button>
+          {['wallet', 'email'].map((tab) => (
+            <button
+              key={tab}
+              className={`flex items-center justify-center flex-1 max-w-[150px] py-3 px-[15px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border whitespace-nowrap ${activeTab === tab
+                ? 'bg-[#C19A4A] text-[#1a1a2e] border-none'
+                : 'bg-white/10 text-white border border-white/20'
+                }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'wallet' ? 'Wallet Connect' : 'Email Login'}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* WALLET TAB */}
       {activeTab === 'wallet' && (
         <section>
-          <div className="bg-white/5 py-[30px] px-5 my-5 mx-5 rounded-xl border border-white/10">
-            <h3 className="text-lg font-bold text-white mb-5 text-center">Choose your wallet</h3>
-            <div className="bg-white/[0.08] py-[15px] px-5 mb-3 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group" onClick={() => handleWalletConnect('Phantom')}>
-              <img src={phantomIcon} alt="Phantom" className="w-5 h-5 flex-shrink-0 object-contain" />
-              <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Phantom</h4>
+          <div className="bg-white/5 py-[30px] px-5 my-5 mx-5 rounded-xl border border-white/10 flex flex-col items-center gap-5">
+            <h3 className="text-lg font-bold text-white text-center">Connect your wallet</h3>
+
+            <p className="text-sm text-[#aaa] text-center max-w-xs">
+              Click the button below to choose your wallet. On mobile, it will open your wallet app.
+              After connecting you'll be asked to <strong className="text-white">sign a message</strong> to
+              verify ownership — no transaction fees.
+            </p>
+
+            {/*
+              WalletMultiButton from @solana/wallet-adapter-react-ui handles everything:
+              - Desktop: shows extension picker modal
+              - Mobile: deeplinks to Phantom / Solflare / Backpack / Glow
+              - After connect: our useEffect fires signMessage via useWallet hook
+            */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <WalletMultiButton />
             </div>
-            <div className="bg-white/[0.08] py-[15px] px-5 mb-3 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group" onClick={() => handleWalletConnect('Solflare')}>
-              <img src={solflareIcon} alt="Solflare" className="w-5 h-5 flex-shrink-0 object-contain" />
-              <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Solflare</h4>
-            </div>
-            <div className="bg-white/[0.08] py-[15px] px-5 mb-3 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group" onClick={() => handleWalletConnect('Backpack')}>
-              <img src={backpackIcon} alt="Backpack" className="w-5 h-5 flex-shrink-0 object-contain" />
-              <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Backpack</h4>
-            </div>
-            <div className="bg-white/[0.08] py-[15px] px-5 mb-0 rounded-lg border border-white/10 flex items-center gap-[15px] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#0B0F1B] hover:border-[#C19A4A] group" onClick={() => handleWalletConnect('Glow')}>
-              <img src={glowIcon} alt="Glow" className="w-5 h-5 flex-shrink-0 object-contain" />
-              <h4 className="text-[15px] font-semibold text-white transition-colors duration-200 ease-in-out group-hover:text-[#C19A4A]">Glow</h4>
-            </div>
+
+            {isLoading && activeTab === 'wallet' && (
+              <p className="text-[#C19A4A] text-sm text-center animate-pulse">
+                Please sign the message in your wallet app...
+              </p>
+            )}
+
+            {connected && !isLoading && !message && activeTab === 'wallet' && (
+              <p className="text-green-400 text-sm text-center">
+                Wallet connected — requesting signature...
+              </p>
+            )}
+
+            {message && (
+              <div className={`w-full p-3 rounded-lg text-sm text-center ${isSuccess
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
+                {message}
+              </div>
+            )}
+
+            {/* Let user retry if they rejected the signature */}
+            {!message.startsWith('✅') && connected && !isLoading && message && activeTab === 'wallet' && (
+              <button
+                onClick={handleWalletAuth}
+                className="py-2 px-6 bg-[#C19A4A] text-[#0B0F1B] rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                Retry Signature
+              </button>
+            )}
           </div>
         </section>
       )}
 
+      {/* EMAIL TAB */}
       {activeTab === 'email' && (
         <section>
           <div className="bg-white/5 py-[30px] px-5 my-5 mx-5 rounded-xl border border-[#C19A4A]">
             <h2 className="text-lg font-bold text-white mb-[25px]">Sign in with Email</h2>
-            
-            <p className="text-sm text-[#ccc] mb-5">We'll send you a code to verify your email.</p>
-            
+            <p className="text-sm text-[#ccc] mb-5">We'll send you a 6-digit code to verify your email.</p>
+
             {message && (
-              <div className={`mb-5 p-3 rounded-lg text-sm ${message.startsWith('✅') ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+              <div className={`mb-5 p-3 rounded-lg text-sm ${isSuccess
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
                 {message}
               </div>
             )}
-            
-            <h2 className="text-sm font-bold text-[#ccc] mb-3">Email Address</h2>
+
+            <label className="text-sm font-bold text-[#ccc] mb-3 block">Email Address</label>
             <form onSubmit={handleEmailSignIn} className="mb-5">
               <input
                 type="email"
-                id="email"
-                name="email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading || otpSent}
-                className="w-full py-3 px-[15px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                className="w-full py-3 px-[15px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] disabled:opacity-50 disabled:cursor-not-allowed mb-4"
               />
-              
-              {/* OTP Code Input */}
+
               <div className="relative mb-4">
-                  <input
-                    type="text"
-                    id="otpCode"
-                    name="otpCode"
-                    placeholder="Enter code from email"
-                    value={otpCode}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 8);
-                      setOtpCode(value);
-                    }}
-                    disabled={isLoading || !otpSent}
-                    maxLength={8}
-                    className="w-full py-3 px-[15px] pr-[110px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all duration-200 ease-in-out placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] focus:border-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSendOTP}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 py-1.5 px-4 bg-transparent text-[#C19A4A] border-none rounded text-sm font-semibold cursor-pointer transition-all duration-200 ease-in-out hover:text-[#d9b563] disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isLoading || otpSent}
-                  >
-                    {otpSent ? 'Sent ✓' : 'Get Code'}
-                  </button>
-                </div>
+                <input
+                  type="text"
+                  placeholder="Enter 6-digit code"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  disabled={isLoading || !otpSent}
+                  maxLength={6}
+                  className="w-full py-3 px-[15px] pr-[110px] bg-white/[0.08] border border-[#C19A4A] rounded-lg text-white text-sm box-border transition-all placeholder:text-white/50 focus:outline-none focus:bg-[#0B0F1B] disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendOTP}
+                  disabled={isLoading || otpSent}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 py-1.5 px-4 bg-transparent text-[#C19A4A] border-none rounded text-sm font-semibold cursor-pointer hover:text-[#d9b563] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {otpSent ? 'Sent ✓' : 'Get Code'}
+                </button>
+              </div>
             </form>
-            
-            <button 
-              className="w-full py-3 px-5 bg-[#C19A4A] text-[#0B0F1B] border-none rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 ease-in-out box-border hover:text-[#C19A4A] hover:bg-[#0B0F1B] hover:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
+
+            <button
               onClick={handleEmailSignIn}
               disabled={isLoading}
+              className="w-full py-3 px-5 bg-[#C19A4A] text-[#0B0F1B] border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-black hover:text-[#C19A4A] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Verifying...' : 'Sign In'}
             </button>
@@ -240,9 +297,15 @@ function Login() {
       )}
 
       <div className="py-[30px] px-5 text-center">
-        <h4 className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">Don't have a wallet? <a href="https://x.com/Ghonsiproof" className="text-[#C19A4A] no-underline cursor-pointer transition-colors duration-200 ease-in-out hover:text-[#C19A4A]">Learn how to get one</a></h4>
-        <h4 className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">Continue without connecting (limited access)</h4>
-        <h4 className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">By connecting you agree to our <a href="/terms" className="text-[#C19A4A] no-underline cursor-pointer transition-colors duration-200 ease-in-out hover:text-[#C19A4A]">Terms of Service</a> and <a href="/policy" className="text-[#C19A4A] no-underline cursor-pointer transition-colors duration-200 ease-in-out hover:text-[#C19A4A]">Privacy Policy</a></h4>
+        <p className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">
+          Don't have a wallet?{' '}
+          <a href="https://x.com/Ghonsiproof" className="text-[#C19A4A] no-underline hover:underline">Learn how to get one</a>
+        </p>
+        <p className="text-xs text-[#ccc] leading-[1.8] mb-[15px]">
+          By connecting you agree to our{' '}
+          <a href="/terms" className="text-[#C19A4A] no-underline hover:underline">Terms of Service</a>{' '}and{' '}
+          <a href="/policy" className="text-[#C19A4A] no-underline hover:underline">Privacy Policy</a>
+        </p>
       </div>
     </main>
   );

@@ -1,3 +1,14 @@
+@media (max-width: 768px) {
+  .hero-card-main {
+    transform: perspective(1000px) rotateY(-3deg) rotateX(1deg) translateZ(10px) !important;
+  }
+
+  .hero-card-main ~ div {
+    top: 8px !important;
+    left: -10px !important;
+    filter: blur(3px) !important;
+  }
+}
 /* Bubble animation styles */
 .bubbles {
   position: absolute;

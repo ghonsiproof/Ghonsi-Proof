@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { createProfile, getProfile, updateProfile } from '../../utils/profileApi';
+import { saveFormData, getFormData, clearFormData } from '../../utils/formPersistence';
 import { supabase } from '../../config/supabaseClient';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
@@ -31,11 +32,23 @@ function CreateProfile() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
+        // First, try to restore saved form data (in case of page refresh)
+        const savedFormData = getFormData('createProfile');
+        if (savedFormData) {
+          console.log('Restoring saved form data');
+          setFormData(savedFormData.formData);
+          setCurrentStep(savedFormData.currentStep || 1);
+          if (savedFormData.profilePhoto) {
+            setProfilePhoto(savedFormData.profilePhoto);
+          }
+          return; // Don't load from DB if we have recent form data
+        }
+
         const user = await getCurrentUser();
         if (!user) return;
 
-        // Load email
-        setFormData(prev => ({ ...prev, emailAddress: user.email }));
+        // Load email (may be null for wallet-only users)
+        setFormData(prev => ({ ...prev, emailAddress: user.email || '' }));
 
         // Try to load existing profile
         const profile = await getProfile(user.id);
@@ -80,6 +93,19 @@ function CreateProfile() {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
+  // Auto-save form data whenever it changes
+  useEffect(() => {
+    const saveTimeout = setTimeout(() => {
+      saveFormData('createProfile', {
+        formData,
+        currentStep,
+        profilePhoto: profilePhoto ? { preview: profilePhoto.preview, file: null } : null,
+      });
+    }, 1000); // Debounce saves by 1 second
+
+    return () => clearTimeout(saveTimeout);
+  }, [formData, currentStep, profilePhoto]);
+
   const handlePhotoUpload = (e) => {
     setPhotoError('');
     const file = e.target.files[0];
@@ -114,8 +140,9 @@ function CreateProfile() {
       if (parts.length < 2 || parts.some(part => part.length < 2 || !nameRegex.test(part))) {
         newErrors.fullName = 'Please enter a valid full name (e.g. First Last)';
       }
+      // Email is optional for wallet-only users
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.emailAddress.trim())) {
+      if (formData.emailAddress.trim() && !emailRegex.test(formData.emailAddress.trim())) {
         newErrors.emailAddress = 'Please enter a valid email address';
       }
     }
@@ -178,6 +205,7 @@ function CreateProfile() {
         // Prepare profile data matching the database schema
         const profileData = {
           display_name: formData.fullName,
+          email: formData.emailAddress || user.email || null,
           bio: formData.professionalBio || null,
           profession: formData.professionalTitle || null,
           location: formData.location || null,
@@ -201,6 +229,7 @@ function CreateProfile() {
           await createProfile({ user_id: user.id, ...profileData });
         }
         
+        clearFormData('createProfile'); // Clear saved form data after successful submission
         setShowSuccess(true);
       } catch (error) {
         console.error('Profile save error:', error);
@@ -318,8 +347,8 @@ function CreateProfile() {
                       {errors.fullName && <span className="text-red-500 text-[10px] mt-1 block">{errors.fullName}</span>}
                     </div>
                     <div>
-                      <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Email Address *</label>
-                      <input name="emailAddress" value={formData.emailAddress} onChange={handleInputChange} type="email" placeholder="Youremail@example.com" className={`w-full bg-transparent border rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation ${errors.emailAddress ? 'border-red-500 animate-[shake_0.5s]' : 'border-white/20'}`} />
+                      <label className="block text-[11px] uppercase tracking-widest font-medium text-white/60 mb-2">Email Address</label>
+                      <input name="emailAddress" value={formData.emailAddress} onChange={handleInputChange} type="email" placeholder="Youremail@example.com (optional for wallet users)" className={`w-full bg-transparent border rounded-lg py-3 px-4 text-sm text-white placeholder-white/50 focus:border-[#C19A4A] focus:ring-1 focus:ring-[#C19A4A] outline-none transition-all touch-manipulation ${errors.emailAddress ? 'border-red-500 animate-[shake_0.5s]' : 'border-white/20'}`} />
                       {errors.emailAddress && <span className="text-red-500 text-[10px] mt-1 block">{errors.emailAddress}</span>}
                     </div>
                     <div>

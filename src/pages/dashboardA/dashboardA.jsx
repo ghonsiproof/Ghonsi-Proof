@@ -1,127 +1,184 @@
-import React, { useState, useEffect } from 'react';
-import { Users, UserCheck, UserX, FileText, Search, X, Shield, Eye } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users, UserCheck, UserX, FileText, Search, X, Shield, Eye, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { supabase } from '../../config/supabaseClient';
-import { getGlobalProofStats, updateProofStatus } from '../../utils/proofsApi';
-import { getCurrentUser } from '../../utils/supabaseAuth';
 import logo from '../../assets/ghonsi-proof-logos/transparent-png-logo/4.png';
 
 function DashboardA() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const [realUsers, setRealUsers] = useState([]);
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeUsers: 0,
-    inactiveUsers: 0,
-    totalProofs: 0
-  });
+  const [selectedProofData, setSelectedProofData] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState({ totalUsers: 0, activeUsers: 0, inactiveUsers: 0, totalProofs: 0 });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAllUsers = async () => {
-      try {
-        // This requires an admin-level RLS policy or service_role key
-        const { data, error } = await supabase
-          .from('profiles')
-          .select(`
-            id,
-            display_name,
-            is_public,
-            created_at,
-            users (email, wallet_address),
-            proofs (status)
-          `);
+    const isAuth = localStorage.getItem('adminAuth');
+    if (!isAuth) {
+      navigate('/adminLogin');
+    }
+  }, [navigate]);
 
-        if (!error) {
-          // Map the nested data to match your table's expected format
-          const formattedUsers = data.map(profile => ({
-            id: profile.id,
-            fullName: profile.display_name,
-            email: profile.users?.email,
-            status: profile.is_public ? 'Active' : 'Inactive',
-            proofs: {
-              verified: profile.proofs.filter(p => p.status === 'verified').length,
-              pending: profile.proofs.filter(p => p.status === 'pending').length
-            },
-            dateJoined: new Date(profile.created_at).toLocaleDateString()
-          }));
-          setRealUsers(formattedUsers);
-          // Calculate stats from real data
-          const totalUsers = formattedUsers.length;
-          const activeUsers = formattedUsers.filter(user => user.status === 'Active').length;
-          const inactiveUsers = totalUsers - activeUsers;
-          setStats(prevStats => ({
-            ...prevStats,
-            totalUsers,
-            activeUsers,
-            inactiveUsers
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    };
-    fetchAllUsers();
-  }, []);
+  const generateUID = (userId) => {
+    if (!userId) return '000000000';
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString().padStart(9, '0').slice(0, 9);
+  };
 
-  useEffect(() => {
-    const loadGlobalStats = async () => {
-      try {
-        const globalStats = await getGlobalProofStats();
-        setStats(prevStats => ({
-          ...prevStats,
-          totalProofs: globalStats.total
-        }));
-      } catch (error) {
-        console.error('Error fetching global proof stats:', error);
-      }
-    };
-    loadGlobalStats();
-  }, []);
-
-  const handleVerify = async (proofId) => {
+  const fetchUsers = useCallback(async () => {
     try {
-      const admin = await getCurrentUser(); // Get current admin ID
-      await updateProofStatus(proofId, 'verified', admin.id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
 
-      alert('✅ Proof officially verified and recorded!');
+      if (profilesError) {
+        console.error('Profiles error:', profilesError);
+        throw profilesError;
+      }
+      
+      const { data: proofsData, error: proofsError } = await supabase
+        .from('proofs')
+        .select('*');
 
-      // Refresh your user list to show the new status
-      window.location.reload();
+      if (proofsError) console.error('Proofs error:', proofsError);
+
+      console.log('Fetched profiles:', profilesData);
+      console.log('Fetched proofs:', proofsData);
+
+      const formattedUsers = profilesData?.map(profile => {
+        const userProofs = proofsData?.filter(p => p.user_id === profile.user_id) || [];
+        const verifiedProofs = userProofs.filter(p => p.status === 'verified').length;
+        const pendingProofs = userProofs.filter(p => p.status === 'pending').length;
+        const rejectedProofs = userProofs.filter(p => p.status === 'rejected').length;
+        const uid = profile.uid || generateUID(profile.user_id);
+        
+        // Calculate last activity from profile updated_at or created_at
+        const lastActivityDate = profile.updated_at || profile.created_at;
+        const lastActivity = lastActivityDate 
+          ? new Date(lastActivityDate).toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'short', 
+              day: 'numeric' 
+            })
+          : 'N/A';
+        
+        return {
+          id: uid,
+          userId: profile.user_id,
+          email: profile.email || 'N/A',
+          status: 'active',
+          proofs: { verified: verifiedProofs, pending: pendingProofs, rejected: rejectedProofs },
+          dateJoined: profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A',
+          lastActivity: lastActivity,
+          fullName: profile.display_name || 'N/A',
+          accountStatus: 'Active',
+          joinDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A',
+          proofHistory: userProofs.map(p => ({
+            proofId: p.id,
+            status: p.status,
+            createdAt: p.created_at,
+            proofType: p.proof_type || 'N/A'
+          }))
+        };
+      }) || [];
+
+      setUsers(formattedUsers);
+
+      setStats({
+        totalUsers: formattedUsers.length,
+        activeUsers: formattedUsers.length,
+        inactiveUsers: 0,
+        totalProofs: proofsData?.length || 0
+      });
     } catch (error) {
-      console.error('Verification failed:', error);
-      alert('Error updating status.');
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+    
+    const channel = supabase
+      .channel('dashboard-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, fetchUsers)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchUsers)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'proofs' }, fetchUsers)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchUsers]);
+
+  const fetchProofDetails = async (proofId) => {
+    try {
+      const { data, error } = await supabase
+        .from('proofs')
+        .select('*')
+        .eq('id', proofId)
+        .single();
+
+      if (error) throw error;
+
+      const fields = [
+        { proofId: data.id, eventType: 'Upload received', proofType: data.proof_type || 'N/A', timestamp: new Date(data.created_at).toLocaleString(), status: 'successful' },
+        { proofId: data.id, eventType: 'Extraction started', proofType: data.proof_type || 'N/A', timestamp: new Date(data.created_at).toLocaleString(), status: data.status === 'verified' ? 'successful' : 'pending' },
+        { proofId: data.id, eventType: 'Verification', proofType: data.proof_type || 'N/A', timestamp: data.updated_at ? new Date(data.updated_at).toLocaleString() : new Date(data.created_at).toLocaleString(), status: data.status === 'verified' ? 'successful' : data.status === 'pending' ? 'pending' : 'failed' }
+      ];
+
+      const successfulCount = fields.filter(f => f.status === 'successful').length;
+      const totalCount = fields.length;
+
+      setSelectedProofData({
+        title: data.proof_type || 'Proof Details',
+        verificationResult: `${successfulCount}/${totalCount}`,
+        completedCount: `${successfulCount}/${totalCount}`,
+        fields: fields
+      });
+      setSelectedMatch(true);
+    } catch (error) {
+      console.error('Error fetching proof details:', error);
     }
   };
 
-  const matchDetails = {
-    title: 'Web3 Hackathon Winner',
-    verificationResult: '98%',
-    completedCount: '1/3x',
-    fields: [
-      { field: 'Full Name', submitted: 'Sarah Johnson', system: 'Sarah Johnson', match: true, confidence: 100 },
-      { field: 'Email Address', submitted: 'sarahjohnson@gmail.com', system: 'sarahjohnson@gmail.com', match: true, confidence: 100 },
-      { field: 'Certificate Title', submitted: 'Web3 Hackathon Winner', system: 'Web3 Hackathon Winner Certification', match: true, confidence: 95 },
-      { field: 'Issuer', submitted: 'Blockchain Academy', system: 'Blockchain Academy', match: true, confidence: 100 }
-    ]
-  };
-
-  const filteredUsers = realUsers.filter(user => {
-    const matchesSearch = user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'All' ||
-                         (filterStatus === 'Active' && user.status === 'Active') ||
-                         (filterStatus === 'Inactive' && user.status === 'Inactive');
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         user.id.includes(searchTerm);
+    const matchesFilter = filterStatus === 'All' || 
+                         (filterStatus === 'Active' && user.status === 'active') ||
+                         (filterStatus === 'Inactive' && user.status === 'inactive');
     return matchesSearch && matchesFilter;
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0B1121] text-white flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0B1121] text-white p-8">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <img src={logo} alt="Ghonsi Proof" className="h-11" />
-        <button className="text-sm text-gray-400 hover:text-white">Home</button>
+        <button 
+          onClick={() => {
+            localStorage.removeItem('adminAuth');
+            navigate('/adminLogin');
+          }}
+          className="text-sm text-gray-400 hover:text-white"
+        >
+          Logout
+        </button>
       </div>
 
       {/* Title */}
@@ -205,7 +262,8 @@ function DashboardA() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">USER</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">#</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">USER ID</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Status</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Proofs</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Date Joined</th>
@@ -216,8 +274,9 @@ function DashboardA() {
             <tbody>
               {filteredUsers.map((user, index) => (
                 <tr key={index} className="border-b border-gray-800 hover:bg-[#1A2332]">
+                  <td className="py-3 px-4 text-sm font-medium text-gray-400">{index + 1}</td>
                   <td className="py-3 px-4">
-                    <div className="text-sm font-medium">{user.fullName}</div>
+                    <div className="text-sm font-medium">{user.id}</div>
                     <div className="text-xs text-gray-400">{user.email}</div>
                   </td>
                   <td className="py-3 px-4">
@@ -229,6 +288,7 @@ function DashboardA() {
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-white">✓ {user.proofs.verified}</span>
                       <span className="text-yellow-500">⏱ {user.proofs.pending}</span>
+                      <span className="text-red-500">✗ {user.proofs.rejected}</span>
                     </div>
                   </td>
                   <td className="py-3 px-4 text-sm">{user.dateJoined}</td>
@@ -277,7 +337,7 @@ function DashboardA() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Last Activity</p>
-                    <p className="text-sm">January 15, 2024</p>
+                    <p className="text-sm">{selectedUser.lastActivity}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Full Name</p>
@@ -302,35 +362,39 @@ function DashboardA() {
               <div className="bg-[#1A2332] rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Shield size={18} />
-                  <h3 className="font-semibold">Proof History & System Matches</h3>
+                  <h3 className="font-semibold">Proof History</h3>
                 </div>
-                {selectedUser.proofHistory && selectedUser.proofHistory.map((proof, idx) => (
-                  <div key={idx} className="bg-[#0B1121] rounded p-3 mb-3">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="text-sm font-medium">{proof.title}</p>
-                        <p className="text-xs text-gray-400">🏆 Achievement: {proof.achievement}</p>
-                        <p className="text-xs text-gray-400">Submitted: {proof.submitted}</p>
-                      </div>
-                      <div className="flex gap-2">
+                {selectedUser.proofHistory && selectedUser.proofHistory.length > 0 ? (
+                  selectedUser.proofHistory.map((proof, idx) => (
+                    <div key={idx} className="bg-[#0B1121] rounded p-3 mb-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm font-medium">{proof.proofId}</p>
+                            {proof.status === 'verified' && (
+                              <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">Verified</span>
+                            )}
+                            {proof.status === 'pending' && (
+                              <span className="bg-yellow-500 text-black text-xs px-2 py-0.5 rounded-full">Pending</span>
+                            )}
+                            {proof.status === 'rejected' && (
+                              <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">Rejected</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400">{proof.proofType} • {new Date(proof.createdAt).toLocaleDateString()}</p>
+                        </div>
                         <button
-                          onClick={() => setSelectedMatch(matchDetails)}
+                          onClick={() => fetchProofDetails(proof.proofId)}
                           className="bg-[#C19A4A] text-black text-xs px-3 py-1.5 rounded font-medium hover:bg-[#D4A854] flex items-center gap-1"
                         >
-                          <Eye size={14} /> View Matches
+                          <Eye size={14} /> View Proofs
                         </button>
-                        {proof.status === 'pending' && (
-                          <button
-                            onClick={() => handleVerify(proof.id)}
-                            className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600"
-                          >
-                            Approve Proof
-                          </button>
-                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400">No proof history available</p>
+                )}
               </div>
             </div>
           </div>
@@ -338,7 +402,7 @@ function DashboardA() {
       )}
 
       {/* System Match Details Modal */}
-      {selectedMatch && (
+      {selectedMatch && selectedProofData && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#0B1121] rounded-lg w-[700px] max-h-[90vh] overflow-y-auto">
             <div className="p-6">
@@ -346,9 +410,9 @@ function DashboardA() {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-2xl font-bold">System Match Details</h2>
-                  <p className="text-sm text-gray-400">{selectedMatch.title}</p>
+                  <p className="text-sm text-gray-400">{selectedProofData.title}</p>
                 </div>
-                <button onClick={() => setSelectedMatch(null)} className="text-gray-400 hover:text-white">
+                <button onClick={() => { setSelectedMatch(null); setSelectedProofData(null); }} className="text-gray-400 hover:text-white">
                   <X size={24} />
                 </button>
               </div>
@@ -357,48 +421,55 @@ function DashboardA() {
               <div className="bg-[#1A2332] border border-gray-700 rounded-lg p-4 mb-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-semibold mb-1">Verification Result</p>
-                    <p className="text-xs text-gray-400">Automated system matching completed {selectedMatch.completedCount}</p>
+                    <p className="text-sm font-semibold mb-1">Proof Upload - Verification Analysis</p>
+                    <p className="text-xs text-gray-400">Event Timeline {selectedProofData.completedCount}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-green-500">{selectedMatch.verificationResult}</p>
-                    <p className="text-xs text-green-500">Verified</p>
+                    <p className="text-2xl font-bold text-green-500">{selectedProofData.verificationResult}</p>
+                    <p className="text-xs text-green-500">Fields Verified</p>
                   </div>
                 </div>
               </div>
 
-              {/* Field by Field Match Analysis */}
+              {/* Field Analysis */}
               <div className="bg-[#1A2332] border border-gray-700 rounded-lg p-4">
-                <h3 className="font-semibold mb-4">Field by Field Match Analysis</h3>
+                <h3 className="font-semibold mb-4">Field</h3>
                 <table className="w-full table-fixed">
                   <thead>
                     <tr className="border-b border-gray-700">
-                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[15%]">FIELD</th>
-                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[25%]">SUBMITTED DATA</th>
-                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[25%]">SYSTEM DATA</th>
-                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[15%]">MATCH</th>
-                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[20%]">CONFIDENCE</th>
+                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[15%]">PROOF ID</th>
+                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[25%]">EVENT TYPE</th>
+                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[20%]">PROOF TYPE</th>
+                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[20%]">TIMESTAMP</th>
+                      <th className="text-left py-2 px-2 text-xs font-semibold text-gray-400 w-[20%]">STATUS</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedMatch.fields.map((field, idx) => (
+                    {selectedProofData.fields.map((field, idx) => (
                       <tr key={idx} className="border-b border-gray-800">
-                        <td className="py-3 px-2 text-sm truncate">{field.field}</td>
-                        <td className="py-3 px-2 text-sm text-gray-300 truncate" title={field.submitted}>{field.submitted}</td>
-                        <td className="py-3 px-2 text-sm text-gray-300 truncate" title={field.system}>{field.system}</td>
+                        <td className="py-3 px-2 text-sm truncate">{field.proofId}</td>
+                        <td className="py-3 px-2 text-sm text-gray-300 truncate">{field.eventType}</td>
+                        <td className="py-3 px-2 text-sm text-gray-300 truncate">{field.proofType}</td>
+                        <td className="py-3 px-2 text-xs text-gray-400">{field.timestamp}</td>
                         <td className="py-3 px-2">
-                          <span className="text-green-500 text-sm flex items-center gap-1">
-                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                            Match
-                          </span>
-                        </td>
-                        <td className="py-3 px-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-green-500 text-sm font-medium">{field.confidence}%</span>
-                            <div className="w-12 h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                              <div className="h-full bg-green-500" style={{ width: `${field.confidence}%` }}></div>
-                            </div>
-                          </div>
+                          {field.status === 'successful' && (
+                            <span className="text-green-500 text-sm flex items-center gap-1">
+                              <CheckCircle size={16} />
+                              Successful
+                            </span>
+                          )}
+                          {field.status === 'pending' && (
+                            <span className="text-yellow-500 text-sm flex items-center gap-1">
+                              <Clock size={16} />
+                              Pending
+                            </span>
+                          )}
+                          {field.status === 'failed' && (
+                            <span className="text-red-500 text-sm flex items-center gap-1">
+                              <XCircle size={16} />
+                              Failed
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))}

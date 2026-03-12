@@ -39,3 +39,105 @@ a {
   text-decoration: none;
   color: inherit;
 }
+
+/* Solana Wallet Adapter Styling */
+.wallet-adapter-button {
+  background-color: #C19A4A !important;
+  color: #0B0F1B !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  cursor: pointer;
+  transition: opacity 0.2s ease !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.wallet-adapter-button:hover {
+  opacity: 0.9 !important;
+}
+
+.wallet-adapter-button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.wallet-adapter-button-trigger {
+  background-color: #C19A4A !important;
+  color: #0B0F1B !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.wallet-adapter-button-trigger:hover {
+  opacity: 0.9 !important;
+}
+
+/* Wallet modal styling */
+.wallet-adapter-modal {
+  background-color: #0B0F1B !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(193, 154, 74, 0.2) !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.wallet-adapter-modal-title {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.wallet-adapter-modal-list {
+  background-color: #0B0F1B !important;
+}
+
+.wallet-adapter-modal-list-more {
+  background-color: #C19A4A !important;
+  color: #0B0F1B !important;
+  border: none !important;
+}
+
+.wallet-adapter-modal-list-more:hover {
+  opacity: 0.9 !important;
+}
+
+.wallet-adapter-modal-middle {
+  color: #888 !important;
+}
+
+/* Wallet option button styling */
+.wallet-adapter-modal-list li {
+  border-radius: 8px !important;
+}
+
+.wallet-adapter-modal-list li button {
+  background-color: transparent !important;
+  border: 1px solid rgba(193, 154, 74, 0.3) !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  transition: all 0.2s ease !important;
+  color: #FFFFFF !important;
+}
+
+.wallet-adapter-modal-list li button:hover {
+  border-color: #C19A4A !important;
+  background-color: rgba(193, 154, 74, 0.1) !important;
+}
+
+/* Close button */
+.wallet-adapter-modal-close {
+  color: #C19A4A !important;
+}
+
+.wallet-adapter-modal-close:hover {
+  opacity: 0.7 !important;
+}

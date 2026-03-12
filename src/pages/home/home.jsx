@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Wallet, Shield, Upload, X, ArrowRight } from 'lucide-react';
+import { Wallet, Upload, X, ArrowRight, Sparkles, Trophy, Share2, Award, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../../components/header/header.jsx';
 import Footer from '../../components/footer/footer.jsx';
 import NotificationWidget from '../../components/NotificationWidget.jsx';
 import logo1 from '../../assets/ghonsi-proof-logos/png-logo/1.png';
+import queenSmithProfile from '../../assets/home/queen-smith-profile.jpg'; 
 import { profileWithfileProofs } from '../../utils/proofsApi.js';
 
 import './home.css';
+
+const QUEEN_SMITH_PROFILE_IMG = queenSmithProfile;
 
 function Home() {
   const [bubbles, setBubbles] = useState([]);
@@ -18,22 +21,36 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  const lastInteractionTime = useRef(0);
+
+  const scrollToBubbleSection = () => {
+    const element = document.getElementById('bubble-section');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Global listener to close popups when clicking blank areas
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (Date.now() - lastInteractionTime.current < 400) return;
+      
       if (!event.target.closest('.bubble-item') && !event.target.closest('.profile-popup-card')) {
         setSelectedBubble(null);
         setIsPinned(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -41,38 +58,66 @@ function Home() {
       try {
         const data = await profileWithfileProofs();
         if (data && data.length > 0) {
-          const formatted = data.map((profile, index) => {
-            // Logic to disperse bubbles while subtly avoiding top-center
-            let top = Math.random() * 75 + 15; // 15% to 90%
-            let left = Math.random() * 80 + 10; // 10% to 90%
+          const getValidPosition = (existingPositions, minDistance) => {
+            let attempts = 0;
+            while (attempts < 100) {
+              let top = Math.random() * 55 + 30;
+              let left = Math.random() * 70 + 15;
 
-            // Subtle avoidance: if bubble is in the top center 20% area, nudge it down
-            if (top < 25 && left > 40 && left < 60) {
-              top += 15;
+              if (top < 35 && left > 40 && left < 60) {
+                top += 10;
+              }
+
+              const isValid = existingPositions.every(pos => {
+                const dx = Math.abs(pos.left - left);
+                const dy = Math.abs(pos.top - top);
+                return Math.sqrt(dx * dx + dy * dy) >= minDistance;
+              });
+
+              if (isValid) {
+                return { top, left };
+              }
+              attempts++;
             }
+            return { top: Math.random() * 55 + 30, left: Math.random() * 70 + 15 };
+          };
 
-            return {
+          const formatted = [];
+          const existingPositions = [];
+          const minDistance = 10;
+
+          data.forEach((profile, index) => {
+            const pos = getValidPosition(existingPositions, minDistance);
+            existingPositions.push(pos);
+
+            formatted.push({
               name: profile.display_name || 'Anonymous',
               bio: profile.bio || 'Web3 Professional',
               img: profile.avatar_url || logo1,
               wallet: profile.users?.wallet_address || '',
               id: profile.id,
-              initialPos: { top: `${top}%`, left: `${left}%` },
-              delay: index * 0.1
-            };
+              userId: profile.user_id,
+              initialPos: { top: `${pos.top}%`, left: `${pos.left}%` },
+              delay: index * 0.1,
+              floatDuration: 5 + Math.random() * 5
+            });
           });
+
           setBubbles(formatted);
         }
-      } catch (error) { 
-        console.error('Error fetching bubbles:', error); 
-      } finally { 
-        setLoading(false); 
+      } catch (error) {
+        console.error('Error fetching bubbles:', error);
+      } finally {
+        setLoading(false);
       }
     };
     loadProfiles();
   }, []);
 
   const handleBubbleInteraction = (bubble, event, type = 'hover') => {
+    event.stopPropagation();
+    lastInteractionTime.current = Date.now();
+
     if (isMobile) {
       setSelectedBubble(bubble);
       return;
@@ -93,7 +138,6 @@ function Home() {
     let leftPosition = bubbleCenterX - popupWidth / 2;
     let topPosition = bubbleBottom + 10;
 
-    // Keep popup within container boundaries
     leftPosition = Math.max(10, Math.min(leftPosition, containerRect.width - popupWidth - 10));
     topPosition = Math.max(10, Math.min(topPosition, containerRect.height - popupHeight - 10));
 
@@ -102,122 +146,668 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A]/30">
+    <div className="min-h-screen bg-[#0B0F1B] text-white font-sans selection:bg-[#C19A4A]/30 relative overflow-hidden">
+      <div className="fixed inset-0 opacity-30 pointer-events-none">
+        <div className="absolute top-0 -left-40 w-96 h-96 bg-[#C19A4A] rounded-full mix-blend-multiply filter blur-[128px] animate-blob" />
+        <div className="absolute top-0 -right-40 w-96 h-96 bg-[#d9b563] rounded-full mix-blend-multiply filter blur-[128px] animate-blob animation-delay-2000" />
+        <div className="absolute -bottom-40 left-1/2 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-[128px] animate-blob animation-delay-4000" />
+      </div>
+
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            linear-gradient(90deg, rgba(193,154,74,0.1) 1px, transparent 1px),
+            linear-gradient(0deg, rgba(193,154,74,0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '80px 80px'
+        }} />
+      </div>
+
       <Header />
       <NotificationWidget />
 
-      <main className="pt-24">
-        {/* HERO SECTION */}
-        <section className="relative px-6 py-12 text-center max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <h1 className="text-4xl md:text-7xl font-bold tracking-tighter leading-tight mb-6">
-              Prove what you've <span className="text-[#C19A4A] drop-shadow-[0_0_15px_rgba(193,154,74,0.3)]">built.</span>
-              <br />
-              <span className="text-gray-400">Unlock your potential.</span>
-            </h1>
-            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-              Ghonsi Proof is the on-chain trust engine for the Web3 workforce. 
-              Verify your work history and store your portfolio on the blockchain.
-            </p>
+      <main className="pt-16 md:pt-20 lg:pt-24 relative z-10">
+        <section className="relative px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 xl:py-20 max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="flex flex-col items-start text-left w-full order-1 lg:order-1"
+            >
+              <div className="w-full text-center md:text-left mb-6 sm:mb-8">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.15] max-w-2xl mx-auto md:mx-0">
+                  <span className="block">
+                    Prove your <span className="relative inline-block">
+                      <span className="bg-gradient-to-r from-[#C19A4A] via-[#d9b563] to-[#C19A4A] bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
+                        work
+                      </span>
+                      <span className="absolute -inset-1 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] opacity-30 blur-2xl" />
+                    </span>
+                  </span>
+                  <span className="block mt-1 sm:mt-2">
+                    <span className="bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 bg-clip-text text-transparent">as you </span>
+                    <span className="bg-gradient-to-br from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+                      GO
+                    </span>
+                  </span>
+                </h1>
+              </div>
+
+              <div className="w-full max-w-xl space-y-3 sm:space-y-4 mb-6 sm:mb-8 text-left">
+                <p className="text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed">
+                  Ghonsi Proof lets you turn your work into a{' '}
+                  <span className="text-[#C19A4A] font-semibold">verifiable on-chain portfolio</span>
+                  , so you get noticed for the contributions you've actually made.
+                </p>
+                <p className="text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed">
+                  Scattered work across GitHub, Discord, X, and other platforms makes proving your skills slow and frustrating.
+                  Ghonsi Proof solves this by letting you upload and verify your work in one trusted place.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto items-stretch sm:items-center">
+                <NavLink
+                  to="/dashboard"
+                  className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(193,154,74,0.4)] flex items-center justify-center gap-2 text-sm sm:text-base whitespace-nowrap"
+                >
+                  <span className="relative z-10">Create my portfolio</span>
+                  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                </NavLink>
+
+                <button
+                  onClick={scrollToBubbleSection}
+                  className="group relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold overflow-hidden transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base whitespace-nowrap"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-xl" />
+                  <div className="absolute inset-[1px] bg-[#0B0F1B]/80 backdrop-blur-xl rounded-[11px]" />
+                  <span className="relative z-10">Verify talent now</span>
+                  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                </button>
+              </div>
+            </motion.div>
+
+            <div className="hidden lg:flex items-center justify-center lg:justify-end order-2 lg:order-2">
+              <div className="relative w-full max-w-[420px] xl:max-w-[460px]" style={{ height: '480px' }}>
+                <div className="relative w-full h-full" style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.15 }}
+                    className="absolute inset-0 p-6 lg:p-7 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20"
+                    style={{
+                      top: '16px',
+                      left: '-24px',
+                      right: '24px',
+                      bottom: '-16px',
+                      filter: 'blur(8px)',
+                      transform: 'perspective(1200px) rotateY(-8deg) rotateX(3deg) translateZ(-50px) scale(0.97)'
+                    }}
+                  >
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="relative flex-shrink-0">
+                        <img src={QUEEN_SMITH_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-white text-lg truncate">Queen Smith</h4>
+                        <p className="text-gray-400 text-xs">Product Designer</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5 mb-3">
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
+                        <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                          Total Proofs
+                        </div>
+                      </div>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center">
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
+                        <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                          Verifiable
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Trophy size={11} className="text-[#C19A4A] flex-shrink-0" /> 
+                          <span className="truncate">Recent Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">Hackathon Winner</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Award size={11} className="text-blue-400 flex-shrink-0" /> 
+                          <span className="truncate">Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">DeFi Summit Speaker</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Star size={11} className="text-purple-400 flex-shrink-0" /> 
+                          <span className="truncate">Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">Top Contributor 2024</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ 
+                      rotateY: -2,
+                      rotateX: 1,
+                      translateZ: 30,
+                      transition: { duration: 0.4 }
+                    }}
+                    className="absolute inset-0 p-6 lg:p-7 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20 flex flex-col gap-4"
+                    style={{
+                      transform: 'perspective(1200px) rotateY(-6deg) rotateX(3deg) translateZ(20px)',
+                      transformStyle: 'preserve-3d',
+                      boxShadow: '-24px 24px 72px rgba(193,154,74,0.15), 0 24px 48px rgba(0,0,0,0.6)'
+                    }}
+                  >
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="relative flex-shrink-0">
+                        <img src={QUEEN_SMITH_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-white text-lg truncate">Queen Smith</h4>
+                        <p className="text-gray-400 text-xs">Product Designer</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
+                        <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                          Total Proofs
+                        </div>
+                      </div>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center">
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
+                        <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                          Verifiable
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 flex-1">
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 hover:border-[#C19A4A]/30 transition-colors">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Trophy size={11} className="text-[#C19A4A] flex-shrink-0" /> 
+                          <span className="truncate">Recent Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">Hackathon Winner</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 hover:border-blue-400/30 transition-colors">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Award size={11} className="text-blue-400 flex-shrink-0" /> 
+                          <span className="truncate">Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">DeFi Summit Speaker</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 hover:border-purple-400/30 transition-colors">
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                          <Star size={11} className="text-purple-400 flex-shrink-0" /> 
+                          <span className="truncate">Achievement</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white truncate">Top Contributor 2024</span>
+                          <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="relative p-[1px] rounded-3xl lg:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
+          >
+            <div className="relative rounded-[23px] lg:rounded-[2.3rem] bg-[#0B0F1B]/90 backdrop-blur-2xl bg-gradient-to-br from-white/10 to-white/5 p-6 sm:p-8 lg:p-10 xl:p-12 overflow-hidden border border-white/10">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/5 via-transparent to-[#d9b563]/5 rounded-[23px] lg:rounded-[2.3rem]" />
+
+              <div className="relative text-center mb-8 sm:mb-10 lg:mb-12">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
+                  How It Works
+                </h2>
+                <p className="text-gray-400 text-sm sm:text-base lg:text-lg xl:text-xl">
+                  Create your permanent work history in 3 steps.
+                </p>
+              </div>
+
+              <div className="relative mx-auto max-w-4xl p-[1px] rounded-2xl bg-gradient-to-br from-[#C19A4A]/20 to-[#d9b563]/20">
+                <div className="relative rounded-[15px] bg-[#0B0F1B]/50 backdrop-blur-xl p-4 sm:p-6 lg:p-8">
+                  <div className="relative space-y-5 sm:space-y-6 lg:space-y-8">
+                    {[
+                      {
+                        icon: Wallet,
+                        title: "Connect",
+                        desc: "Sign up and link your wallet.",
+                        gradient: "from-blue-500 to-cyan-500"
+                      },
+                      {
+                        icon: Upload,
+                        title: "Upload",
+                        desc: "Add your work and verify it on-chain.",
+                        gradient: "from-[#d9b563] to-pink-500"
+                      },
+                      {
+                        icon: Share2,
+                        title: "Share",
+                        desc: "Instantly share your verified portfolio with employers or collaborators.",
+                        gradient: "from-[#C19A4A] to-[#d9b563]"
+                      }
+                    ].map((item, i) => (
+                      <motion.div
+                        key={item.title}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.2 }}
+                        className="group relative"
+                      >
+                        <div className="relative p-[1px] rounded-xl lg:rounded-2xl bg-gradient-to-r from-white/10 to-white/5 hover:from-[#C19A4A]/30 hover:to-[#d9b563]/30 transition-all duration-500">
+                          <div className="flex flex-row items-center gap-4 sm:gap-6 p-4 sm:p-6 rounded-[11px] lg:rounded-[15px] bg-gradient-to-br from-white/[0.03] to-white/[0.01] backdrop-blur-xl">
+                            <div className="relative flex-shrink-0">
+                              <div className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl bg-gradient-to-br ${item.gradient} p-[1px]`}>
+                                <div className="w-full h-full rounded-[10px] lg:rounded-[14px] bg-[#0B0F1B] flex items-center justify-center">
+                                  <item.icon size={20} className="text-[#C19A4A] sm:w-6 sm:h-6" />
+                                </div>
+                              </div>
+                              <div className={`absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                                {item.title}
+                              </h3>
+                              <p className="text-gray-400 text-xs sm:text-sm lg:text-base leading-relaxed">{item.desc}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <div className="pt-6 sm:pt-8 flex justify-center">
+                    <NavLink
+                      to="/dashboard"
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(193,154,74,0.4)] flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center max-w-xs"
+                    >
+                      <span className="relative z-10">Create my portfolio</span>
+                      <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </NavLink>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </section>
 
-        {/* BUBBLE EXPLORER */}
-        <section className="relative h-[600px] md:h-[700px] mx-4 border border-white/5 rounded-[2rem] bg-gradient-to-b from-white/[0.02] to-transparent bubbles-section overflow-visible mb-20">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A10_0%,transparent_70%)]" />
-
-          <p className="absolute top-8 left-1/2 -translate-x-1/2 z-20 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-[#C19A4A] text-xs font-bold uppercase tracking-widest whitespace-nowrap">
-            Explore Verified Professionals
-          </p>
-
-          {loading ? (
-             <div className="flex h-full items-center justify-center">
-                <div className="w-12 h-12 border-4 border-t-[#C19A4A] border-white/10 rounded-full animate-spin" />
-             </div>
-          ) : (
-            <div className="relative w-full h-full p-10">
-              {bubbles.map((bubble) => (
-                <motion.div
-                  key={bubble.id}
-                  className="absolute cursor-pointer group bubble-item"
-                  style={{ top: bubble.initialPos.top, left: bubble.initialPos.left }}
-                  animate={{ y: [0, -15, 0], x: [0, 10, 0] }}
-                  transition={{ duration: 5 + Math.random() * 5, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
-                  onClick={(e) => handleBubbleInteraction(bubble, e, 'click')}
-                  onMouseEnter={(e) => !isMobile && !isPinned && handleBubbleInteraction(bubble, e, 'hover')}
-                  onMouseLeave={() => !isMobile && !isPinned && setSelectedBubble(null)}
-                >
-                  <div className={`relative p-1 rounded-full transition-all duration-300 ${selectedBubble?.id === bubble.id ? 'ring-4 ring-[#C19A4A]' : 'ring-2 ring-white/10'}`}>
-                    <img src={bubble.img} alt="" className="w-12 h-12 md:w-16 md:h-16 rounded-full grayscale hover:grayscale-0 transition-all shadow-xl" />
+        <section className="lg:hidden max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex justify-center"
+          >
+            <div className="relative w-full max-w-[340px] sm:max-w-[380px]">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+                className="p-6 sm:p-8 rounded-3xl bg-[#131825]/90 backdrop-blur-3xl border border-[#C19A4A]/20 flex flex-col gap-6 shadow-[0_20px_60px_rgba(193,154,74,0.15)]"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative flex-shrink-0">
+                    <img src={QUEEN_SMITH_PROFILE_IMG} className="w-16 h-16 rounded-full border-2 border-[#C19A4A] object-cover" alt="Profile" />
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-white text-base sm:text-lg truncate">Queen Smith</h4>
+                    <p className="text-gray-400 text-xs">Product Designer</p>
+                  </div>
+                </div>
 
-          <AnimatePresence>
-            {selectedBubble && (
-              <>
-                {isMobile && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedBubble(null)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1001]" />
-                )}
-                <motion.div
-                  initial={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
-                  animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1 }}
-                  exit={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
-                  className={`bg-[#0B0F1B]/95 backdrop-blur-2xl border border-[#C19A4A]/30 p-6 z-[1002] shadow-2xl profile-popup-card ${isMobile ? 'fixed bottom-0 left-0 right-0 rounded-t-3xl' : 'absolute rounded-2xl w-[300px]'}`}
-                  style={!isMobile ? { top: cardPos.top, left: cardPos.left } : {}}
-                >
-                  <button onClick={() => { setSelectedBubble(null); setIsPinned(false); }} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20} /></button>
-                  <div className="flex items-center gap-4 mb-4">
-                    <img src={selectedBubble.img} className="w-16 h-16 rounded-full border-2 border-[#C19A4A]" alt="" />
-                    <div>
-                        <h3 className="font-bold text-lg">{selectedBubble.name}</h3>
-                        <p className="text-[#C19A4A] text-sm uppercase font-bold tracking-tighter">Verified Member</p>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-white/5 flex flex-col items-center justify-center text-center min-h-[80px]">
+                    <div className="text-3xl font-bold text-white mb-2">12</div>
+                    <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                      Total Proofs
                     </div>
                   </div>
-                  <p className="text-gray-400 text-sm mb-6 leading-relaxed">{selectedBubble.bio}</p>
-                  <NavLink to={`/request?wallet=${selectedBubble.wallet}`} className="flex items-center justify-center gap-2 w-full py-3 bg-[#C19A4A] text-[#030712] font-bold rounded-xl hover:bg-[#d9b563] transition-all">
-                    View Full Profile <ArrowRight size={18} />
-                  </NavLink>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+                  <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-[#C19A4A]/20 flex flex-col items-center justify-center text-center min-h-[80px]">
+                    <div className="text-3xl font-bold text-white mb-2">12</div>
+                    <div className="text-gray-400 text-[11px] uppercase font-semibold tracking-tight">
+                      Verifiable
+                    </div>
+                  </div>
+                  <div className="bg-white/5 rounded-2xl p-3 sm:p-4 border border-white/5 col-span-2">
+                    <div className="flex items-center gap-1.5 text-gray-400 text-[10px] mb-1 uppercase font-bold tracking-tight">
+                      <Trophy size={12} className="text-[#C19A4A] flex-shrink-0" /> 
+                      <span className="truncate">Recent Achievement</span>
+                    </div>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <span className="text-xs sm:text-sm font-bold text-white truncate">Hackathon Winner</span>
+                      <span className="text-[10px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Verifiable</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
         </section>
 
-        {/* FEATURES GRID */}
-        <section className="max-w-6xl mx-auto px-6 pb-32">
-            <div className="grid md:grid-cols-3 gap-6">
-                {[
-                    { 
-                      title: "On-Chain Identity", 
-                      icon: <Wallet size={32}/>, 
-                      desc: "Aggregate your scattered contributions into one verifiable ID." 
-                    },
-                    { 
-                      title: "Proof of Work", 
-                      icon: <Shield size={32}/>, 
-                      desc: "No more fake resumes. Your history is backed by the blockchain." 
-                    },
-                    { 
-                      title: "Talent Discovery", 
-                      icon: <Upload size={32}/>, 
-                      desc: "Founders find you based on what you have actually built."
-                    }
-                ].map((item, i) => (
-                    <div key={i} className="p-10 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors group">
-                        <div className="flex flex-col items-center mb-6">
-                            <div className="text-[#C19A4A] mb-6 group-hover:scale-110 transition-transform">{item.icon}</div>
-                            <h4 className="text-xl font-bold mb-3 text-center">{item.title}</h4>
-                        </div>
-                        <p className="text-slate-400 text-sm leading-relaxed text-center">{item.desc}</p>
-                    </div>
-                ))}
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="relative"
+          >
+            <div className="absolute -top-10 sm:-top-20 -left-10 sm:-left-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#C19A4A] rounded-full opacity-20 blur-[80px] sm:blur-[100px] pointer-events-none" />
+            <div className="absolute -bottom-10 sm:-bottom-20 -right-10 sm:-right-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#d9b563] rounded-full opacity-20 blur-[80px] sm:blur-[100px] pointer-events-none" />
+
+            <div className="relative flex flex-col items-center gap-4 sm:gap-6">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white leading-tight max-w-4xl text-center lg:whitespace-nowrap"
+              >
+                Building the trust layer for the global workforce.
+              </motion.h2>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="w-full max-w-2xl lg:-ml-8"
+              >
+                <p className="text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed">
+                  Your reputation should be easy to prove and accessible anytime.
+                </p>
+                <p className="text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed">
+                  Ghonsi Proof bridges the gap between doing the work and getting the credit you deserve.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-2"
+              >
+                <NavLink 
+                  to="/dashboard" 
+                  className="px-5 py-2.5 rounded-lg border border-[#C19A4A] bg-gradient-to-r from-[#C19A4A] to-[#d9b563] hover:from-[#d9b563] hover:to-[#C19A4A] text-[#030712] text-sm sm:text-base font-medium transition-all duration-200 flex items-center gap-2"
+                >
+                  Create my portfolio
+                </NavLink>
+
+                <button
+                  onClick={scrollToBubbleSection}
+                  className="group relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold overflow-hidden transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm sm:text-base justify-center whitespace-nowrap"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/0 via-[#C19A4A]/10 to-[#C19A4A]/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                  <div className="absolute inset-[1px] bg-[#0B0F1B]/80 backdrop-blur-xl rounded-[11px]" />
+                  <span className="relative z-10">Verify talent now</span>
+                  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                </button>
+              </motion.div>
             </div>
+          </motion.div>
+        </section>
+
+        {/* DISCOVER VERIFIED TALENT - BUBBLE EXPLORER - Mobile Optimized */}
+              <section id="bubble-section" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 lg:pt-14 pb-0">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-6 sm:mb-10 lg:mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
+              Discover Verified Talent
+            </h2>
+            <p className="text-gray-300 text-sm sm:text-base lg:text-lg px-2">Browse on-chain portfolios of proven Web3 builders.</p>
+          </motion.div>
+        </section>
+
+        {/* Premium Bubble Container - Mobile Optimized */}
+        <section className="mx-2 md:mx-4 mb-12 md:mb-20">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="relative p-[2px] rounded-[2rem] md:rounded-[2.5rem] bg-gradient-to-br from-[#C19A4A]/50 via-[#d9b563]/30 to-blue-500/30"
+          >
+            <div className="relative p-[1px] rounded-[1.95rem] md:rounded-[2.4rem] bg-gradient-to-br from-white/10 to-white/5">
+              <div className="relative h-[900px] md:h-[1100px] lg:h-[1300px] rounded-[1.9rem] md:rounded-[2.3rem] bg-gradient-to-b from-[#0B0F1B]/95 to-[#0B0F1B]/80 backdrop-blur-2xl bubbles-section overflow-visible">
+                {/* Radial gradient overlay */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#C19A4A15_0%,transparent_70%)] rounded-[1.9rem] md:rounded-[2.3rem]" />
+                
+                {/* Animated gradient lines */}
+                <div className="absolute inset-0 opacity-30 rounded-[1.9rem] md:rounded-[2.3rem]" style={{
+                  backgroundImage: `
+                    radial-gradient(circle at 20% 50%, rgba(193,154,74,0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 50%, rgba(147,51,234,0.15) 0%, transparent 50%)
+                  `
+                }} />
+
+                <div className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 z-20">
+                  <div className="relative px-4 md:px-6 py-2 md:py-3 rounded-full bg-gradient-to-r from-[#C19A4A]/20 to-[#d9b563]/20 border border-[#C19A4A]/30 backdrop-blur-xl">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C19A4A]/10 to-[#d9b563]/10 rounded-full animate-pulse" />
+                    <span className="relative text-[#C19A4A] text-[10px] md:text-xs font-bold uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5 md:gap-2">
+                      <Sparkles size={12} className="md:w-[14px] md:h-[14px]" />
+                      Explore Verified Professionals
+                    </span>
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div className="flex h-full items-center justify-center">
+                    <div className="relative">
+                      <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-t-[#C19A4A] border-r-[#d9b563] border-b-blue-500 border-l-[#C19A4A]/20 rounded-full animate-spin" />
+                      <div className="absolute inset-0 w-12 h-12 md:w-16 md:h-16 border-4 border-[#C19A4A] rounded-full opacity-20 blur-xl animate-pulse" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative w-full h-full p-6 md:p-10">
+                    {bubbles.map((bubble) => (
+                      <motion.div
+                        key={bubble.id}
+                        className="absolute cursor-pointer group bubble-item"
+                        style={{ top: bubble.initialPos.top, left: bubble.initialPos.left }}
+                        animate={{ y: [0, -15, 0], x: [0, 10, 0] }}
+                        transition={{ duration: 5 + Math.random() * 5, repeat: Infinity, ease: "easeInOut", delay: bubble.delay }}
+                        onClick={(e) => handleBubbleInteraction(bubble, e, 'click')}
+                        onMouseEnter={(e) => !isMobile && !isPinned && handleBubbleInteraction(bubble, e, 'hover')}
+                        onMouseLeave={() => !isMobile && !isPinned && setSelectedBubble(null)}
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        <div className={`relative p-[2px] rounded-full bg-gradient-to-br ${selectedBubble?.id === bubble.id ? 'from-[#C19A4A] to-[#d9b563]' : 'from-white/20 to-white/5'} transition-all duration-300`}>
+                          <div className="relative p-1 rounded-full bg-[#0B0F1B]">
+                            <img 
+                              src={bubble.img} 
+                              alt="" 
+                              className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full grayscale group-hover:grayscale-0 transition-all shadow-xl" 
+                            />
+                          </div>
+                          {/* Glow effect on hover */}
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#C19A4A] to-[#d9b563] opacity-0 group-hover:opacity-50 blur-xl transition-opacity" />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                <AnimatePresence>
+                  {selectedBubble && (
+                    <>
+                      {isMobile && (
+                        <motion.div 
+                          initial={{ opacity: 0 }} 
+                          animate={{ opacity: 1 }} 
+                          exit={{ opacity: 0 }} 
+                          onClick={() => setSelectedBubble(null)} 
+                          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1001]" 
+                        />
+                      )}
+                      <motion.div
+                        initial={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
+                        animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1 }}
+                        exit={isMobile ? { y: "100%" } : { opacity: 0, scale: 0.9 }}
+                        className={`z-[1002] profile-popup-card ${isMobile ? 'fixed bottom-0 left-0 right-0' : 'absolute w-[300px] md:w-[320px]'}`}
+                        style={!isMobile ? { top: cardPos.top, left: cardPos.left } : {}}
+                      >
+                        {/* Premium card with gradient border */}
+                        <div className="relative p-[2px] rounded-t-3xl md:rounded-3xl bg-gradient-to-br from-[#C19A4A] via-[#d9b563] to-blue-500">
+                          <div className="relative rounded-t-[22px] md:rounded-[22px] bg-[#0B0F1B] backdrop-blur-2xl p-5 md:p-6 shadow-2xl">
+                            {/* Inner glow */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A]/10 via-transparent to-[#d9b563]/10 rounded-t-[22px] md:rounded-[22px]" />
+                            
+                            <button 
+                              onClick={() => { setSelectedBubble(null); setIsPinned(false); }} 
+                              className="absolute top-3 md:top-4 right-3 md:right-4 z-10 text-gray-400 hover:text-white transition-colors"
+                            >
+                              <X size={18} className="md:w-5 md:h-5" />
+                            </button>
+                            
+                            <div className="relative flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
+                              <div className="relative">
+                                <div className="absolute inset-0 bg-gradient-to-br from-[#C19A4A] to-[#d9b563] rounded-full blur-md opacity-50" />
+                                <img 
+                                  src={selectedBubble.img} 
+                                  className="relative w-14 h-14 md:w-16 md:h-16 rounded-full border-2 border-[#C19A4A]" 
+                                  alt="" 
+                                />
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-base md:text-lg bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                                  {selectedBubble.name}
+                                </h3>
+                                <p className="text-[#C19A4A] text-xs md:text-sm uppercase font-bold tracking-tighter flex items-center gap-1">
+                                  <Sparkles size={10} className="md:w-3 md:h-3" />
+                                  Verified Member
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <p className="relative text-gray-400 text-xs md:text-sm mb-5 md:mb-6 leading-relaxed">
+                              {selectedBubble.bio}
+                            </p>
+                            
+                            <NavLink 
+                              to={`/request?id=${selectedBubble.userId}`} 
+                              className="relative group flex items-center justify-center gap-2 w-full py-2.5 md:py-3 bg-gradient-to-r from-[#C19A4A] to-[#d9b563] text-[#030712] font-bold rounded-xl overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(193,154,74,0.4)] text-sm md:text-base"
+                            >
+                              <span className="relative z-10">View Full Profile</span>
+                              <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform md:w-[18px] md:h-[18px]" />
+                              <div className="absolute inset-0 bg-gradient-to-r from-[#d9b563] to-[#C19A4A] opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </NavLink>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
         </section>
       </main>
+      
       <Footer />
+
+      <style>{`
+        @keyframes blob {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          25% { transform: translate(20px, -50px) scale(1.1); }
+          50% { transform: translate(-20px, 20px) scale(0.9); }
+          75% { transform: translate(50px, 50px) scale(1.05); }
+        }
+        
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        
+        .animate-gradient {
+          animation: gradient 3s ease infinite;
+        }
+
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .bubble-item {
+          will-change: transform;
+          transform: translateZ(0);
+        }
+
+        @media (min-width: 375px) {
+          .xs\\:inline {
+            display: inline;
+          }
+          .xs\\:hidden {
+            display: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }

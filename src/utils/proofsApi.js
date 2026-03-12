@@ -15,22 +15,30 @@ export const uploadProof = async (
   supportingFiles = []
 ) => {
   try {
-    const user = await supabase.auth.getUser();
-
-    if (!user.data.user) {
+    // FIX: app uses wallet-based auth, not Supabase auth session.
+    // userId is passed directly in proofData from upload.jsx
+    const userId = proofData.userId;
+    if (!userId) {
       throw new Error("User not authenticated");
     }
 
-    // 1. Insert proof record
+    // 1. Insert proof record with IPFS and transaction data
     const { data: proof, error: proofError } = await supabase
       .from("proofs")
       .insert({
-        user_id: user.data.user.id,
+        user_id: userId,
         proof_type: proofData.proofType,
         proof_name: proofData.proofName,
         summary: proofData.summary,
         reference_link: proofData.referenceLink || null,
-        status: "pending",
+        file_ipfs_hash: proofData.fileIpfsHash || proofData.ipfsHash || null,
+        file_ipfs_url: proofData.fileIpfsUrl || proofData.ipfsUrl || null,
+        metadata_ipfs_hash: proofData.metadataIpfsHash || null,
+        metadata_ipfs_url: proofData.metadataIpfsUrl || null,
+        blockchain_tx: proofData.transactionHash || null,
+        status: "verified",
+        verified_at: new Date().toISOString(),
+        extracted_data: proofData.extractedData || null,
       })
       .select()
       .single();
@@ -42,7 +50,7 @@ export const uploadProof = async (
       proof.id,
       referenceFiles,
       "reference",
-      user.data.user.id
+      userId
     );
 
     // 3. Upload supporting files
@@ -50,7 +58,7 @@ export const uploadProof = async (
       proof.id,
       supportingFiles,
       "supporting",
-      user.data.user.id
+      userId
     );
 
     return {
@@ -60,6 +68,7 @@ export const uploadProof = async (
     };
   } catch (error) {
     console.error("Upload proof error:", error);
+    console.error("Upload proof error details:", JSON.stringify(error, null, 2));
     throw error;
   }
 };
@@ -70,11 +79,9 @@ const uploadFiles = async (proofId, files, fileType, userId) => {
 
   for (const file of files) {
     try {
-      // Generate unique filename
       const timestamp = Date.now();
       const filename = `${userId}/${proofId}/${timestamp}-${file.name}`;
 
-      // Upload to Supabase Storage
       const { data: storageData, error: storageError } = await supabase.storage
         .from(PROOF_FILES_BUCKET)
         .upload(filename, file, {
@@ -84,10 +91,8 @@ const uploadFiles = async (proofId, files, fileType, userId) => {
 
       if (storageError) throw storageError;
 
-      // Get public URL
       const fileUrl = getPublicUrl(PROOF_FILES_BUCKET, storageData.path);
 
-      // Save file record to database
       const { data: fileRecord, error: fileError } = await supabase
         .from("files")
         .insert({
@@ -108,7 +113,6 @@ const uploadFiles = async (proofId, files, fileType, userId) => {
       uploadedFiles.push(fileRecord);
     } catch (error) {
       console.error(`Error uploading file ${file.name}:`, error);
-      // Continue with other files even if one fails
     }
   }
 
@@ -119,12 +123,7 @@ const uploadFiles = async (proofId, files, fileType, userId) => {
 export const getUserProofs = async (userId) => {
   const { data, error } = await supabase
     .from("proofs")
-    .select(
-      `
-      *,
-      files(*)
-    `
-    )
+    .select(`*, files(*)`)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -136,13 +135,7 @@ export const getUserProofs = async (userId) => {
 export const getProof = async (proofId) => {
   const { data, error } = await supabase
     .from("proofs")
-    .select(
-      `
-      *,
-      files(*),
-      users(wallet_address, email)
-    `
-    )
+    .select(`*, files(*), users(wallet_address, email)`)
     .eq("id", proofId)
     .single();
 
@@ -168,7 +161,6 @@ export const updateProof = async (proofId, updates) => {
 
 // Delete proof
 export const deleteProof = async (proofId) => {
-  // First, get all files associated with this proof
   const { data: files, error: filesError } = await supabase
     .from("files")
     .select("file_path")
@@ -176,7 +168,6 @@ export const deleteProof = async (proofId) => {
 
   if (filesError) throw filesError;
 
-  // Delete files from storage
   if (files && files.length > 0) {
     const filePaths = files.map((f) => f.file_path);
     const { error: storageError } = await supabase.storage
@@ -187,7 +178,6 @@ export const deleteProof = async (proofId) => {
       console.error("Error deleting files from storage:", storageError);
   }
 
-  // Delete file records from database (cascade should handle this, but being explicit)
   const { error: deleteFilesError } = await supabase
     .from("files")
     .delete()
@@ -195,7 +185,6 @@ export const deleteProof = async (proofId) => {
 
   if (deleteFilesError) throw deleteFilesError;
 
-  // Delete proof record
   const { error: deleteProofError } = await supabase
     .from("proofs")
     .delete()
@@ -228,16 +217,15 @@ export const updateProofStatus = async (proofId, status, verifierId = null) => {
   if (error) throw error;
   return data;
 };
+
 export const profileWithfileProofs = async () => {
   const { data: profile, error } = await supabase
     .from("profiles_with_proofs_files")
-    .select(`
-      *,
-      users(wallet_address)
-    `);
+    .select(`*, users(wallet_address)`);
   if (error) throw error;
   return profile;
 };
+
 // Get proof statistics for a user
 export const getProofStats = async (userId) => {
   const { data, error } = await supabase
@@ -255,7 +243,6 @@ export const getProofStats = async (userId) => {
     byType: {},
   };
 
-  // Count by proof type
   data.forEach((proof) => {
     if (!stats.byType[proof.proof_type]) {
       stats.byType[proof.proof_type] = 0;
@@ -270,13 +257,8 @@ export const getProofStats = async (userId) => {
 export const getGlobalProofStats = async () => {
   try {
     const [totalResult, verifiedResult] = await Promise.all([
-      supabase
-        .from('proofs')
-        .select('*', { count: 'exact', head: true }),
-      supabase
-        .from('proofs')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'verified')
+      supabase.from('proofs').select('*', { count: 'exact', head: true }),
+      supabase.from('proofs').select('*', { count: 'exact', head: true }).eq('status', 'verified'),
     ]);
 
     if (totalResult.error) throw totalResult.error;
@@ -284,7 +266,7 @@ export const getGlobalProofStats = async () => {
 
     return {
       total: totalResult.count || 0,
-      verified: verifiedResult.count || 0
+      verified: verifiedResult.count || 0,
     };
   } catch (error) {
     console.error('Error fetching global stats:', error);

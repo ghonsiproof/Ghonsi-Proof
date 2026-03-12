@@ -1,92 +1,128 @@
-import { supabase } from "../config/supabaseClient";
+import { supabase } from '../config/supabaseClient';
 
 /**
  * Profile Management API
  */
 
-// Create a new profile
-export const createProfile = async (profileData) => {
-  const user = await supabase.auth.getUser();
-
-  if (!user.data.user) {
-    throw new Error("User not authenticated");
+const generateUID = (userId) => {
+  if (!userId) return '000000000';
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+    hash = hash & hash;
   }
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .insert({
-      user_id: user.data.user.id,
-      ...profileData,
-      created_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+  return Math.abs(hash).toString().padStart(9, '0').slice(0, 9);
 };
 
-// Get profile by user ID
+/**
+ * Fetches profile for the logged-in user
+ */
 export const getProfile = async (userId) => {
   const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", userId)
+    .from('profiles')
+    .select('*, users(email, wallet_address)')
+    .eq('user_id', userId)
     .single();
 
-  if (error && error.code !== "PGRST116") throw error; // Ignore "not found" error
-  return data;
-};
-//
-export const fetchProfiles = async () => {
-  const { data: profiles, error: proErr } = await supabase
-    .from("profile")
-    .select("*");
-  console.log(profiles);
+  if (error && error.code !== 'PGRST116') throw error;
 
-  // const { data: proofs, error: proofErr } = await supabase
-  //   .from("proof")
-  //   .select(`*, files(*)`);
-
-  // const combined = profiles.map((profile) => ({
-  //   ...profile,
-  //   proofs: proofs.filter((p) => p.user_id === profile.user_id),
-  // }));
-
-  if (proErr) {
-    throw new Error(proErr.message);
+  if (data) {
+    const updates = {};
+    if (!data.uid) {
+      updates.uid = generateUID(userId);
+      data.uid = updates.uid;
+    }
+    if (!data.email) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          updates.email = user.email;
+          data.email = updates.email;
+        }
+      } catch {
+        // wallet-only user, no Supabase auth session
+      }
+    }
+    if (Object.keys(updates).length > 0) {
+      await supabase.from('profiles').update(updates).eq('user_id', userId);
+    }
   }
 
-  return [];
-};
+  // Prefer wallet_address from the users join (source of truth),
+  // fall back to profiles.wallet_address for backwards compatibility
+  if (data?.users?.wallet_address) {
+    data.wallet_address = data.users.wallet_address;
+  }
 
-// Get profile by wallet address (for public profiles)
-export const getProfileByWallet = async (walletAddress) => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select(
-      `
-      *,
-      users!inner(wallet_address, email)
-    `
-    )
-    .eq("users.wallet_address", walletAddress)
-    .eq("is_public", true)
-    .single();
-
-  if (error && error.code !== "PGRST116") throw error;
   return data;
 };
 
-// Update profile
-export const updateProfile = async (userId, updates) => {
+export const getProfileByWallet = async (walletAddress) => {
   const { data, error } = await supabase
-    .from("profiles")
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId)
+    .from('profiles')
+    .select('*, users!inner(*)')
+    .eq('users.wallet_address', walletAddress)
+    .single();
+  if (error) return null;
+  return data;
+};
+
+export const getProfileById = async (userId) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*, users(*)')
+    .eq('user_id', userId)
+    .single();
+  if (error) return null;
+  return data;
+};
+
+/**
+ * Create or update a profile — uses upsert on user_id to prevent
+ * "duplicate key" errors when the profile row already exists.
+ * This handles: new users, returning users, and retry after a failed save.
+ */
+export const createProfile = async (profileData) => {
+  let userId = null;
+  let email = null;
+
+  // Try Supabase auth session first
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      userId = user.id;
+      email = user.email;
+    }
+  } catch {
+    // no Supabase session — wallet user
+  }
+
+  // Fall back to profileData for wallet users
+  if (!userId) {
+    userId = profileData.user_id;
+    if (!userId) throw new Error('User not authenticated — no user ID found');
+    email = profileData.email || null;
+  }
+
+  // profileData email takes priority
+  if (profileData.email) email = profileData.email;
+
+  const uid = generateUID(userId);
+
+  // Use upsert with onConflict: user_id so retries and existing profiles
+  // never throw a unique constraint violation
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert(
+      {
+        user_id: userId,
+        uid,
+        email,
+        ...profileData,
+        created_at: profileData.created_at || new Date().toISOString(),
+      },
+      { onConflict: 'user_id', ignoreDuplicates: false }
+    )
     .select()
     .single();
 
@@ -94,25 +130,27 @@ export const updateProfile = async (userId, updates) => {
   return data;
 };
 
-// Delete profile
-export const deleteProfile = async (userId) => {
-  const { error } = await supabase
-    .from("profiles")
-    .delete()
-    .eq("user_id", userId);
-
+export const updateProfile = async (userId, updates) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('user_id', userId)
+    .select();
   if (error) throw error;
-  return true;
+  return data[0];
 };
 
-// Check if profile exists
-export const profileExists = async (userId) => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
+export const fetchProfiles = async () => {
+  const { data, error } = await supabase.from('profiles').select('*');
+  if (error) return [];
+  return data;
+};
 
-  if (error && error.code !== "PGRST116") throw error;
+export const profileExists = async (userId) => {
+  const { data } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', userId)
+    .single();
   return !!data;
 };
