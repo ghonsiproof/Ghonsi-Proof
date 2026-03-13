@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Share2, Mail, Wallet, ExternalLink, ShieldCheck, Info, Check, Calendar } from 'lucide-react';
 import { getCurrentUser } from '../../utils/supabaseAuth';
 import { createPortfolioRequestMessage } from '../../utils/messagesApi';
@@ -48,8 +48,6 @@ function Request() {
   const [formData, setFormData]                 = useState({ name: '', email: '' });
   const [copied, setCopied]                     = useState(false);
   const [currentUserId, setCurrentUserId]       = useState(null);
-  const [proofs, setProofs]                     = useState([]);
-  const [profile, setProfile]                   = useState(null);
 
   useEffect(() => {
     // Restore form data on mount
@@ -68,11 +66,8 @@ function Request() {
         const profile = await getProfileById(userId);
         if (!profile) { setLoading(false); return; }
 
-        const proofsData = await getUserProofs(userId);
+        const proofs = await getUserProofs(userId);
         const stats  = await getProofStats(userId);
-
-        setProfile(profile);
-        setProofs(proofsData);
 
         const mappedData = {
           profilePhotoUrl: profile.avatar_url,
@@ -87,7 +82,8 @@ function Request() {
             proofs:       stats.verified,
             achievements: stats.verified,
           },
-          proofs: proofsData.map(proof => ({
+          skills: profile.skills || [],
+          proofs: proofs.map(proof => ({
             id:     `GH-${proof.proof_type?.charAt(0).toUpperCase()}-${String(proof.id).padStart(3, '0')}`,
             title:  proof.proof_name,
             status: proof.status === 'verified' ? 'Verifiable' : 'Pending',
@@ -124,32 +120,6 @@ function Request() {
     fetchProfile();
     loadUserEmail();
   }, []);
-
-  // Auto-generate skills from proofs extracted_data; fall back to profile.skills if no extracted skills
-  const autoSkills = useMemo(() => {
-    const validProofs = proofs.filter(proof => {
-      const extracted = proof?.extracted_data;
-      const category = extracted?.program_category;
-      const conf = extracted?.confidence?.program_category;
-      return (
-        proof?.extracted_data &&
-        typeof category === 'string' &&
-        category.length > 0 &&
-        typeof conf === 'number' &&
-        conf >= 0.7
-      );
-    });
-
-    const categorySet = new Set();
-    validProofs.forEach(proof => {
-      const category = proof.extracted_data.program_category;
-      if (category) categorySet.add(category);
-    });
-
-    const fromProofs = Array.from(categorySet);
-    if (fromProofs.length > 0) return fromProofs;
-    return profile?.skills || [];
-  }, [proofs, profile]);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -383,13 +353,10 @@ function Request() {
         <GradientCard variant="subtle" innerClassName="p-5">
           <div className="mb-3">
             <SectionTitle>Skills & Expertise</SectionTitle>
-            <p className="text-[10px] text-gray-500 mt-1 pl-3">
-              {proofs.length > 0 ? 'Auto-detected from verified proofs' : 'Upload proofs to auto-generate skills'}
-            </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {autoSkills.length > 0 ? (
-              autoSkills.map((skill, idx) => (
+            {profileData.skills.length > 0 ? (
+              profileData.skills.map((skill, idx) => (
                 <span
                   key={idx}
                   className="text-xs text-[#C19A4A] bg-[#1A1F2E] border border-[#C19A4A]/20 px-3 py-1.5 rounded-full hover:bg-[#C19A4A]/10 transition-colors"
@@ -398,7 +365,7 @@ function Request() {
                 </span>
               ))
             ) : (
-              <span className="text-xs text-gray-600 italic">No skills detected yet</span>
+              <span className="text-xs text-gray-600 italic">No skills listed</span>
             )}
           </div>
         </GradientCard>
